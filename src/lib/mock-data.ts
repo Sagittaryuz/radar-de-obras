@@ -30,9 +30,9 @@ export type Loja = {
 
 export const users: User[] = [
   { id: 'user-1', name: 'Marcos Pires', email: 'marcos.pires@jcruzeiro.com', avatar: 'https://i.pravatar.cc/150?u=marcos.pires@jcruzeiro.com', role: 'Admin' },
-  { id: 'user-2', name: 'Ana Silva', email: 'ana.silva@example.com', avatar: 'https://i.pravatar.cc/150?u=ana.silva@example.com', role: 'Vendedor' },
-  { id: 'user-3', name: 'Carlos Santos', email: 'carlos.santos@example.com', avatar: 'https://i.pravatar.cc/150?u=carlos.santos@example.com', role: 'Vendedor' },
-  { id: 'user-4', name: 'Sofia Ferreira', email: 'sofia.ferreira@example.com', avatar: 'https://i.pravatar.cc/150?u=sofia.ferreira@example.com', role: 'Vendedor' },
+  { id: 'user-2', name: 'Ana Silva', email: 'ana.silva@jcruzeiro.com', avatar: 'https://i.pravatar.cc/150?u=ana.silva@jcruzeiro.com', role: 'Vendedor' },
+  { id: 'user-3', name: 'Carlos Santos', email: 'carlos.santos@jcruzeiro.com', avatar: 'https://i.pravatar.cc/150?u=carlos.santos@jcruzeiro.com', role: 'Vendedor' },
+  { id: 'user-4', name: 'Sofia Ferreira', email: 'sofia.ferreira@jcruzeiro.com', avatar: 'https://i.pravatar.cc/150?u=sofia.ferreira@jcruzeiro.com', role: 'Vendedor' },
 ];
 
 export const obras: Obra[] = [

@@ -27,7 +27,7 @@ export async function loginAction(credentials: unknown) {
     return { error: 'Ocorreu um erro. Tente novamente.' };
   }
   
-  // Redirect is handled on the client-side after toast
+  // The redirect is handled on the client-side to ensure a smooth transition.
   return { success: true };
 }
 

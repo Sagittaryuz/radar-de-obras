@@ -23,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<LoginFormValues>({
@@ -47,8 +48,8 @@ export function LoginForm() {
           title: 'Login bem-sucedido!',
           description: 'Redirecionando para o dashboard...',
         });
-        // Force a full page reload to ensure session is updated correctly
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
+        router.refresh(); // Ensures the layout re-renders with the new session
       }
     });
   };
@@ -88,6 +89,9 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
+             <p className="text-xs text-center text-muted-foreground">
+              (Use qualquer email da lista de usuários e a senha '123456' para o login de teste)
+            </p>
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Entrar
