@@ -41,19 +41,41 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
   const handleLocation = () => {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        // Mocking address based on location for demonstration
-        toast({
-          title: "Localização Obtida!",
-          description: "Você pode preencher o endereço manualmente.",
-        });
-        setIsLocating(false);
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await response.json();
+
+          if (data.address) {
+            setRua(data.address.road || '');
+            setBairro(data.address.suburb || data.address.city_district || '');
+            toast({
+              title: "Endereço Preenchido!",
+              description: "A rua e o bairro foram preenchidos com base na sua localização.",
+            });
+          } else {
+             toast({
+              variant: 'destructive',
+              title: "Endereço não encontrado",
+              description: "Não foi possível encontrar um endereço para sua localização.",
+            });
+          }
+        } catch (error) {
+           toast({
+            variant: 'destructive',
+            title: "Erro ao buscar endereço",
+            description: "Ocorreu um erro ao converter sua localização em endereço.",
+          });
+        } finally {
+            setIsLocating(false);
+        }
       },
       (error) => {
         toast({
           variant: 'destructive',
           title: "Erro de Localização",
-          description: "Não foi possível obter sua localização.",
+          description: "Não foi possível obter sua localização. Verifique as permissões do navegador.",
         });
         console.error("Geolocation Error:", error);
         setIsLocating(false);
