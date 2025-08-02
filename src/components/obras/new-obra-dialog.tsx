@@ -43,12 +43,8 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
         // Mocking address based on location for demonstration
         toast({
           title: "Localização Obtida!",
-          description: "Endereço preenchido automaticamente.",
+          description: "Você pode preencher o endereço manualmente.",
         });
-        setRua('Av. Goiás (Exemplo)');
-        setNumero('1000');
-        setBairro('Centro');
-        setUnidade('loja-2'); // Auto-selects "Catedral" as it's in "Centro"
         setIsLocating(false);
       },
       (error) => {
