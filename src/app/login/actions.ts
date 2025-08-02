@@ -1,0 +1,37 @@
+'use server';
+
+import { z } from 'zod';
+import { login, logout as authLogout } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
+
+export async function loginAction(credentials: unknown) {
+  const validatedCredentials = loginSchema.safeParse(credentials);
+
+  if (!validatedCredentials.success) {
+    return { error: 'Credenciais inválidas.' };
+  }
+
+  const { email } = validatedCredentials.data;
+  
+  try {
+    const result = await login(email);
+    if (result.error) {
+      return { error: result.error };
+    }
+  } catch (error) {
+    return { error: 'Ocorreu um erro. Tente novamente.' };
+  }
+  
+  // Redirect is handled on the client-side after toast
+  return { success: true };
+}
+
+export async function logoutAction() {
+  await authLogout();
+  redirect('/login');
+}

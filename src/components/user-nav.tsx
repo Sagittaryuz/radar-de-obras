@@ -1,0 +1,61 @@
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LogOut, Settings } from 'lucide-react';
+import Link from 'next/link';
+import type { User } from '@/lib/mock-data';
+import { logoutAction } from '@/app/login/actions';
+
+function getInitials(name: string) {
+    const names = name.split(' ');
+    const initials = names.map(n => n[0]).join('');
+    return initials.slice(0, 2).toUpperCase();
+}
+
+export function UserNav({ user }: { user: User }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={user.avatar} alt={`@${user.name}`} />
+            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Configurações</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <form action={logoutAction}>
+          <DropdownMenuItem asChild>
+              <button type="submit" className="w-full">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+              </button>
+          </DropdownMenuItem>
+        </form>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
