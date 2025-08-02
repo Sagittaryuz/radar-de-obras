@@ -7,8 +7,11 @@ import { app } from './firebase';
 const SESSION_COOKIE_NAME = 'jcr_radar_session';
 
 export async function getSession(): Promise<User | null> {
-  const sessionCookie = cookies().get(SESSION_COOKIE_NAME);
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
+  
   if (!sessionCookie) return null;
+
   try {
     return JSON.parse(sessionCookie.value);
   } catch {
