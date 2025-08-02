@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ interface NewObraDialogProps {
 export function NewObraDialog({ lojas }: NewObraDialogProps) {
   const { toast } = useToast();
   const [isLocating, setIsLocating] = useState(false);
+  const [open, setOpen] = useState(false);
 
   // States for form fields
   const [client, setClient] = useState('');
@@ -73,13 +75,11 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
         title: "Obra Criada",
         description: "A nova prospecção foi registrada com sucesso.",
     });
-    // This is a mock, so we won't actually add the obra to the list.
-    const closeButton = document.getElementById('close-new-obra-dialog');
-    closeButton?.click();
+    setOpen(false); // Close dialog on submit
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -159,7 +159,7 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-                <Button id="close-new-obra-dialog" type="button" variant="secondary">
+                <Button type="button" variant="secondary">
                     Cancelar
                 </Button>
             </DialogClose>
