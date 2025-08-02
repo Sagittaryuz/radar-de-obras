@@ -16,10 +16,10 @@ export async function loginAction(credentials: unknown) {
     return { error: 'Credenciais inválidas.' };
   }
 
-  const { email } = validatedCredentials.data;
+  const { email, password } = validatedCredentials.data;
   
   try {
-    const result = await login(email);
+    const result = await login(email, password);
     if (result.error) {
       return { error: result.error };
     }
