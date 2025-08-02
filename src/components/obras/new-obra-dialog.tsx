@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,11 +15,60 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { Loja } from '@/lib/mock-data';
 
-export function NewObraDialog() {
+interface NewObraDialogProps {
+  lojas: Loja[];
+}
+
+export function NewObraDialog({ lojas }: NewObraDialogProps) {
   const { toast } = useToast();
+  const [isLocating, setIsLocating] = useState(false);
+
+  // States for form fields
+  const [client, setClient] = useState('');
+  const [rua, setRua] = useState('');
+  const [numero, setNumero] = useState('');
+  const [bairro, setBairro] = useState('');
+  const [unidade, setUnidade] = useState('');
+  const [etapa, setEtapa] = useState('');
+  const [foto, setFoto] = useState<File | null>(null);
+
+  const handleLocation = () => {
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // Mocking address based on location for demonstration
+        toast({
+          title: "Localização Obtida!",
+          description: "Endereço preenchido automaticamente.",
+        });
+        setRua('Av. Goiás (Exemplo)');
+        setNumero('1000');
+        setBairro('Centro');
+        setUnidade('loja-2'); // Auto-selects "Catedral" as it's in "Centro"
+        setIsLocating(false);
+      },
+      (error) => {
+        toast({
+          variant: 'destructive',
+          title: "Erro de Localização",
+          description: "Não foi possível obter sua localização.",
+        });
+        console.error("Geolocation Error:", error);
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setFoto(event.target.files[0]);
+    }
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -28,11 +78,9 @@ export function NewObraDialog() {
         description: "A nova prospecção foi registrada com sucesso.",
     });
     // This is a mock, so we won't actually add the obra to the list.
-    // In a real app, you'd likely use server actions and revalidate the path.
     const closeButton = document.getElementById('close-new-obra-dialog');
     closeButton?.click();
   };
-
 
   return (
     <Dialog>
@@ -42,33 +90,59 @@ export function NewObraDialog() {
           Nova Obra
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline">Nova Prospecção de Obra</DialogTitle>
           <DialogDescription>
-            Preencha os dados abaixo para registrar uma nova obra.
+            Preencha os dados para registrar uma nova obra.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="client" className="text-right">
-                Cliente
-              </Label>
-              <Input id="client" placeholder="Nome do cliente ou construtora" className="col-span-3" required />
+          <div className="space-y-4 py-4">
+            <Button type="button" variant="outline" className="w-full" onClick={handleLocation} disabled={isLocating}>
+              <MapPin className="mr-2 h-4 w-4" />
+              {isLocating ? 'Obtendo localização...' : 'Usar Localização Atual'}
+            </Button>
+            
+            <div>
+              <Label htmlFor="client">Cliente</Label>
+              <Input id="client" placeholder="Nome do cliente ou construtora" required value={client} onChange={e => setClient(e.target.value)} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="address" className="text-right">
-                Endereço
-              </Label>
-              <Input id="address" placeholder="Endereço completo da obra" className="col-span-3" required/>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className='col-span-2'>
+                <Label htmlFor="rua">Rua</Label>
+                <Input id="rua" placeholder="Ex: Av. Brasil" required value={rua} onChange={e => setRua(e.target.value)} />
+              </div>
+               <div>
+                <Label htmlFor="numero">N.º</Label>
+                <Input id="numero" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value)} />
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="stage" className="text-right">
-                Etapa
-              </Label>
-              <Select required>
-                  <SelectTrigger className="col-span-3">
+
+            <div>
+              <Label htmlFor="bairro">Bairro</Label>
+              <Input id="bairro" placeholder="Ex: Centro" required value={bairro} onChange={e => setBairro(e.target.value)} />
+            </div>
+
+            <div>
+              <Label htmlFor="unidade">Unidade J. Cruzeiro</Label>
+              <Select required onValueChange={setUnidade} value={unidade}>
+                  <SelectTrigger id="unidade">
+                      <SelectValue placeholder="Selecione a unidade responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {lojas.map(loja => (
+                        <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="stage">Etapa da Obra</Label>
+              <Select required onValueChange={setEtapa} value={etapa}>
+                  <SelectTrigger id="stage">
                       <SelectValue placeholder="Selecione a etapa da obra" />
                   </SelectTrigger>
                   <SelectContent>
@@ -80,6 +154,12 @@ export function NewObraDialog() {
                   </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <Label htmlFor="foto">Foto da Fachada</Label>
+              <Input id="foto" type="file" accept="image/*" onChange={handleFileChange} />
+            </div>
+
           </div>
           <DialogFooter>
             <DialogClose asChild>

@@ -10,7 +10,13 @@ export type User = {
 export type Obra = {
   id: string;
   clientName: string;
-  address: string;
+  address: string; // Kept for simplicity on kanban card
+  street: string;
+  number: string;
+  neighborhood: string;
+  photoUrl?: string;
+  gmapsUrl?: string;
+  lojaId: string;
   stage: 'Fundação' | 'Alvenaria' | 'Acabamento' | 'Pintura' | 'Telhado';
   status: 'Entrada' | 'Triagem' | 'Atribuída' | 'Em Negociação' | 'Ganha' | 'Perdida';
   sellerId: string | null;
@@ -30,14 +36,14 @@ export const users: User[] = [
 ];
 
 export const obras: Obra[] = [
-  { id: 'obra-1', clientName: 'Construtora A', address: 'Rua das Flores, 123', stage: 'Fundação', status: 'Entrada', sellerId: null },
-  { id: 'obra-2', clientName: 'Família Souza', address: 'Av. Principal, 456', stage: 'Alvenaria', status: 'Triagem', sellerId: null },
-  { id: 'obra-3', clientName: 'Empresa B', address: 'Pç. Central, 789', stage: 'Acabamento', status: 'Atribuída', sellerId: 'user-2' },
-  { id: 'obra-4', clientName: 'Sr. Roberto Lima', address: 'Al. dos Jardins, 101', stage: 'Fundação', status: 'Em Negociação', sellerId: 'user-3' },
-  { id: 'obra-5', clientName: 'Condomínio Sol', address: 'Rua da Paz, 202', stage: 'Pintura', status: 'Ganha', sellerId: 'user-2' },
-  { id: 'obra-6', clientName: 'Investimentos C', address: 'Av. do Progresso, 303', stage: 'Alvenaria', status: 'Perdida', sellerId: 'user-3' },
-  { id: 'obra-7', clientName: 'Sra. Julia Mendes', address: 'Rua do Sol, 404', stage: 'Acabamento', status: 'Entrada', sellerId: null },
-  { id: 'obra-8', clientName: 'Loja de Varejo D', address: 'Rua do Comércio, 505', stage: 'Telhado', status: 'Atribuída', sellerId: 'user-4' },
+  { id: 'obra-1', clientName: 'Construtora A', address: 'Rua das Flores, 123', street: 'Rua das Flores', number: '123', neighborhood: 'JARDIM PARAÍSO', lojaId: 'loja-1', stage: 'Fundação', status: 'Entrada', sellerId: null },
+  { id: 'obra-2', clientName: 'Família Souza', address: 'Av. Principal, 456', street: 'Av. Principal', number: '456', neighborhood: 'CENTRO', lojaId: 'loja-2', stage: 'Alvenaria', status: 'Triagem', sellerId: null },
+  { id: 'obra-3', clientName: 'Empresa B', address: 'Pç. Central, 789', street: 'Pç. Central', number: '789', neighborhood: 'CENTRO', lojaId: 'loja-2', stage: 'Acabamento', status: 'Atribuída', sellerId: 'user-2' },
+  { id: 'obra-4', clientName: 'Sr. Roberto Lima', address: 'Al. dos Jardins, 101', street: 'Al. dos Jardins', number: '101', neighborhood: 'JARDIM AMÉRICA', lojaId: 'loja-3', stage: 'Fundação', status: 'Em Negociação', sellerId: 'user-3' },
+  { id: 'obra-5', clientName: 'Condomínio Sol', address: 'Rua da Paz, 202', street: 'Rua da Paz', number: '202', neighborhood: 'VILA SOFIA', lojaId: 'loja-3', stage: 'Pintura', status: 'Ganha', sellerId: 'user-2' },
+  { id: 'obra-6', clientName: 'Investimentos C', address: 'Av. do Progresso, 303', street: 'Av. do Progresso', number: '303', neighborhood: 'SETOR INDUSTRIAL', lojaId: 'loja-3', stage: 'Alvenaria', status: 'Perdida', sellerId: 'user-3' },
+  { id: 'obra-7', clientName: 'Sra. Julia Mendes', address: 'Rua do Sol, 404', street: 'Rua do Sol', number: '404', neighborhood: 'RES. PORTAL DO SOL 1ªETAPA', lojaId: 'loja-1', stage: 'Acabamento', status: 'Entrada', sellerId: null },
+  { id: 'obra-8', clientName: 'Loja de Varejo D', address: 'Rua do Comércio, 505', street: 'Rua do Comércio', number: '505', neighborhood: 'CENTRO', lojaId: 'loja-2', stage: 'Telhado', status: 'Atribuída', sellerId: 'user-4' },
 ];
 
 export const lojas: Loja[] = [
