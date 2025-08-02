@@ -48,6 +48,7 @@ export function LoginForm() {
           title: 'Login bem-sucedido!',
           description: 'Redirecionando para o dashboard...',
         });
+        router.refresh();
         router.push('/dashboard');
       }
     });
