@@ -12,7 +12,6 @@ import { LogOut, Settings } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/mock-data';
 import { logoutAction } from '@/app/login/actions';
-import { cn } from '@/lib/utils';
 
 function getInitials(name: string) {
     const names = name.split(' ');

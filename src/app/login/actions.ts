@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { login, logout as authLogout } from '@/lib/auth';
+import { login, logout } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 const loginSchema = z.object({
@@ -27,11 +27,11 @@ export async function loginAction(credentials: unknown) {
     return { error: 'Ocorreu um erro. Tente novamente.' };
   }
   
-  // The redirect is handled on the client-side.
+  // A redirect/reload is handled on the client-side after this action resolves.
   return { success: true };
 }
 
 export async function logoutAction() {
-  await authLogout();
-  redirect('/login');
+    await logout();
+    redirect('/login');
 }

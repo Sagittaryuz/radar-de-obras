@@ -25,6 +25,7 @@ export async function getSession(): Promise<User | null> {
 export async function login(email: string, password?: string): Promise<{ user?: User; error?: string }> {
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
+  // For this mock auth, we're using a static password.
   if (!user || password !== '123456') {
       return { error: 'Usuário ou senha inválidos.' };
   }
