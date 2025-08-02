@@ -20,8 +20,11 @@ function MainLayoutClient({ children }: { children: React.ReactNode }) {
                 redirect('/login');
             } else {
                 setUser(session);
+                setLoading(false);
             }
-            setLoading(false);
+        }).catch(() => {
+            // Handle error case, e.g., redirect to login
+            redirect('/login');
         });
     }, []);
 
@@ -52,7 +55,9 @@ function MainLayoutClient({ children }: { children: React.ReactNode }) {
     }
 
     if (!user) {
-        return null;
+        // This can happen briefly before redirect.
+        // You can also show a full-screen loader here.
+        return null; 
     }
 
     return (
