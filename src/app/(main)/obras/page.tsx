@@ -13,7 +13,7 @@ export default async function ObrasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center gap-4">
         <h1 className="font-headline text-3xl font-bold tracking-tight">Quadro de Obras</h1>
         <NewObraDialog />
       </div>
