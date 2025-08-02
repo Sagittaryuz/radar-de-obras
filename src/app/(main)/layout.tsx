@@ -1,91 +1,41 @@
 
-'use client';
-
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
-import { SidebarProvider, Sidebar } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/main-sidebar';
-import { useEffect, useState } from 'react';
 import type { User } from '@/lib/mock-data';
-import { Skeleton } from '@/components/ui/skeleton';
-import { SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 
-
-function MainLayoutClient({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const checkSession = async () => {
-            const session = await getSession();
-            if (!session) {
-                redirect('/login');
-            } else {
-                setUser(session);
-                setLoading(false);
-            }
-        };
-        checkSession();
-    }, []);
-
-    if (loading) {
-        return (
-             <div className="flex min-h-screen w-full bg-background">
-                <div className="hidden md:block border-r p-2" style={{width: '16rem'}}>
-                    <div className="flex flex-col gap-4">
-                        <div className="p-2 flex items-center gap-2">
-                             <Skeleton className="h-10 w-10 rounded-md" />
-                             <div className="flex flex-col gap-2">
-                                <Skeleton className="h-4 w-32" />
-                                <Skeleton className="h-3 w-24" />
-                             </div>
-                        </div>
-                         <div className="flex flex-col gap-2 px-2">
-                            <Skeleton className="h-8 w-full" />
-                            <Skeleton className="h-8 w-full" />
-                            <Skeleton className="h-8 w-full" />
-                         </div>
-                    </div>
-                </div>
-                <div className="flex-1 p-6">
-                    <Skeleton className="h-full w-full" />
-                </div>
-             </div>
-        )
-    }
-
-    if (!user) {
-        return null; 
-    }
-
-    return (
-        <SidebarProvider>
-            <div className="flex min-h-screen w-full bg-background">
-                <Sidebar className="border-r">
-                    <MainSidebar user={user} />
-                </Sidebar>
-                <SidebarInset className="flex flex-col">
-                    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-                        <div className='sm:hidden'>
-                            <SidebarTrigger />
-                        </div>
-                        <div className="ml-auto">
-                        </div>
-                    </header>
-                    <main className="flex-1 overflow-y-auto p-4 pt-0 sm:p-6 sm:pt-0">
-                        {children}
-                    </main>
-                </SidebarInset>
-            </div>
-        </SidebarProvider>
-    );
-}
-
-
-export default function MainLayout({
+export default async function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <MainLayoutClient>{children}</MainLayoutClient>
+  const user = await getSession();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <Sidebar className="border-r">
+          <MainSidebar user={user} />
+        </Sidebar>
+        <SidebarInset className="flex flex-col">
+          <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+            <div className='sm:hidden'>
+              <SidebarTrigger />
+            </div>
+            <div className="ml-auto">
+              {/* Future header content can go here, like a user nav for mobile */}
+            </div>
+          </header>
+          <main className="flex-1 overflow-y-auto p-4 pt-0 sm:p-6 sm:pt-0">
+            {children}
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
 }
