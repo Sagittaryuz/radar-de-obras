@@ -12,14 +12,12 @@ export default async function ObrasPage() {
   const sellers = await getUsers();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.14)-2*theme(spacing.6))]">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="font-headline text-3xl font-bold tracking-tight">Quadro de Obras</h1>
         <NewObraDialog />
       </div>
-      <div className="flex-1 overflow-x-auto">
-        <KanbanBoard initialObras={initialObras} sellers={sellers} />
-      </div>
+      <KanbanBoard initialObras={initialObras} sellers={sellers} />
     </div>
   );
 }

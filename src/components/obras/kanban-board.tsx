@@ -2,9 +2,10 @@
 
 import { useState, useMemo, DragEvent } from 'react';
 import type { Obra, User } from '@/lib/mock-data';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type KanbanBoardProps = {
   initialObras: Obra[];
@@ -54,53 +55,54 @@ export function KanbanBoard({ initialObras, sellers }: KanbanBoardProps) {
   };
 
   return (
-    <div className="flex gap-4 pb-4 min-w-max">
+    <Tabs defaultValue={columns[0]} className="w-full">
+      <TabsList className="grid w-full grid-cols-6">
+        {columns.map(status => (
+          <TabsTrigger key={status} value={status}>{status}</TabsTrigger>
+        ))}
+      </TabsList>
       {columns.map(status => (
-        <div
-          key={status}
-          className="w-72 flex-shrink-0"
+        <TabsContent 
+          key={status} 
+          value={status}
           onDragOver={handleDragOver}
           onDrop={e => handleDrop(e, status)}
+          className="mt-4 min-h-[400px] rounded-md border border-dashed border-border p-4"
         >
-          <Card className="bg-muted/50 h-full">
-            <CardHeader className='pb-4'>
-              <CardTitle className="font-headline text-lg">{status}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {obras
-                .filter(obra => obra.status === status)
-                .map(obra => {
-                  const seller = obra.sellerId ? sellerMap[obra.sellerId] : null;
-                  return (
-                    <Card
-                      key={obra.id}
-                      draggable
-                      onDragStart={e => handleDragStart(e, obra)}
-                      className={cn(
-                        "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing",
-                        draggedItem?.id === obra.id && "opacity-50"
-                      )}
-                    >
-                      <CardContent className="p-4 space-y-2">
-                        <p className="font-bold">{obra.clientName}</p>
-                        <p className="text-sm text-muted-foreground">{obra.address}</p>
-                        <div className="flex justify-between items-center pt-2">
-                           <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{obra.stage}</span>
-                           {seller && (
-                             <Avatar className="h-7 w-7">
-                               <AvatarImage src={seller.avatar} />
-                               <AvatarFallback>{getInitials(seller.name)}</AvatarFallback>
-                             </Avatar>
-                           )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-            </CardContent>
-          </Card>
-        </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {obras
+              .filter(obra => obra.status === status)
+              .map(obra => {
+                const seller = obra.sellerId ? sellerMap[obra.sellerId] : null;
+                return (
+                  <Card
+                    key={obra.id}
+                    draggable
+                    onDragStart={e => handleDragStart(e, obra)}
+                    className={cn(
+                      "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing",
+                      draggedItem?.id === obra.id && "opacity-50"
+                    )}
+                  >
+                    <CardContent className="p-4 space-y-2">
+                      <p className="font-bold">{obra.clientName}</p>
+                      <p className="text-sm text-muted-foreground">{obra.address}</p>
+                      <div className="flex justify-between items-center pt-2">
+                         <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{obra.stage}</span>
+                         {seller && (
+                           <Avatar className="h-7 w-7">
+                             <AvatarImage src={seller.avatar} />
+                             <AvatarFallback>{getInitials(seller.name)}</AvatarFallback>
+                           </Avatar>
+                         )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+          </div>
+        </TabsContent>
       ))}
-    </div>
+    </Tabs>
   );
 }
