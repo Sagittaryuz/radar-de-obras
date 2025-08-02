@@ -27,7 +27,7 @@ export default async function MainLayout({
               <SidebarTrigger />
             </div>
             <div className="ml-auto">
-              <UserNav user={session} />
+               {/* The UserNav is now in the sidebar footer as well */}
             </div>
           </header>
           <main className="flex-1 overflow-y-auto p-4 pt-0 sm:p-6 sm:pt-0">

@@ -2,8 +2,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, ListTodo, Map, Shield, LogOut } from 'lucide-react';
-
+import { Building2, LayoutDashboard, ListTodo, Map, Shield, LogOut, Settings } from 'lucide-react';
+import Link from 'next/link';
+import type { User } from '@/lib/mock-data';
+import { logoutAction } from '@/app/login/actions';
 import {
   SidebarContent,
   SidebarHeader,
@@ -13,9 +15,7 @@ import {
   SidebarFooter,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import Link from 'next/link';
-import type { User } from '@/lib/mock-data';
-import { logoutAction } from '@/app/login/actions';
+import { UserNav } from '@/components/user-nav';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -65,6 +65,9 @@ export function MainSidebar({ user }: { user: User }) {
       </SidebarContent>
       <SidebarSeparator />
         <SidebarFooter className="p-2">
+            <div className="pb-2">
+              <UserNav user={user} />
+            </div>
             <form action={logoutAction} className="w-full">
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -81,5 +84,3 @@ export function MainSidebar({ user }: { user: User }) {
     </>
   );
 }
-
-    
