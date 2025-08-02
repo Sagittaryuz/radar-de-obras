@@ -88,14 +88,14 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   }, [obras]);
 
   const obrasByLoja = useMemo(() => {
-    if (!obras || !lojaMap) return [];
-    const counts = obras.reduce((acc, obra) => {
+    if (!allObras || !lojaMap) return []; // Always use allObras for this chart
+    const counts = allObras.reduce((acc, obra) => {
       const lojaName = lojaMap[obra.lojaId] || 'Desconhecida';
       acc[lojaName] = (acc[lojaName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [obras, lojaMap]);
+  }, [allObras, lojaMap]);
 
   if (!allObras || !allLojas) {
     return null; // Or a loading indicator
@@ -119,7 +119,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
                     <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
                     <Legend />
                     {obraStatuses.map(status => (
-                      <Bar key={status} dataKey={status} stackId="a" fill={statusColors[status]} radius={[4, 4, 0, 0]} />
+                      <Bar key={`summary-${status}`} dataKey={status} stackId="a" fill={statusColors[status]} radius={[4, 4, 0, 0]} />
                     ))}
                   </BarChart>
                 </ResponsiveContainer>
