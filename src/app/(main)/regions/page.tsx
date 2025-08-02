@@ -24,7 +24,7 @@ export default async function RegionsPage() {
             </CardHeader>
             <CardContent>
               <p className="font-semibold mb-2 text-sm">Bairros Atendidos:</p>
-              <ul className="space-y-1">
+              <ul className="space-y-1 list-disc list-inside">
                 {loja.neighborhoods.map(bairro => (
                   <li key={bairro} className="text-sm text-muted-foreground">{bairro}</li>
                 ))}
