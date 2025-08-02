@@ -22,7 +22,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
@@ -48,8 +47,8 @@ export function LoginForm() {
           title: 'Login bem-sucedido!',
           description: 'Redirecionando para o dashboard...',
         });
-        router.refresh();
-        router.push('/dashboard');
+        // Force a full page reload to ensure session is updated correctly
+        window.location.href = '/dashboard';
       }
     });
   };
