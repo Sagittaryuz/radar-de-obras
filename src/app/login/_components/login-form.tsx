@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +22,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const { toast } = useToast();
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<LoginFormValues>({
@@ -48,8 +46,8 @@ export function LoginForm() {
           title: 'Login bem-sucedido!',
           description: 'Redirecionando para o dashboard...',
         });
-        router.push('/dashboard');
-        router.refresh(); // Ensures the layout re-renders with the new session
+        // Force a full page reload to ensure the new session is picked up by the server layout.
+        window.location.href = '/dashboard';
       }
     });
   };
