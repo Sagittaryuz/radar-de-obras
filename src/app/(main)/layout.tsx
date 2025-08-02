@@ -1,31 +1,31 @@
 
 'use client';
 
-import { redirect, usePathname } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
-import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/main-sidebar';
-import { UserNav } from '@/components/user-nav';
 import { useEffect, useState } from 'react';
 import type { User } from '@/lib/mock-data';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+
 
 function MainLayoutClient({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getSession().then(session => {
+        const checkSession = async () => {
+            const session = await getSession();
             if (!session) {
                 redirect('/login');
             } else {
                 setUser(session);
                 setLoading(false);
             }
-        }).catch(() => {
-            // Handle error case, e.g., redirect to login
-            redirect('/login');
-        });
+        };
+        checkSession();
     }, []);
 
     if (loading) {
@@ -55,8 +55,6 @@ function MainLayoutClient({ children }: { children: React.ReactNode }) {
     }
 
     if (!user) {
-        // This can happen briefly before redirect.
-        // You can also show a full-screen loader here.
         return null; 
     }
 
@@ -72,7 +70,6 @@ function MainLayoutClient({ children }: { children: React.ReactNode }) {
                             <SidebarTrigger />
                         </div>
                         <div className="ml-auto">
-                            {/* The UserNav is now in the sidebar footer as well */}
                         </div>
                     </header>
                     <main className="flex-1 overflow-y-auto p-4 pt-0 sm:p-6 sm:pt-0">

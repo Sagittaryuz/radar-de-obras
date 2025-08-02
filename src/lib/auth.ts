@@ -8,21 +8,21 @@ const SESSION_COOKIE_NAME = 'jcr_radar_session';
 
 export async function getSession(): Promise<User | null> {
   const cookieStore = cookies();
-  const sessionCookie = await cookieStore.get(SESSION_COOKIE_NAME);
+  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
   
   if (!sessionCookie) return null;
 
   try {
-    return JSON.parse(sessionCookie.value);
+    const user = JSON.parse(sessionCookie.value);
+    // Let's re-validate against our mock data to ensure it's a valid user
+    const foundUser = users.find(u => u.id === user.id);
+    return foundUser || null;
   } catch {
     return null;
   }
 }
 
 export async function login(email: string, password?: string): Promise<{ user?: User; error?: string }> {
-  // NOTE: This is a mock authentication. In a real app, you would validate
-  // the password against a hashed version in your database.
-  // For this demo, we'll just check if the user exists and the password is '123456'.
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
   if (!user || password !== '123456') {
@@ -31,7 +31,12 @@ export async function login(email: string, password?: string): Promise<{ user?: 
 
   try {
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    cookies().set(SESSION_COOKIE_NAME, JSON.stringify(user), { expires, httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+    cookies().set(SESSION_COOKIE_NAME, JSON.stringify(user), { 
+        expires, 
+        httpOnly: true, 
+        sameSite: 'lax', 
+        secure: process.env.NODE_ENV === 'production' 
+    });
 
     return { user };
   } catch (error: any) {
