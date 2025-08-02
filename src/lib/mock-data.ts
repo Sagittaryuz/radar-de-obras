@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -40,9 +41,45 @@ export const obras: Obra[] = [
 ];
 
 export const lojas: Loja[] = [
-  { id: 'loja-1', name: 'Matriz', neighborhoods: ['Centro', 'Vila Nova', 'Jardim América', 'Santa Rita'] },
-  { id: 'loja-2', name: 'Catedral', neighborhoods: ['Bairro Alto', 'Cristo Rei', 'São Francisco', 'Mercês'] },
-  { id: 'loja-3', name: 'Said Abdala', neighborhoods: ['Portão', 'Água Verde', 'Vila Izabel', 'Batel'] },
+  { 
+    id: 'loja-1', 
+    name: 'Matriz', 
+    neighborhoods: [
+      'HAMOA', 'RES. PORTAL DO SOL 2ªETAPA', 'RES. PORTAL DO SOL 1ªETAPA', 'RESIDENCIAL IMPERIAL', 
+      'JARDIM PARAÍSO', 'HAQUARELA', 'SETOR JARDIM GOIAS ll', 'SETOR JARDIM GOIAS', 'SETOR PARQUE BRITO', 
+      'COHACOL 1', 'RESIDENCIAL MAURO BENTO', 'VILA MUTIRÃO', 'BAIRRO EPAMINONDAS 1', 'RESIDENCIAL BANDEIRANTES', 
+      'BAIRRO SANTO ANTONIO', 'CONJUNTO RESIDENCIAL DR. DORIVAL DE CARVALHO', 'SETOR AEROPORTO', 'SETOR ANTENA', 
+      'SETOR PLANALTO', 'SETOR SANTA LÚCIA', 'VILA IRACEMA', 'SETOR BELA VISTA', 'SETOR BELA VISTA 2', 
+      'VILA CARLA', 'SETOR OESTE', 'SETOR GRANJEIRO', 'LOTEAMENTO JOSÉ FERREIRA', 'SETOR SAMUEL GRAHAM', 
+      'SETOR DAS MANSÕES', 'BAIRRO PRIMAVERA 2', 'SETOR CYLLENEO FRANÇA', 'SETOR JOSÉ BENTO', 
+      'CONJUNTO RIO CLARO 1', 'CONJUNTO RIO CLARO 2', 'CONJUNTO RIO CLARO 3', 'BAIRRO EPAMINONDAS 2'
+    ] 
+  },
+  { 
+    id: 'loja-2', 
+    name: 'Catedral', 
+    neighborhoods: [
+      'SETOR SANTA MARIA', 'CENTRO', 'LOTEAMENTO JOÃO RODRIGUES DA CUNHA', 'VILA PROGRESSO', 'VILA OLAVO', 
+      'LOT SANTA ROSA', 'LOTEAMENTO CARVALHO', 'VILA TRÊS MARIAS', 'BAIRRO PRIMAVERA', 'BENTA CAMPOS', 
+      'SETOR CENTRAL PARTE BAIXA', 'VILA FREI DOMINGOS', 'VILA CAMPO NEUTRO', 'VILA SÃO PEDRO', 
+      'RESIDENCIAL ALTO DAS ROSAS', 'SETOR JARDIM DA LIBERDADE', 'NOVA ESPERANÇA', 'VILA PALMEIRAS', 
+      'SETOR COLINA', 'SETOR JACUTINGA', 'SETOR BRASÍLIA', 'JARDIM JATAÍ', 'CIDADE JARDIM', 
+      'BAIRRO DOM BENEDITO'
+    ] 
+  },
+  { 
+    id: 'loja-3', 
+    name: 'Said Abdala', 
+    neighborhoods: [
+      'VILA FÁTIMA', 'VILA PARAÍSO 1', 'VILA PARAÍSO 2', 'JARDIM MIXIMIANO', 'VILA JARDIM RIO CLARO', 
+      'SETOR CORDEIRO', 'FERNANDES', 'BAIRRO HAMILTON NUNES', 'RESIDENCIAL ELDORADO', 'JARDIM AMÉRICA', 
+      'VILA SOFIA', 'LOTEAMENTO SEBASTIÃO H. DE SOUZA', 'BAIRRO FRANCISCO ANTÔNIO', 'CONJUNTO ESTRELA D´ALVA', 
+      'CONDOMÍNIO ITALIA', 'JARDIM FLORESTA', 'RESIDENCIAL SUL', 'RESIDENCIAL COHACOL 5', 'SETOR FABRINY', 
+      'SETOR AIMBIRÉ', 'SETOR INDUSTRIAL', 'BAIRRO SODRÉ', 'BAIRRO POPULAR', 'BARCELONA', 
+      'VILA MORADA DO SOL', 'SETOR HERMOSA', 'RESIDENCIAL DAS BRISAS 1', 'RESIDENCIAL DAS BRISAS 2', 
+      'RESIDENCIAL DAS BRISAS 3'
+    ] 
+  },
 ];
 
 // Mock async data fetching
