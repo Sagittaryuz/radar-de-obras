@@ -65,7 +65,7 @@ export function DashboardCharts({ obras, lojas }: DashboardChartsProps) {
               <BarChart data={obrasByStatus} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                <YAxis />
+                <YAxis allowDecimals={false} />
                 <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
                 <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
               </BarChart>
@@ -105,7 +105,7 @@ export function DashboardCharts({ obras, lojas }: DashboardChartsProps) {
               <BarChart data={obrasByLoja} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} width={80} />
-                <XAxis type="number" />
+                <XAxis type="number" allowDecimals={false} />
                 <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
                 <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
               </BarChart>
