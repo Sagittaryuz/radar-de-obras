@@ -7,8 +7,8 @@ import type { Obra, Loja } from '@/lib/mock-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
-  const [obras, setObras] = useState<Obra[]>([]);
-  const [lojas, setLojas] = useState<Loja[]>([]);
+  const [obras, setObras] = useState<Obra[] | null>(null);
+  const [lojas, setLojas] = useState<Loja[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  if (loading) {
+  if (loading || !obras || !lojas) {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">

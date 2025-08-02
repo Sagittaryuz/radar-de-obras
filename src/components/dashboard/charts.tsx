@@ -1,6 +1,6 @@
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, Legend, Tooltip, ResponsiveContainer, StackedBar } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,6 +35,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   const [selectedLoja, setSelectedLoja] = useState('all');
 
   const lojaMap = useMemo(() => {
+    if (!allLojas) return {};
     return allLojas.reduce((acc, loja) => {
       acc[loja.id] = loja.name;
       return acc;
@@ -42,6 +43,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   }, [allLojas]);
 
   const obras = useMemo(() => {
+    if (!allObras) return [];
     if (selectedLoja === 'all') {
       return allObras;
     }
@@ -50,6 +52,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
 
   // Data for the new summary chart (always shows all lojas)
   const summaryData = useMemo(() => {
+    if (!allLojas || !allObras) return [];
     const dataByLoja = allLojas.map(loja => {
       const lojaObras = allObras.filter(o => o.lojaId === loja.id);
       const statusCounts = obraStatuses.reduce((acc, status) => {
@@ -67,6 +70,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
 
 
   const obrasByStatus = useMemo(() => {
+    if (!obras) return [];
     const counts = obras.reduce((acc, obra) => {
       acc[obra.status] = (acc[obra.status] || 0) + 1;
       return acc;
@@ -75,6 +79,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   }, [obras]);
 
   const obrasByStage = useMemo(() => {
+    if (!obras) return [];
     const counts = obras.reduce((acc, obra) => {
       acc[obra.stage] = (acc[obra.stage] || 0) + 1;
       return acc;
@@ -83,6 +88,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   }, [obras]);
 
   const obrasByLoja = useMemo(() => {
+    if (!obras || !lojaMap) return [];
     const counts = obras.reduce((acc, obra) => {
       const lojaName = lojaMap[obra.lojaId] || 'Desconhecida';
       acc[lojaName] = (acc[lojaName] || 0) + 1;
@@ -91,6 +97,10 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [obras, lojaMap]);
 
+  if (!allObras || !allLojas) {
+    return null; // Or a loading indicator
+  }
+  
   return (
     <>
       <div className="space-y-6">
