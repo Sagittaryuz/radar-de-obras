@@ -68,18 +68,6 @@ export function MainSidebar({ user }: { user: User }) {
             <div className="pb-2">
               <UserNav user={user} />
             </div>
-            <form action={logoutAction} className="w-full">
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                            <button type="submit" className="w-full">
-                                <LogOut />
-                                <span>Sair</span>
-                            </button>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </form>
         </SidebarFooter>
     </>
   );
