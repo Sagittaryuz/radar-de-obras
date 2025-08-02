@@ -1,7 +1,8 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, ListTodo, Map, Shield } from 'lucide-react';
+import { Building2, LayoutDashboard, ListTodo, Map, Shield, LogOut } from 'lucide-react';
 
 import {
   SidebarContent,
@@ -9,9 +10,12 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarFooter,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import type { User } from '@/lib/mock-data';
+import { logoutAction } from '@/app/login/actions';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -41,7 +45,7 @@ export function MainSidebar({ user }: { user: User }) {
             </div>
         </div>
       </SidebarHeader>
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-2 flex-1">
         <SidebarMenu>
           {allMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
@@ -59,6 +63,23 @@ export function MainSidebar({ user }: { user: User }) {
           ))}
         </SidebarMenu>
       </SidebarContent>
+      <SidebarSeparator />
+        <SidebarFooter className="p-2">
+            <form action={logoutAction} className="w-full">
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                            <button type="submit" className="w-full">
+                                <LogOut />
+                                <span>Sair</span>
+                            </button>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </form>
+        </SidebarFooter>
     </>
   );
 }
+
+    
