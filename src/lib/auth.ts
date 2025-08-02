@@ -1,3 +1,5 @@
+'use server';
+
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/mock-data';
 import { users } from '@/lib/mock-data';
