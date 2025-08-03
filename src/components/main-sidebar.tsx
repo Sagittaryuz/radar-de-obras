@@ -40,8 +40,8 @@ export function MainSidebar({ user }: { user: User }) {
                 <Building2 className="h-6 w-6" />
             </div>
             <div className="flex flex-col">
-                <h2 className="font-headline text-xl font-bold">Radar de Obras</h2>
-                <p className="text-xs text-muted-foreground">J. Cruzeiro</p>
+                <h2 className="font-headline text-xl font-bold" suppressHydrationWarning>Radar de Obras</h2>
+                <p className="text-xs text-muted-foreground" suppressHydrationWarning>J. Cruzeiro</p>
             </div>
         </div>
       </SidebarHeader>
@@ -56,7 +56,7 @@ export function MainSidebar({ user }: { user: User }) {
               >
                 <Link href={item.href}>
                   <item.icon />
-                  <span>{item.label}</span>
+                  <span suppressHydrationWarning>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
