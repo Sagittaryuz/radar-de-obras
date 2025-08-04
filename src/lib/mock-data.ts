@@ -32,6 +32,50 @@ export type Loja = {
   neighborhoods: string[];
 };
 
+const hardcodedLojas: Loja[] = [
+    {
+        id: 'catedral',
+        name: 'CATEDRAL',
+        neighborhoods: [
+            "SETOR SANTA MARIA", "CENTRO", "LOTEAMENTO JOÃO RODRIGUES DA CUNHA", "VILA PROGRESSO",
+            "VILA OLAVO", "LOT SANTA ROSA", "LOTEAMENTO CARVALHO", "VILA TRÊS MARIAS", "BAIRRO PRIMAVERA",
+            "BENTA CAMPOS", "SETOR CENTRAL PARTE BAIXA", "VILA FREI DOMINGOS", "VILA CAMPO NEUTRO",
+            "VILA SÃO PEDRO", "RESIDENCIAL ALTO DAS ROSAS", "SETOR JARDIM DA LIBERDADE", "NOVA ESPERANÇA",
+            "VILA PALMEIRAS", "SETOR COLINA", "SETOR JACUTINGA", "SETOR BRASÍLIA", "JARDIM JATAÍ",
+            "CIDADE JARDIM", "BAIRRO DOM BENEDITO"
+        ]
+    },
+    {
+        id: 'matriz',
+        name: 'MATRIZ',
+        neighborhoods: [
+            "HAMOA RES. PORTAL DO SOL 2ªETAPA", "RES. PORTAL DO SOL 1ªETAPA", "RESIDENCIAL IMPERIAL",
+            "JARDIM PARAÍSO", "HAQUARELA", "SETOR JARDIM GOIAS ll", "SETOR JARDIM GOIAS", "SETOR PARQUE BRITO",
+            "COHACOL 1", "RESIDENCIAL MAURO BENTO", "VILA MUTIRÃO", "BAIRRO EPAMINONDAS 1", "RESIDENCIAL BANDEIRANTES",
+            "BAIRRO SANTO ANTONIO", "CONJUNTO RESIDENCIAL DR. DORIVAL DE CARVALHO", "SETOR AEROPORTO",
+            "SETOR ANTENA", "SETOR PLANALTO", "SETOR SANTA LÚCIA", "VILA IRACEMA", "SETOR BELA VISTA",
+            "SETOR BELA VISTA 2", "VILA CARLA", "SETOR OESTE", "SETOR GRANJEIRO", "LOTEAMENTO JOSÉ FERREIRA",
+            "SETOR SAMUEL GRAHAM", "SETOR DAS MANSÕES", "BAIRRO PRIMAVERA 2", "SETOR CYLLENEO FRANÇA",
+            "SETOR JOSÉ BENTO", "CONJUNTO RIO CLARO 1", "CONJUNTO RIO CLARO 2", "CONJUNTO RIO CLARO 3",
+            "BAIRRO EPAMINONDAS 2"
+        ]
+    },
+    {
+        id: 'said-abdala',
+        name: 'SAID ABDALA',
+        neighborhoods: [
+            "VILA FÁTIMA", "VILA PARAÍSO 1", "VILA PARAÍSO 2", "JARDIM MIXIMIANO", "VILA JARDIM RIO CLARO",
+            "SETOR CORDEIRO FERNANDES", "BAIRRO HAMILTON NUNES", "RESIDENCIAL ELDORADO", "JARDIM AMÉRICA",
+            "SETOR CORDEIRO", "VILA SOFIA", "LOTEAMENTO SEBASTIÃO H. DE SOUZA", "BAIRRO FRANCISCO ANTÔNIO",
+            "CONJUNTO ESTRELA D´ALVA", "CONDOMÍNIO ITALIA", "JARDIM FLORESTA", "RESIDENCIAL SUL",
+            "RESIDENCIAL COHACOL 5", "SETOR FABRINY", "SETOR AIMBIRÉ", "SETOR INDUSTRIAL", "BAIRRO SODRÉ",
+            "BAIRRO POPULAR", "BARCELONA", "VILA MORADA DO SOL", "SETOR HERMOSA", "RESIDENCIAL DAS BRISAS 1",
+            "RESIDENCIAL DAS BRISAS 2", "RESIDENCIAL DAS BRISAS 3"
+        ]
+    }
+];
+
+
 // These functions will now be called from client components
 export async function getObras(): Promise<Obra[]> {
   try {
@@ -61,11 +105,29 @@ export async function getLojas(): Promise<Loja[]> {
   try {
     const lojasCol = collection(db, 'lojas');
     const lojasSnapshot = await getDocs(lojasCol);
-    const lojasList = lojasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Loja));
+    
+    if (lojasSnapshot.empty) {
+        console.warn("Firestore 'lojas' collection is empty. Returning hardcoded data.");
+        return hardcodedLojas;
+    }
+
+    const lojasList = lojasSnapshot.docs.map(doc => {
+        const data = doc.data();
+        const hardcodedData = hardcodedLojas.find(l => l.id === doc.id);
+        return {
+            id: doc.id,
+            name: data.name,
+            // If neighborhoods are empty in Firestore, use the hardcoded ones.
+            neighborhoods: (data.neighborhoods && data.neighborhoods.length > 0) 
+                           ? data.neighborhoods 
+                           : (hardcodedData ? hardcodedData.neighborhoods : [])
+        } as Loja
+    });
     return lojasList;
   } catch (error) {
     console.error("Error fetching lojas from client:", error);
-    return [];
+    // Fallback to hardcoded data on error
+    return hardcodedLojas;
   }
 }
 
