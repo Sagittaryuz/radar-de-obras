@@ -51,19 +51,42 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
       fetchLojas();
     }
   }, [open]);
+  
+  // Reset form state when obra prop changes or dialog opens
+  useEffect(() => {
+    if (obra) {
+        setClient(obra.clientName);
+        setPhone(obra.contactPhone || '');
+        setRua(obra.street);
+        setNumero(obra.number);
+        setBairro(obra.neighborhood);
+        setUnidade(obra.lojaId);
+        setEtapa(obra.stage);
+    }
+  }, [obra, open]);
+
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     startTransition(async () => {
-        const updatedData: Partial<Obra> = {
-            clientName: client,
-            contactPhone: phone,
-            street: rua,
-            number: numero,
-            neighborhood: bairro,
-            lojaId: unidade,
-            stage: etapa,
-        };
+        const updatedData: Partial<Obra> = {};
+
+        if (client !== obra.clientName) updatedData.clientName = client;
+        if (phone !== (obra.contactPhone || '')) updatedData.contactPhone = phone;
+        if (rua !== obra.street) updatedData.street = rua;
+        if (numero !== obra.number) updatedData.number = numero;
+        if (bairro !== obra.neighborhood) updatedData.neighborhood = bairro;
+        if (unidade !== obra.lojaId) updatedData.lojaId = unidade;
+        if (etapa !== obra.stage) updatedData.stage = etapa;
+        
+        if (Object.keys(updatedData).length === 0) {
+            toast({
+                title: "Nenhuma Alteração",
+                description: "Nenhuma informação foi modificada.",
+            });
+            return;
+        }
+
 
         const result = await updateObra(obra.id, updatedData);
 
@@ -115,22 +138,22 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
             <div className="grid grid-cols-3 gap-2">
               <div className='col-span-2'>
                 <Label htmlFor="rua">Rua</Label>
-                <Input id="rua" placeholder="Ex: Av. Brasil" required value={rua} onChange={e => setRua(e.target.value)} />
+                <Input id="rua" placeholder="Ex: Av. Brasil" value={rua} onChange={e => setRua(e.target.value)} />
               </div>
                <div>
                 <Label htmlFor="numero">N.º</Label>
-                <Input id="numero" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value)} />
+                <Input id="numero" placeholder="Ex: 123" value={numero} onChange={e => setNumero(e.target.value)} />
               </div>
             </div>
 
             <div>
               <Label htmlFor="bairro">Bairro</Label>
-              <Input id="bairro" placeholder="Ex: Centro" required value={bairro} onChange={e => setBairro(e.target.value)} />
+              <Input id="bairro" placeholder="Ex: Centro" value={bairro} onChange={e => setBairro(e.target.value)} />
             </div>
 
             <div>
               <Label htmlFor="unidade">Unidade J. Cruzeiro</Label>
-              <Select required onValueChange={setUnidade} value={unidade}>
+              <Select onValueChange={setUnidade} value={unidade}>
                   <SelectTrigger id="unidade">
                       <SelectValue placeholder="Selecione a unidade responsável" />
                   </SelectTrigger>
@@ -144,7 +167,7 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
 
             <div>
               <Label htmlFor="stage">Etapa da Obra</Label>
-              <Select required onValueChange={setEtapa} value={etapa}>
+              <Select onValueChange={setEtapa} value={etapa}>
                   <SelectTrigger id="stage">
                       <SelectValue placeholder="Selecione a etapa da obra" />
                   </SelectTrigger>

@@ -31,12 +31,24 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
   try {
     const obraRef = doc(dbAdmin, 'obras', obraId);
 
-    // Build the full address on the server to ensure consistency
-    if (data.street && data.number && data.neighborhood) {
-        data.address = `${data.street}, ${data.number}, ${data.neighborhood}`;
+    // Get the existing document to merge the address fields
+    const currentDocSnap = await getDoc(obraRef);
+    if (!currentDocSnap.exists()) {
+      return { error: 'Obra não encontrada.' };
     }
+    const currentData = currentDocSnap.data() as Obra;
 
-    await updateDoc(obraRef, data);
+    // Merge new data with current data
+    const newData = { ...currentData, ...data };
+
+    // Build the full address on the server to ensure consistency,
+    // using the merged data.
+    newData.address = `${newData.street}, ${newData.number}, ${newData.neighborhood}`;
+    
+    // The data passed to updateDoc should only contain what's changed, plus the potentially updated address.
+    const updatePayload = { ...data, address: newData.address };
+
+    await updateDoc(obraRef, updatePayload);
 
     // Fetch the updated document to return the full object
     const updatedSnap = await getDoc(obraRef);
@@ -47,6 +59,7 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
     
     revalidatePath(`/obras/${obraId}`);
     revalidatePath('/obras');
+    revalidatePath('/dashboard');
     return { success: true, data: updatedData };
   } catch (error) {
     console.error("Error updating obra:", error);
@@ -59,6 +72,7 @@ export async function deleteObra(obraId: string) {
     const obraRef = doc(dbAdmin, 'obras', obraId);
     await deleteDoc(obraRef);
     revalidatePath('/obras');
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
     console.error("Error deleting obra:", error);
