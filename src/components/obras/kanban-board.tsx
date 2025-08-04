@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, DragEvent } from 'react';
@@ -6,6 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+
 
 type KanbanBoardProps = {
   initialObras: Obra[];
@@ -24,6 +30,8 @@ function getInitials(name: string) {
 export function KanbanBoard({ initialObras, sellers }: KanbanBoardProps) {
   const [obras, setObras] = useState<Obra[]>(initialObras);
   const [draggedItem, setDraggedItem] = useState<Obra | null>(null);
+  const { toast } = useToast();
+  const router = useRouter();
 
   const sellerMap = useMemo(() => {
     return sellers.reduce((acc, seller) => {
@@ -42,15 +50,39 @@ export function KanbanBoard({ initialObras, sellers }: KanbanBoardProps) {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>, status: Status) => {
+  const handleDrop = async (e: DragEvent<HTMLDivElement>, status: Status) => {
     e.preventDefault();
-    if (draggedItem) {
+    if (draggedItem && draggedItem.status !== status) {
+      const originalObras = obras;
+      // Optimistic update
       setObras(prevObras =>
         prevObras.map(obra =>
           obra.id === draggedItem.id ? { ...obra, status } : obra
         )
       );
-      setDraggedItem(null);
+      
+      try {
+        const obraRef = doc(db, 'obras', draggedItem.id);
+        await updateDoc(obraRef, { status });
+        toast({
+          title: "Status Atualizado!",
+          description: `A obra "${draggedItem.clientName}" foi movida para ${status}.`,
+        });
+        // router.refresh(); // Optional: uncomment if you want to re-fetch all data
+      } catch (error) {
+        console.error("Failed to update status:", error);
+        // Rollback on error
+        setObras(originalObras);
+        toast({
+          variant: 'destructive',
+          title: "Erro ao Atualizar",
+          description: "Não foi possível atualizar o status da obra. Tente novamente.",
+        });
+      } finally {
+        setDraggedItem(null);
+      }
+    } else {
+        setDraggedItem(null);
     }
   };
 

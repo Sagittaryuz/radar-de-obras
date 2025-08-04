@@ -19,6 +19,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlusCircle, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja } from '@/lib/mock-data';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 interface NewObraDialogProps {
   lojas: Loja[];
@@ -28,6 +31,7 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
   const { toast } = useToast();
   const [isLocating, setIsLocating] = useState(false);
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   // States for form fields
   const [client, setClient] = useState('');
@@ -90,14 +94,38 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
     }
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // In a real app, you would handle form submission to the server here.
-    toast({
-        title: "Obra Criada",
-        description: "A nova prospecção foi registrada com sucesso.",
-    });
-    setOpen(false); // Close dialog on submit
+    try {
+        const newObra = {
+            clientName: client,
+            street: rua,
+            number: numero,
+            neighborhood: bairro,
+            address: `${rua}, ${numero}, ${bairro}`,
+            lojaId: unidade,
+            stage: etapa,
+            status: 'Entrada', // Initial status
+            sellerId: null,
+            // photoUrl would be handled by an upload service in a real app
+        };
+
+        await addDoc(collection(db, 'obras'), newObra);
+
+        toast({
+            title: "Obra Criada",
+            description: "A nova prospecção foi registrada com sucesso no Firestore.",
+        });
+        setOpen(false);
+        router.refresh(); // Refresh the page to show the new obra
+    } catch (e) {
+        console.error("Error adding document: ", e);
+        toast({
+            variant: 'destructive',
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar a obra no banco de dados.",
+        });
+    }
   };
 
   return (

@@ -1,8 +1,9 @@
+
 'use server';
 
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/mock-data';
-import { users } from '@/lib/mock-data';
+import { getUsers } from '@/lib/mock-data';
 
 const SESSION_COOKIE_NAME = 'jcr_radar_session';
 
@@ -14,7 +15,7 @@ export async function getSession(): Promise<User | null> {
 
   try {
     const user = JSON.parse(sessionCookie.value);
-    // Let's re-validate against our mock data to ensure it's a valid user
+    const users = await getUsers();
     const foundUser = users.find(u => u.id === user.id);
     return foundUser || null;
   } catch {
@@ -23,9 +24,9 @@ export async function getSession(): Promise<User | null> {
 }
 
 export async function login(email: string, password?: string): Promise<{ user?: User; error?: string }> {
+  const users = await getUsers();
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-  // For this mock auth, we're using a static password.
   if (!user || password !== '123456') {
       return { error: 'Usuário ou senha inválidos.' };
   }

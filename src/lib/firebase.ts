@@ -1,3 +1,20 @@
 
-// This file is intentionally left blank.
-// Firebase SDK initialization has been removed as it is not currently used for authentication.
+'use client';
+
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+
+const firebaseConfig = {
+  projectId: "jcr-radar",
+  appId: "1:808852792035:web:f1f4caa30551eb51531bd6",
+  storageBucket: "jcr-radar.firebasestorage.app",
+  apiKey: "AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg",
+  authDomain: "jcr-radar.firebaseapp.com",
+  messagingSenderId: "808852792035"
+};
+
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
+
+export { app, db };
