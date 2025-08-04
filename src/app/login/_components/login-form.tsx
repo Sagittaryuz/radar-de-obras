@@ -36,15 +36,20 @@ export function LoginForm() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
+    console.log('Login attempt with data:', data); // LOG: Dados do formulário
     startTransition(async () => {
       try {
         // 1. Authenticate with Firebase on the client
         const auth = getAuth(app);
+        console.log('Attempting Firebase sign-in...'); // LOG: Início da tentativa
         await signInWithEmailAndPassword(auth, data.email, data.password);
+        console.log('Firebase sign-in successful.'); // LOG: Sucesso no Firebase
 
         // 2. If Firebase auth is successful, call the server action
         // to set the session cookie.
+        console.log('Calling login server action...'); // LOG: Chamada da Ação de Servidor
         const result = await loginAction(data);
+        console.log('Server action result:', result); // LOG: Resultado da Ação de Servidor
 
         if (result?.error) {
           toast({
@@ -61,6 +66,7 @@ export function LoginForm() {
           window.location.href = '/dashboard';
         }
       } catch (error: any) {
+        console.error('Firebase Auth Error:', error); // LOG: Objeto de erro completo
         // Handle Firebase authentication errors
         let errorMessage = 'Ocorreu um erro. Verifique suas credenciais.';
         switch (error.code) {
