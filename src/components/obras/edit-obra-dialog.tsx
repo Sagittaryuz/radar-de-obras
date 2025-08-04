@@ -68,6 +68,8 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    console.log('[EditDialog] handleSubmit triggered.');
+    
     startTransition(async () => {
         const updatedData: Partial<Obra> = {};
 
@@ -80,6 +82,11 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
         if (unidade !== obra.lojaId) updatedData.lojaId = unidade;
         if (etapa !== obra.stage) updatedData.stage = etapa;
         
+        console.log('[EditDialog] Original Obra:', obra);
+        console.log('[EditDialog] Current Form State:', { client, phone, rua, numero, bairro, unidade, etapa });
+        console.log('[EditDialog] Number of changes:', Object.keys(updatedData).length);
+        console.log('[EditDialog] Data being sent to server action:', updatedData);
+
         if (Object.keys(updatedData).length === 0) {
             toast({
                 title: "Nenhuma Alteração",

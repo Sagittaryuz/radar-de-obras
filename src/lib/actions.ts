@@ -28,18 +28,27 @@ export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: str
 }
 
 export async function updateObra(obraId: string, data: Partial<Obra>) {
+  console.log(`[Action: updateObra] Received request for obraId: ${obraId}`);
+  console.log('[Action: updateObra] Received data:', data);
+
   try {
     const obraRef = doc(dbAdmin, 'obras', obraId);
 
     // Get the existing document to merge the address fields
+    console.log('[Action: updateObra] Fetching current document...');
     const currentDocSnap = await getDoc(obraRef);
     if (!currentDocSnap.exists()) {
+      console.error(`[Action: updateObra] Error: Obra with ID ${obraId} not found.`);
       return { error: 'Obra não encontrada.' };
     }
     const currentData = currentDocSnap.data() as Obra;
+    console.log('[Action: updateObra] Current data found:', currentData);
+
 
     // Merge new data with current data
     const newData = { ...currentData, ...data };
+    console.log('[Action: updateObra] Merged data:', newData);
+
 
     // Build the full address on the server to ensure consistency,
     // using the merged data.
@@ -47,22 +56,31 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
     
     // The data passed to updateDoc should only contain what's changed, plus the potentially updated address.
     const updatePayload = { ...data, address: newData.address };
+    console.log('[Action: updateObra] Final payload for updateDoc:', updatePayload);
+
 
     await updateDoc(obraRef, updatePayload);
+    console.log('[Action: updateObra] updateDoc successful.');
+
 
     // Fetch the updated document to return the full object
     const updatedSnap = await getDoc(obraRef);
     if (!updatedSnap.exists()) {
+        console.error("[Action: updateObra] CRITICAL: Document not found after update.");
         throw new Error("Document not found after update.");
     }
     const updatedData = { id: updatedSnap.id, ...updatedSnap.data() } as Obra;
+    console.log('[Action: updateObra] Successfully fetched updated data to return:', updatedData);
+
     
     revalidatePath(`/obras/${obraId}`);
     revalidatePath('/obras');
     revalidatePath('/dashboard');
+    console.log('[Action: updateObra] Revalidation complete. Returning success.');
+
     return { success: true, data: updatedData };
   } catch (error) {
-    console.error("Error updating obra:", error);
+    console.error("[Action: updateObra] CATCH BLOCK: Error updating obra:", error);
     return { error: 'Falha ao atualizar a obra. Tente novamente.' };
   }
 }
