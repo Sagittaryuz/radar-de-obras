@@ -1,7 +1,6 @@
 
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, where, query } from 'firebase/firestore';
 import { db } from './firebase';
-import { dbAdmin } from './firebase-admin';
 
 export type User = {
   id: string;
@@ -32,30 +31,54 @@ export type Loja = {
   neighborhoods: string[];
 };
 
-// Mock data has been removed. Data will now be fetched from Firestore.
-export const users: User[] = [];
-export const obras: Obra[] = [];
-export const lojas: Loja[] = [];
-
-
-// Functions to fetch data from Firestore
 export async function getObras(): Promise<Obra[]> {
-  const obrasCol = dbAdmin.collection('obras');
-  const obrasSnapshot = await obrasCol.get();
-  const obrasList = obrasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Obra));
-  return obrasList;
+  try {
+    const obrasCol = collection(db, 'obras');
+    const obrasSnapshot = await getDocs(obrasCol);
+    const obrasList = obrasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Obra));
+    return obrasList;
+  } catch (error) {
+    console.error("Error fetching obras:", error);
+    return [];
+  }
 }
 
 export async function getUsers(): Promise<User[]> {
-  const usersCol = dbAdmin.collection('users');
-  const usersSnapshot = await usersCol.get();
-  const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-  return usersList;
+  try {
+    const usersCol = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCol);
+    const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+    return usersList;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
 }
 
 export async function getLojas(): Promise<Loja[]> {
-  const lojasCol = dbAdmin.collection('lojas');
-  const lojasSnapshot = await lojasCol.get();
-  const lojasList = lojasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Loja));
-  return lojasList;
+  try {
+    const lojasCol = collection(db, 'lojas');
+    const lojasSnapshot = await getDocs(lojasCol);
+    const lojasList = lojasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Loja));
+    return lojasList;
+  } catch (error) {
+    console.error("Error fetching lojas:", error);
+    return [];
+  }
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      return null;
+    }
+    const userDoc = querySnapshot.docs[0];
+    return { id: userDoc.id, ...userDoc.data() } as User;
+  } catch (error) {
+    console.error("Error fetching user by email:", error);
+    return null;
+  }
 }

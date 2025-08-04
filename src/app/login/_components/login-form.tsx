@@ -39,7 +39,6 @@ export function LoginForm() {
   const onSubmit = (data: LoginFormValues) => {
     startTransition(async () => {
       try {
-        // 1. Authenticate with Firebase on the client
         const auth = getAuth(app);
         const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
         const firebaseUser = userCredential.user;
@@ -48,19 +47,14 @@ export function LoginForm() {
            throw new Error("Usuário não encontrado no Firebase.");
         }
 
-        // NOTE: In a real app, you would fetch the user's full profile (including custom roles)
-        // from your own database (Firestore) here. For this app, we'll construct a partial User object.
         const userPayload: User = {
             id: firebaseUser.uid,
             name: firebaseUser.displayName || 'Usuário',
             email: firebaseUser.email!,
             avatar: firebaseUser.photoURL || '',
-            // The role needs to be determined. For now, we'll default based on email.
             role: firebaseUser.email === 'marcos.pires@jcruzeiro.com' ? 'Admin' : 'Vendedor'
         };
 
-        // 2. If Firebase auth is successful, call the server action
-        // to set the session cookie, passing the user data.
         const result = await loginAction(userPayload);
 
         if (result?.error) {
@@ -74,7 +68,6 @@ export function LoginForm() {
             title: 'Login bem-sucedido!',
             description: 'Redirecionando para o dashboard...',
           });
-          // Force a full page reload to ensure the new session is picked up by the server layout.
           window.location.href = '/dashboard';
         }
       } catch (error: any) {
