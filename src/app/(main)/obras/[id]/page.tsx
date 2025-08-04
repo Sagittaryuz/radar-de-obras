@@ -2,15 +2,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { useParams, notFound, useRouter } from 'next/navigation';
 import { getObraById, getUserById, getLojas } from '@/lib/mock-data';
 import type { Obra, User, Loja } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase } from 'lucide-react';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { EditObraDialog } from '@/components/obras/edit-obra-dialog';
+import { DeleteObraDialog } from '@/components/obras/delete-obra-dialog';
+
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
 
@@ -60,6 +64,11 @@ export default function ObraDetailPage() {
   const [seller, setSeller] = useState<User | null>(null);
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleObraUpdated = (updatedObra: Obra) => {
+    setObra(updatedObra);
+  };
+
 
   useEffect(() => {
     if (!obraId) return;
@@ -111,6 +120,10 @@ export default function ObraDetailPage() {
          <h1 className="font-headline text-3xl font-bold tracking-tight">
             Detalhes da Obra
          </h1>
+         <div className="flex items-center gap-2">
+            <EditObraDialog obra={obra} onObraUpdated={handleObraUpdated}/>
+            <DeleteObraDialog obraId={obra.id} />
+         </div>
       </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
