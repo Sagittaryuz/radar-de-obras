@@ -1,6 +1,7 @@
 
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { dbAdmin } from './firebase-admin';
 
 export type User = {
   id: string;
@@ -39,22 +40,22 @@ export const lojas: Loja[] = [];
 
 // Functions to fetch data from Firestore
 export async function getObras(): Promise<Obra[]> {
-  const obrasCol = collection(db, 'obras');
-  const obrasSnapshot = await getDocs(obrasCol);
+  const obrasCol = dbAdmin.collection('obras');
+  const obrasSnapshot = await obrasCol.get();
   const obrasList = obrasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Obra));
   return obrasList;
 }
 
 export async function getUsers(): Promise<User[]> {
-  const usersCol = collection(db, 'users');
-  const usersSnapshot = await getDocs(usersCol);
+  const usersCol = dbAdmin.collection('users');
+  const usersSnapshot = await usersCol.get();
   const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
   return usersList;
 }
 
 export async function getLojas(): Promise<Loja[]> {
-  const lojasCol = collection(db, 'lojas');
-  const lojasSnapshot = await getDocs(lojasCol);
+  const lojasCol = dbAdmin.collection('lojas');
+  const lojasSnapshot = await lojasCol.get();
   const lojasList = lojasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Loja));
   return lojasList;
 }
