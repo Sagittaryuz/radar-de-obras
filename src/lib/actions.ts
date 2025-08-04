@@ -29,12 +29,12 @@ export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: str
 
 export async function updateObra(obraId: string, data: Partial<Obra>) {
   console.log(`[Action: updateObra] Received request for obraId: ${obraId}`);
-  console.log('[Action: updateObra] Received data:', data);
+  console.log('[Action: updateObra] Received data for update:', data);
 
   try {
     const obraRef = doc(dbAdmin, 'obras', obraId);
 
-    // Get the existing document to merge the address fields
+    // Get the existing document to correctly merge address fields
     console.log('[Action: updateObra] Fetching current document...');
     const currentDocSnap = await getDoc(obraRef);
     if (!currentDocSnap.exists()) {
@@ -44,26 +44,33 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
     const currentData = currentDocSnap.data() as Obra;
     console.log('[Action: updateObra] Current data found:', currentData);
 
+    // Merge new data with current data to have a complete view for address construction
+    const mergedData = { ...currentData, ...data };
+    console.log('[Action: updateObra] Merged data (for address construction):', mergedData);
 
-    // Merge new data with current data
-    const newData = { ...currentData, ...data };
-    console.log('[Action: updateObra] Merged data:', newData);
-
-
-    // Build the full address on the server to ensure consistency,
-    // using the merged data.
-    newData.address = `${newData.street}, ${newData.number}, ${newData.neighborhood}`;
+    // Build the full address on the server to ensure consistency.
+    const newAddress = `${mergedData.street}, ${mergedData.number}, ${mergedData.neighborhood}`;
     
-    // The data passed to updateDoc should only contain what's changed, plus the potentially updated address.
-    const updatePayload = { ...data, address: newData.address };
-    console.log('[Action: updateObra] Final payload for updateDoc:', updatePayload);
+    // The payload for updateDoc should only contain what's actually changed.
+    // Start with the data received from the client.
+    const updatePayload: Partial<Obra> = { ...data };
 
+    // If the new address is different from the old one, add it to the payload.
+    if (newAddress !== currentData.address) {
+      updatePayload.address = newAddress;
+    }
+    
+    console.log('[Action: updateObra] Final payload for updateDoc:', updatePayload);
+    
+    if (Object.keys(updatePayload).length === 0) {
+       console.log('[Action: updateObra] No changes detected. Skipping update.');
+       return { success: true, data: currentData };
+    }
 
     await updateDoc(obraRef, updatePayload);
     console.log('[Action: updateObra] updateDoc successful.');
 
-
-    // Fetch the updated document to return the full object
+    // Fetch the fully updated document to return the complete object
     const updatedSnap = await getDoc(obraRef);
     if (!updatedSnap.exists()) {
         console.error("[Action: updateObra] CRITICAL: Document not found after update.");
