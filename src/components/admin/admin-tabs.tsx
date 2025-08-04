@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { EditNeighborhoodsDialog } from "./edit-neighborhoods-dialog";
 import type { User, Loja } from "@/lib/mock-data";
 
 interface AdminTabsProps {
@@ -100,13 +100,17 @@ export function AdminTabs({ users, lojas }: AdminTabsProps) {
                 <Card key={loja.id} className="bg-muted/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-base font-medium">{loja.name}</CardTitle>
-                        <Button size="sm" variant="outline">Editar Bairros</Button>
+                        <EditNeighborhoodsDialog loja={loja} />
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap gap-2">
-                            {loja.neighborhoods.map(bairro => (
+                            {loja.neighborhoods.length > 0 ? (
+                              loja.neighborhoods.map(bairro => (
                                 <Badge key={bairro} variant="secondary">{bairro}</Badge>
-                            ))}
+                              ))
+                            ) : (
+                              <p className="text-sm text-muted-foreground">Nenhum bairro cadastrado.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
