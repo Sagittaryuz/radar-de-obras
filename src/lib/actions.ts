@@ -2,13 +2,15 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { getFirestore } from 'firebase-admin/firestore';
 import { dbAdmin } from './firebase-admin';
-import { doc, updateDoc } from 'firebase/firestore';
 
 export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: string[]) {
   try {
-    const lojaRef = doc(dbAdmin, 'lojas', lojaId);
-    await updateDoc(lojaRef, { neighborhoods });
+    const db = getFirestore(dbAdmin);
+    const lojaRef = db.collection('lojas').doc(lojaId);
+    await lojaRef.update({ neighborhoods });
+
     revalidatePath('/admin'); // Revalidate the admin page to show new data
     revalidatePath('/regions'); // Revalidate the regions page
     return { success: true };

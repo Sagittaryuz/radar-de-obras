@@ -1,5 +1,5 @@
 
-import { collection, getDocs, doc, getDoc, where, query } from 'firebase/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import { dbAdmin } from './firebase-admin'; // Use the admin instance for server-side fetching
 
 export type User = {
@@ -35,8 +35,8 @@ export type Loja = {
 // These functions run on the server, so they should use the admin DB instance.
 export async function getObras(): Promise<Obra[]> {
   try {
-    const obrasCol = collection(dbAdmin, 'obras');
-    const obrasSnapshot = await getDocs(obrasCol);
+    const obrasCol = getFirestore(dbAdmin).collection('obras');
+    const obrasSnapshot = await obrasCol.get();
     const obrasList = obrasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Obra));
     return obrasList;
   } catch (error) {
@@ -47,8 +47,8 @@ export async function getObras(): Promise<Obra[]> {
 
 export async function getUsers(): Promise<User[]> {
   try {
-    const usersCol = collection(dbAdmin, 'users');
-    const usersSnapshot = await getDocs(usersCol);
+    const usersCol = getFirestore(dbAdmin).collection('users');
+    const usersSnapshot = await usersCol.get();
     const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
     return usersList;
   } catch (error) {
@@ -59,8 +59,8 @@ export async function getUsers(): Promise<User[]> {
 
 export async function getLojas(): Promise<Loja[]> {
   try {
-    const lojasCol = collection(dbAdmin, 'lojas');
-    const lojasSnapshot = await getDocs(lojasCol);
+    const lojasCol = getFirestore(dbAdmin).collection('lojas');
+    const lojasSnapshot = await lojasCol.get();
     const lojasList = lojasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Loja));
     return lojasList;
   } catch (error) {
@@ -71,9 +71,9 @@ export async function getLojas(): Promise<Loja[]> {
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
-    const usersRef = collection(dbAdmin, 'users');
-    const q = query(usersRef, where('email', '==', email));
-    const querySnapshot = await getDocs(q);
+    const usersRef = getFirestore(dbAdmin).collection('users');
+    const q = usersRef.where('email', '==', email);
+    const querySnapshot = await q.get();
     if (querySnapshot.empty) {
       return null;
     }
