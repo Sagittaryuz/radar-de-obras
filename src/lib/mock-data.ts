@@ -1,6 +1,6 @@
 
 import { collection, getDocs, doc, getDoc, where, query } from 'firebase/firestore';
-import { db } from './firebase';
+import { dbAdmin } from './firebase-admin'; // Use the admin instance for server-side fetching
 
 export type User = {
   id: string;
@@ -31,9 +31,10 @@ export type Loja = {
   neighborhoods: string[];
 };
 
+// These functions run on the server, so they should use the admin DB instance.
 export async function getObras(): Promise<Obra[]> {
   try {
-    const obrasCol = collection(db, 'obras');
+    const obrasCol = collection(dbAdmin, 'obras');
     const obrasSnapshot = await getDocs(obrasCol);
     const obrasList = obrasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Obra));
     return obrasList;
@@ -45,7 +46,7 @@ export async function getObras(): Promise<Obra[]> {
 
 export async function getUsers(): Promise<User[]> {
   try {
-    const usersCol = collection(db, 'users');
+    const usersCol = collection(dbAdmin, 'users');
     const usersSnapshot = await getDocs(usersCol);
     const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
     return usersList;
@@ -57,7 +58,7 @@ export async function getUsers(): Promise<User[]> {
 
 export async function getLojas(): Promise<Loja[]> {
   try {
-    const lojasCol = collection(db, 'lojas');
+    const lojasCol = collection(dbAdmin, 'lojas');
     const lojasSnapshot = await getDocs(lojasCol);
     const lojasList = lojasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Loja));
     return lojasList;
@@ -69,7 +70,7 @@ export async function getLojas(): Promise<Loja[]> {
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
-    const usersRef = collection(db, 'users');
+    const usersRef = collection(dbAdmin, 'users');
     const q = query(usersRef, where('email', '==', email));
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {

@@ -37,11 +37,14 @@ export function LoginForm() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
+    console.log('Login attempt with data:', data);
     startTransition(async () => {
       try {
+        console.log('Attempting Firebase sign-in...');
         const auth = getAuth(app);
         const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
         const firebaseUser = userCredential.user;
+        console.log('Firebase sign-in successful.');
 
         if (!firebaseUser) {
            throw new Error("Usuário não encontrado no Firebase.");
@@ -55,7 +58,9 @@ export function LoginForm() {
             role: firebaseUser.email === 'marcos.pires@jcruzeiro.com' ? 'Admin' : 'Vendedor'
         };
 
+        console.log('Calling login server action...');
         const result = await loginAction(userPayload);
+        console.log('Server action result:', result);
 
         if (result?.error) {
           toast({

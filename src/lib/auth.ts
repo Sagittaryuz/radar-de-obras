@@ -9,7 +9,7 @@ const SESSION_COOKIE_NAME = 'jcr_radar_session';
 export async function getSession(): Promise<User | null> {
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
-  
+
   if (!sessionCookie) return null;
 
   try {
@@ -20,18 +20,25 @@ export async function getSession(): Promise<User | null> {
   }
 }
 
+// This function ONLY creates the session cookie.
+// Authentication happens on the client with the Firebase SDK.
+// User data validation happens in the server action.
 export async function login(user: User): Promise<void> {
+  console.log(`[Auth Lib] Attempting to set session cookie for: ${user.email}`);
   try {
+    // The user object is now passed in directly from the validated action.
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    cookies().set(SESSION_COOKIE_NAME, JSON.stringify(user), { 
-        expires, 
-        httpOnly: true, 
-        sameSite: 'lax', 
-        secure: process.env.NODE_ENV === 'production' 
+    cookies().set(SESSION_COOKIE_NAME, JSON.stringify(user), {
+        expires,
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production'
     });
-    console.log(`[Server Action] Session cookie set for ${user.email}`);
+    console.log(`[Auth Lib] Session cookie set successfully for ${user.email}`);
   } catch (error: any) {
-    console.error('[Server Action] Failed to set cookie:', error);
+    // Log the detailed error on the server.
+    console.error('[Auth Lib] FAILED to set session cookie:', error);
+    // Throw a new error to be caught by the server action.
     throw new Error('Ocorreu um erro no servidor ao criar a sessão.');
   }
 }
