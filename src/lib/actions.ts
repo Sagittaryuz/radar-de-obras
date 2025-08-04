@@ -42,16 +42,11 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
     const currentData = currentDocSnap.data() as Obra;
     console.log('[Action: updateObra] Current data found:', currentData);
     
-    // Merge new data with existing data to ensure we have all fields for address reconstruction
     const mergedData = { ...currentData, ...data };
-    
-    // Always reconstruct the address field to ensure consistency
     const newAddress = `${mergedData.street}, ${mergedData.number}, ${mergedData.neighborhood}`;
-
-    // Prepare the final payload for Firestore. Start with the data from the client.
+    
     const updatePayload: Partial<Obra> = { ...data };
 
-    // If the newly constructed address is different from the old one, add it to the payload.
     if (newAddress !== currentData.address) {
       updatePayload.address = newAddress;
     }
@@ -60,9 +55,7 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
     
     if (Object.keys(updatePayload).length === 0) {
        console.log('[Action: updateObra] No changes detected. Skipping update.');
-       // Return the most up-to-date data.
-       const finalSnap = await getDoc(obraRef);
-       return { success: true, data: { id: finalSnap.id, ...finalSnap.data() } as Obra };
+       return { success: true, data: { id: currentDocSnap.id, ...currentData } as Obra };
     }
 
     await updateDoc(obraRef, updatePayload);

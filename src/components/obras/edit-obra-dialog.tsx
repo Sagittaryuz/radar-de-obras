@@ -52,7 +52,7 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
     }
   }, [open]);
   
-  // Reset form state when obra prop changes or dialog opens
+  // Reset form state when obra prop changes or dialog opens/closes
   useEffect(() => {
     if (obra) {
         setClient(obra.clientName);
