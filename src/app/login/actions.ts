@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { login } from '@/lib/auth';
+import { login, logout } from '@/lib/auth'; // Import logout
 import { redirect } from 'next/navigation';
 import type { User } from '@/lib/mock-data';
 

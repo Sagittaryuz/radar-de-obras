@@ -73,11 +73,13 @@ export function LoginForm() {
             title: 'Login bem-sucedido!',
             description: 'Redirecionando para o dashboard...',
           });
+          // Force a full page reload to ensure session is read correctly
           window.location.href = '/dashboard';
         }
       } catch (error: any) {
         console.error('Authentication Error:', error);
         let errorMessage = 'Ocorreu um erro. Verifique suas credenciais.';
+        // Firebase Auth error codes
         switch (error.code) {
             case 'auth/user-not-found':
             case 'auth/wrong-password':
