@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { getObras, getLojas } from '@/lib/mock-data';
 import { DashboardCharts } from '@/components/dashboard/charts';
 import type { Obra, Loja } from '@/lib/mock-data';
-import type { Metadata } from 'next';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // This is now a Client Component to fetch data client-side.
