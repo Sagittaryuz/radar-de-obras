@@ -28,22 +28,21 @@ export async function getSession(): Promise<User | null> {
   }
 }
 
-// Note: This function now interacts with the client-side Firebase Auth SDK.
-// It's designed to be called from a client component, not a Server Action directly.
+// Note: This function no longer performs Firebase sign-in. It only handles the session cookie.
+// The client-side component now handles the Firebase authentication.
 export async function login(email: string, password?: string): Promise<{ user?: User; error?: string }> {
   try {
-    // This is a placeholder for the actual Firebase sign-in logic which will now live on the client.
-    // The server-side cookie login remains for session management after client-side auth.
     const users = await getUsers();
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-    // We keep this check, but the password validation is now conceptual.
-    // The real password check happens on the client with Firebase Auth.
+    // The password check is no longer done here, but we still need to find the user.
     if (!user) {
-      return { error: 'Usuário ou senha inválidos.' };
+      // This error should theoretically not be hit if client-side auth succeeds,
+      // but it's a good safeguard.
+      return { error: 'Usuário não encontrado no banco de dados do aplicativo.' };
     }
     
-    // If client-side auth is successful, we set the server session cookie.
+    // Set the server-side session cookie.
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     cookies().set(SESSION_COOKIE_NAME, JSON.stringify(user), { 
         expires, 
@@ -55,16 +54,8 @@ export async function login(email: string, password?: string): Promise<{ user?: 
     return { user };
 
   } catch (error: any) {
-    console.error('Login Error:', error);
-    // Firebase provides specific error codes that can be translated to user-friendly messages.
-    switch (error.code) {
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-      case 'auth/invalid-credential':
-        return { error: 'Usuário ou senha inválidos.' };
-      default:
-        return { error: 'Ocorreu um erro ao tentar fazer login. Tente novamente.' };
-    }
+    console.error('Login Action Error:', error);
+    return { error: 'Ocorreu um erro no servidor ao criar a sessão.' };
   }
 }
 
