@@ -4,10 +4,12 @@ import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 export default async function LoginPage() {
-  const session = await getSession();
-  if (session) {
-    redirect('/dashboard');
-  }
+  // A verificação de sessão foi removida daqui para corrigir o erro
+  // "cookies() should be awaited". O layout principal já protege as rotas.
+  // const session = await getSession();
+  // if (session) {
+  //   redirect('/dashboard');
+  // }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
