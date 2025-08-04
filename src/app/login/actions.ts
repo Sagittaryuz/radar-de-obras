@@ -4,33 +4,34 @@
 import { z } from 'zod';
 import { login, logout } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import type { User } from '@/lib/mock-data';
 
-const loginSchema = z.object({
+// This schema is now for the user object passed from the client
+const userSchema = z.object({
+  id: z.string(),
+  name: z.string(),
   email: z.string().email(),
-  password: z.string(),
+  avatar: z.string().url().or(z.literal('')),
+  role: z.enum(['Vendedor', 'Admin']),
 });
 
-export async function loginAction(credentials: unknown) {
+export async function loginAction(userData: User) {
   // This server action now only handles setting the cookie after
-  // the client has successfully authenticated with Firebase.
-  const validatedCredentials = loginSchema.safeParse(credentials);
+  // the client has successfully authenticated with Firebase and passed the user data.
+  const validatedUser = userSchema.safeParse(userData);
 
-  if (!validatedCredentials.success) {
-    return { error: 'Credenciais inválidas.' };
+  if (!validatedUser.success) {
+    console.error("Invalid user data received by server action:", validatedUser.error);
+    return { error: 'Dados do usuário inválidos.' };
   }
 
-  const { email } = validatedCredentials.data;
-  
   try {
-    // This login function no longer checks the password. It finds the user
-    // and sets the cookie. The actual password check must happen on the client
-    // before this action is called.
-    const result = await login(email);
-    if (result.error) {
-      return { error: result.error };
-    }
+    // This login function no longer validates credentials or fetches from DB.
+    // It just sets the cookie with the provided user data.
+    await login(validatedUser.data);
   } catch (error) {
-    return { error: 'Ocorreu um erro. Tente novamente.' };
+    console.error("Server action login failed:", error);
+    return { error: 'Ocorreu um erro no servidor ao criar a sessão.' };
   }
   
   // A redirect/reload is handled on the client-side after this action resolves.

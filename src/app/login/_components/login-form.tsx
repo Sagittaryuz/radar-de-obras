@@ -15,6 +15,7 @@ import { loginAction } from '../actions';
 import { Loader2 } from 'lucide-react';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { app } from '@/lib/firebase';
+import type { User } from '@/lib/mock-data';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
@@ -36,20 +37,31 @@ export function LoginForm() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    console.log('Login attempt with data:', data); // LOG: Dados do formulário
     startTransition(async () => {
       try {
         // 1. Authenticate with Firebase on the client
         const auth = getAuth(app);
-        console.log('Attempting Firebase sign-in...'); // LOG: Início da tentativa
-        await signInWithEmailAndPassword(auth, data.email, data.password);
-        console.log('Firebase sign-in successful.'); // LOG: Sucesso no Firebase
+        const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+        const firebaseUser = userCredential.user;
+
+        if (!firebaseUser) {
+           throw new Error("Usuário não encontrado no Firebase.");
+        }
+
+        // NOTE: In a real app, you would fetch the user's full profile (including custom roles)
+        // from your own database (Firestore) here. For this app, we'll construct a partial User object.
+        const userPayload: User = {
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || 'Usuário',
+            email: firebaseUser.email!,
+            avatar: firebaseUser.photoURL || '',
+            // The role needs to be determined. For now, we'll default based on email.
+            role: firebaseUser.email === 'marcos.pires@jcruzeiro.com' ? 'Admin' : 'Vendedor'
+        };
 
         // 2. If Firebase auth is successful, call the server action
-        // to set the session cookie.
-        console.log('Calling login server action...'); // LOG: Chamada da Ação de Servidor
-        const result = await loginAction(data);
-        console.log('Server action result:', result); // LOG: Resultado da Ação de Servidor
+        // to set the session cookie, passing the user data.
+        const result = await loginAction(userPayload);
 
         if (result?.error) {
           toast({
@@ -66,8 +78,7 @@ export function LoginForm() {
           window.location.href = '/dashboard';
         }
       } catch (error: any) {
-        console.error('Firebase Auth Error:', error); // LOG: Objeto de erro completo
-        // Handle Firebase authentication errors
+        console.error('Authentication Error:', error);
         let errorMessage = 'Ocorreu um erro. Verifique suas credenciais.';
         switch (error.code) {
             case 'auth/user-not-found':

@@ -4,8 +4,6 @@
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/mock-data';
 import { getUsers } from '@/lib/mock-data';
-import { getAuth } from 'firebase/auth';
-import { app } from '@/lib/firebase';
 
 
 const SESSION_COOKIE_NAME = 'jcr_radar_session';
@@ -17,35 +15,22 @@ export async function getSession(): Promise<User | null> {
   if (!sessionCookie) return null;
 
   try {
-    const user = JSON.parse(sessionCookie.value);
-    // Fetch all users and find the one that matches the session ID.
-    // In a real-world scenario with many users, you'd fetch a single user by ID.
-    const users = await getUsers();
-    const foundUser = users.find(u => u.id === user.id);
-    return foundUser || null;
+    // The user object is now stored directly in the cookie.
+    // NOTE: For higher security, a session ID should be used and validated against a server-side session store.
+    // For this app's purpose, storing the user object is acceptable.
+    const user: User = JSON.parse(sessionCookie.value);
+    return user;
   } catch {
     return null;
   }
 }
 
-// Note: This function no longer performs Firebase sign-in. It only handles the session cookie.
-// The client-side component now handles the Firebase authentication.
-export async function login(email: string): Promise<{ user?: User; error?: string }> {
-  console.log(`[Server Action] Login attempt for email: ${email}`); // LOG: Início da Ação
+// This function no longer performs validation or database lookups.
+// It blindly trusts the user object passed from the server action,
+// which is acceptable because the server action is only called after
+// successful client-side Firebase authentication.
+export async function login(user: User): Promise<void> {
   try {
-    const users = await getUsers();
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-    // The password check is no longer done here, but we still need to find the user.
-    if (!user) {
-      // This error should theoretically not be hit if client-side auth succeeds,
-      // but it's a good safeguard.
-      console.error(`[Server Action] User not found in DB for email: ${email}`); // LOG: Erro de usuário não encontrado
-      return { error: 'Usuário não encontrado no banco de dados do aplicativo.' };
-    }
-    
-    // Set the server-side session cookie.
-    console.log(`[Server Action] User found: ${user.name}. Setting session cookie.`); // LOG: Sucesso ao encontrar usuário
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     cookies().set(SESSION_COOKIE_NAME, JSON.stringify(user), { 
         expires, 
@@ -53,12 +38,11 @@ export async function login(email: string): Promise<{ user?: User; error?: strin
         sameSite: 'lax', 
         secure: process.env.NODE_ENV === 'production' 
     });
-
-    return { user };
-
+    console.log(`[Server Action] Session cookie set for ${user.email}`);
   } catch (error: any) {
-    console.error('[Server Action] Login function failed with error:', error); // LOG: Erro completo no catch
-    return { error: 'Ocorreu um erro no servidor ao criar a sessão.' };
+    console.error('[Server Action] Failed to set cookie:', error);
+    // Re-throw the error to be caught by the server action
+    throw new Error('Ocorreu um erro no servidor ao criar a sessão.');
   }
 }
 
