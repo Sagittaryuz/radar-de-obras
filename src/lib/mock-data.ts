@@ -18,7 +18,7 @@ export type Obra = {
   number: string;
   neighborhood: string;
   contactPhone?: string;
-  photoUrl?: string;
+  photoUrls?: string[];
   gmapsUrl?: string;
   lojaId: string;
   stage: 'Fundação' | 'Alvenaria' | 'Acabamento' | 'Pintura' | 'Telhado';

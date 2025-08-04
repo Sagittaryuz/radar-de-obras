@@ -8,12 +8,13 @@ import type { Obra, User, Loja } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2 } from 'lucide-react';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { EditObraDialog } from '@/components/obras/edit-obra-dialog';
 import { DeleteObraDialog } from '@/components/obras/delete-obra-dialog';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
@@ -169,6 +170,43 @@ export default function ObraDetailPage() {
                     )}
                 </CardContent>
             </Card>
+            
+            {obra.photoUrls && obra.photoUrls.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2">
+                            <Camera className="h-5 w-5 text-primary" />
+                            Fotos da Obra
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Carousel className="w-full max-w-xl mx-auto">
+                            <CarouselContent>
+                                {obra.photoUrls.map((url, index) => (
+                                    <CarouselItem key={index}>
+                                        <div className="p-1">
+                                            <Card>
+                                                <CardContent className="flex aspect-video items-center justify-center p-0">
+                                                    <Image
+                                                        src={url}
+                                                        alt={`Foto da obra ${index + 1}`}
+                                                        width={600}
+                                                        height={400}
+                                                        className="rounded-md object-cover"
+                                                    />
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            <CarouselPrevious />
+                            <CarouselNext />
+                        </Carousel>
+                    </CardContent>
+                </Card>
+            )}
+
              <Card>
                 <CardHeader>
                     <CardTitle className="font-headline">Status Atual</CardTitle>
@@ -194,6 +232,7 @@ export default function ObraDetailPage() {
                             alt={`Mapa da localização da obra em ${obra.address}`}
                             fill
                             className="rounded-md object-cover"
+                            unoptimized
                         />
                     </div>
                 </CardContent>

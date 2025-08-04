@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,18 +16,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, MapPin, X } from 'lucide-react';
+import { PlusCircle, MapPin, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja } from '@/lib/mock-data';
 import { getLojas } from '@/lib/mock-data';
 import { addDoc, collection } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 export function NewObraDialog() {
   const { toast } = useToast();
   const [isLocating, setIsLocating] = useState(false);
+  const [isSaving, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
@@ -49,7 +51,6 @@ export function NewObraDialog() {
       const fetchLojas = async () => {
         const lojasData = await getLojas();
         setLojas(lojasData);
-        console.log("Lojas carregadas para o diálogo:", lojasData);
       };
       fetchLojas();
     }
@@ -131,39 +132,51 @@ export function NewObraDialog() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    try {
-        const newObra = {
-            clientName: client,
-            contactPhone: phone,
-            street: rua,
-            number: numero,
-            neighborhood: bairro,
-            address: `${rua}, ${numero}, ${bairro}`,
-            lojaId: unidade,
-            stage: etapa,
-            status: 'Entrada', // Initial status
-            sellerId: null,
-            // photoUrls would be handled by an upload service in a real app
-            // We're just logging the number of files for now
-        };
+    startTransition(async () => {
+        try {
+            // 1. Upload photos to Firebase Storage
+            const photoUrls = await Promise.all(
+                fotos.map(async (file) => {
+                    const storageRef = ref(storage, `obras/${Date.now()}-${file.name}`);
+                    await uploadBytes(storageRef, file);
+                    const downloadURL = await getDownloadURL(storageRef);
+                    return downloadURL;
+                })
+            );
 
-        console.log("Salvando nova obra com", fotos.length, "fotos.");
-        await addDoc(collection(db, 'obras'), newObra);
+            // 2. Create obra document data
+            const newObra = {
+                clientName: client,
+                contactPhone: phone,
+                street: rua,
+                number: numero,
+                neighborhood: bairro,
+                address: `${rua}, ${numero}, ${bairro}`,
+                lojaId: unidade,
+                stage: etapa,
+                status: 'Entrada', // Initial status
+                sellerId: null,
+                photoUrls: photoUrls, // Add the array of photo URLs
+            };
 
-        toast({
-            title: "Obra Criada",
-            description: "A nova prospecção foi registrada com sucesso.",
-        });
-        setOpen(false);
-        router.refresh(); // Refresh the page to show the new obra
-    } catch (e) {
-        console.error("Error adding document: ", e);
-        toast({
-            variant: 'destructive',
-            title: "Erro ao Salvar",
-            description: "Não foi possível salvar a obra no banco de dados.",
-        });
-    }
+            // 3. Save to Firestore
+            await addDoc(collection(db, 'obras'), newObra);
+
+            toast({
+                title: "Obra Criada",
+                description: "A nova prospecção foi registrada com sucesso.",
+            });
+            setOpen(false);
+            router.refresh(); // Refresh the page to show the new obra
+        } catch (e) {
+            console.error("Error adding document: ", e);
+            toast({
+                variant: 'destructive',
+                title: "Erro ao Salvar",
+                description: "Não foi possível salvar a obra. Verifique o console para mais detalhes.",
+            });
+        }
+    });
   };
 
   return (
@@ -182,7 +195,7 @@ export function NewObraDialog() {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <Button type="button" variant="outline" className="w-full" onClick={handleLocation} disabled={isLocating}>
               <MapPin className="mr-2 h-4 w-4" />
               {isLocating ? 'Obtendo localização...' : 'Usar Localização Atual'}
@@ -278,11 +291,14 @@ export function NewObraDialog() {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-                <Button type="button" variant="secondary">
+                <Button type="button" variant="secondary" disabled={isSaving}>
                     Cancelar
                 </Button>
             </DialogClose>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit" disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
