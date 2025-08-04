@@ -1,6 +1,7 @@
 // src/lib/firebase-admin.ts
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import 'dotenv/config';
 
 const serviceAccount = {
   "type": "service_account",
@@ -18,6 +19,7 @@ const serviceAccount = {
 let app: App;
 
 if (getApps().length === 0) {
+  // @ts-ignore
   app = initializeApp({
     credential: cert(serviceAccount),
   });
