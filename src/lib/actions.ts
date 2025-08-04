@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, doc, updateDoc, deleteDoc } from 'firebase-admin/firestore';
+import { getFirestore, doc, updateDoc, deleteDoc, getDoc } from 'firebase-admin/firestore';
 import type { Obra } from './mock-data';
 
 // Server-side action still needs its own admin instance for writing
@@ -30,10 +30,24 @@ export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: str
 export async function updateObra(obraId: string, data: Partial<Obra>) {
   try {
     const obraRef = doc(dbAdmin, 'obras', obraId);
+
+    // Build the full address on the server to ensure consistency
+    if (data.street && data.number && data.neighborhood) {
+        data.address = `${data.street}, ${data.number}, ${data.neighborhood}`;
+    }
+
     await updateDoc(obraRef, data);
+
+    // Fetch the updated document to return the full object
+    const updatedSnap = await getDoc(obraRef);
+    if (!updatedSnap.exists()) {
+        throw new Error("Document not found after update.");
+    }
+    const updatedData = { id: updatedSnap.id, ...updatedSnap.data() } as Obra;
+    
     revalidatePath(`/obras/${obraId}`);
     revalidatePath('/obras');
-    return { success: true, data: { ...data, id: obraId } };
+    return { success: true, data: updatedData };
   } catch (error) {
     console.error("Error updating obra:", error);
     return { error: 'Falha ao atualizar a obra. Tente novamente.' };

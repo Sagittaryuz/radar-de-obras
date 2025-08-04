@@ -61,19 +61,19 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
             street: rua,
             number: numero,
             neighborhood: bairro,
-            address: `${rua}, ${numero}, ${bairro}`,
             lojaId: unidade,
             stage: etapa,
         };
 
         const result = await updateObra(obra.id, updatedData);
 
-        if (result.success) {
+        if (result.success && result.data) {
             toast({
                 title: "Obra Atualizada",
                 description: "Os dados da obra foram atualizados com sucesso.",
             });
-            onObraUpdated({ ...obra, ...updatedData});
+            // Pass the full updated obra from the server back to the page
+            onObraUpdated(result.data as Obra);
             setOpen(false);
         } else {
             toast({
