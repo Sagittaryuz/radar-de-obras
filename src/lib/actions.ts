@@ -34,8 +34,6 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
   try {
     const obraRef = doc(dbAdmin, 'obras', obraId);
 
-    // Get the existing document to correctly merge address fields
-    console.log('[Action: updateObra] Fetching current document...');
     const currentDocSnap = await getDoc(obraRef);
     if (!currentDocSnap.exists()) {
       console.error(`[Action: updateObra] Error: Obra with ID ${obraId} not found.`);
@@ -43,19 +41,13 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
     }
     const currentData = currentDocSnap.data() as Obra;
     console.log('[Action: updateObra] Current data found:', currentData);
-
-    // Merge new data with current data to have a complete view for address construction
-    const mergedData = { ...currentData, ...data };
-    console.log('[Action: updateObra] Merged data (for address construction):', mergedData);
-
-    // Build the full address on the server to ensure consistency.
-    const newAddress = `${mergedData.street}, ${mergedData.number}, ${mergedData.neighborhood}`;
     
-    // The payload for updateDoc should only contain what's actually changed.
-    // Start with the data received from the client.
+    const mergedData = { ...currentData, ...data };
+    
+    const newAddress = `${mergedData.street}, ${mergedData.number}, ${mergedData.neighborhood}`;
+
     const updatePayload: Partial<Obra> = { ...data };
 
-    // If the new address is different from the old one, add it to the payload.
     if (newAddress !== currentData.address) {
       updatePayload.address = newAddress;
     }
@@ -70,7 +62,6 @@ export async function updateObra(obraId: string, data: Partial<Obra>) {
     await updateDoc(obraRef, updatePayload);
     console.log('[Action: updateObra] updateDoc successful.');
 
-    // Fetch the fully updated document to return the complete object
     const updatedSnap = await getDoc(obraRef);
     if (!updatedSnap.exists()) {
         console.error("[Action: updateObra] CRITICAL: Document not found after update.");
