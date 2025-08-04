@@ -2,12 +2,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getFirestore } from 'firebase-admin/firestore';
+import { dbAdmin } from './firebase-admin';
 
 export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: string[]) {
   try {
-    const db = getFirestore();
-    const lojaRef = db.collection('lojas').doc(lojaId);
+    const lojaRef = dbAdmin.collection('lojas').doc(lojaId);
     await lojaRef.update({ neighborhoods });
 
     revalidatePath('/admin'); // Revalidate the admin page to show new data

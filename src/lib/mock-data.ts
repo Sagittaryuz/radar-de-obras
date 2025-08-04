@@ -1,5 +1,4 @@
 
-import { getFirestore } from 'firebase-admin/firestore';
 import { dbAdmin } from './firebase-admin'; // Use the admin instance for server-side fetching
 
 export type User = {
@@ -35,21 +34,20 @@ export type Loja = {
 // These functions run on the server, so they should use the admin DB instance.
 export async function getObras(): Promise<Obra[]> {
   try {
-    const db = getFirestore();
-    const obrasCol = db.collection('obras');
+    const obrasCol = dbAdmin.collection('obras');
     const obrasSnapshot = await obrasCol.get();
     const obrasList = obrasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Obra));
     return obrasList;
   } catch (error) {
     console.error("Error fetching obras:", error);
+    // Return empty array on error to prevent breaking the UI
     return [];
   }
 }
 
 export async function getUsers(): Promise<User[]> {
   try {
-    const db = getFirestore();
-    const usersCol = db.collection('users');
+    const usersCol = dbAdmin.collection('users');
     const usersSnapshot = await usersCol.get();
     const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
     return usersList;
@@ -61,8 +59,7 @@ export async function getUsers(): Promise<User[]> {
 
 export async function getLojas(): Promise<Loja[]> {
   try {
-    const db = getFirestore();
-    const lojasCol = db.collection('lojas');
+    const lojasCol = dbAdmin.collection('lojas');
     const lojasSnapshot = await lojasCol.get();
     const lojasList = lojasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Loja));
     return lojasList;
@@ -74,8 +71,7 @@ export async function getLojas(): Promise<Loja[]> {
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
-    const db = getFirestore();
-    const usersRef = db.collection('users');
+    const usersRef = dbAdmin.collection('users');
     const q = usersRef.where('email', '==', email);
     const querySnapshot = await q.get();
     if (querySnapshot.empty) {
