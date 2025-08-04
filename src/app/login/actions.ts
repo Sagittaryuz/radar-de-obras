@@ -19,13 +19,13 @@ export async function loginAction(credentials: unknown) {
     return { error: 'Credenciais inválidas.' };
   }
 
-  const { email, password } = validatedCredentials.data;
+  const { email } = validatedCredentials.data;
   
   try {
     // This login function no longer checks the password. It finds the user
     // and sets the cookie. The actual password check must happen on the client
     // before this action is called.
-    const result = await login(email, password);
+    const result = await login(email);
     if (result.error) {
       return { error: result.error };
     }

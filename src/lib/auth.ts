@@ -4,7 +4,7 @@
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/mock-data';
 import { getUsers } from '@/lib/mock-data';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 
 
@@ -30,7 +30,7 @@ export async function getSession(): Promise<User | null> {
 
 // Note: This function no longer performs Firebase sign-in. It only handles the session cookie.
 // The client-side component now handles the Firebase authentication.
-export async function login(email: string, password?: string): Promise<{ user?: User; error?: string }> {
+export async function login(email: string): Promise<{ user?: User; error?: string }> {
   try {
     const users = await getUsers();
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
