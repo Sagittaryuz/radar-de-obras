@@ -31,6 +31,7 @@ export async function getSession(): Promise<User | null> {
 // Note: This function no longer performs Firebase sign-in. It only handles the session cookie.
 // The client-side component now handles the Firebase authentication.
 export async function login(email: string): Promise<{ user?: User; error?: string }> {
+  console.log(`[Server Action] Login attempt for email: ${email}`); // LOG: Início da Ação
   try {
     const users = await getUsers();
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -39,10 +40,12 @@ export async function login(email: string): Promise<{ user?: User; error?: strin
     if (!user) {
       // This error should theoretically not be hit if client-side auth succeeds,
       // but it's a good safeguard.
+      console.error(`[Server Action] User not found in DB for email: ${email}`); // LOG: Erro de usuário não encontrado
       return { error: 'Usuário não encontrado no banco de dados do aplicativo.' };
     }
     
     // Set the server-side session cookie.
+    console.log(`[Server Action] User found: ${user.name}. Setting session cookie.`); // LOG: Sucesso ao encontrar usuário
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     cookies().set(SESSION_COOKIE_NAME, JSON.stringify(user), { 
         expires, 
@@ -54,7 +57,7 @@ export async function login(email: string): Promise<{ user?: User; error?: strin
     return { user };
 
   } catch (error: any) {
-    console.error('Login Action Error:', error);
+    console.error('[Server Action] Login function failed with error:', error); // LOG: Erro completo no catch
     return { error: 'Ocorreu um erro no servidor ao criar a sessão.' };
   }
 }
