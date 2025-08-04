@@ -3,12 +3,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
-import { getObraById, getUserById } from '@/lib/mock-data';
-import type { Obra, User } from '@/lib/mock-data';
+import { getObraById, getUserById, getLojas } from '@/lib/mock-data';
+import type { Obra, User, Loja } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench } from 'lucide-react';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -58,6 +58,7 @@ export default function ObraDetailPage() {
 
   const [obra, setObra] = useState<Obra | null>(null);
   const [seller, setSeller] = useState<User | null>(null);
+  const [lojas, setLojas] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,9 +67,14 @@ export default function ObraDetailPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const obraData = await getObraById(obraId);
+        const [obraData, lojasData] = await Promise.all([
+            getObraById(obraId),
+            getLojas()
+        ]);
+        
         if (obraData) {
           setObra(obraData);
+          setLojas(lojasData);
           if (obraData.sellerId) {
             const sellerData = await getUserById(obraData.sellerId);
             setSeller(sellerData);
@@ -97,6 +103,7 @@ export default function ObraDetailPage() {
   }
   
   const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(obra.address)}&zoom=16&size=600x400&maptype=roadmap&markers=color:red%7Clabel:O%7C${encodeURIComponent(obra.address)}&key=${GOOGLE_MAPS_API_KEY}`;
+  const lojaName = lojas.find(l => l.id === obra.lojaId)?.name || obra.lojaId;
 
   return (
     <div className="space-y-6">
@@ -110,21 +117,36 @@ export default function ObraDetailPage() {
          <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">{obra.clientName}</CardTitle>
+                    <CardTitle className="font-headline flex items-center gap-3">
+                        <Briefcase className="h-6 w-6 text-primary" />
+                        {obra.clientName}
+                    </CardTitle>
                     <CardDescription>{obra.address}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 grid md:grid-cols-2 gap-4">
                     <div className="flex items-center gap-3">
                         <Phone className="h-5 w-5 text-muted-foreground" />
                         <span className="text-sm">{obra.contactPhone || 'Não informado'}</span>
                     </div>
-                    <div className="flex items-center gap-3">
+                     <div className="flex items-center gap-3">
                         <Wrench className="h-5 w-5 text-muted-foreground" />
                         <Badge variant="secondary">{obra.stage}</Badge>
                     </div>
                     <div className="flex items-center gap-3">
+                        <Home className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm">Rua: {obra.street}</span>
+                    </div>
+                     <div className="flex items-center gap-3">
+                        <Hash className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm">Nº: {obra.number}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm">Bairro: {obra.neighborhood}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
                         <Building className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm">Loja ID: {obra.lojaId}</span>
+                        <span className="text-sm">Unidade: {lojaName}</span>
                     </div>
                     {seller && (
                         <div className="flex items-center gap-3">

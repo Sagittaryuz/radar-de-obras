@@ -145,20 +145,20 @@ export async function getLojas(): Promise<Loja[]> {
 
     const lojasList = lojasSnapshot.docs.map(doc => {
         const data = doc.data();
-        const hardcodedData = hardcodedLojas.find(l => l.id === doc.id);
+        // Use the name from firestore, and neighborhoods from firestore if they exist and are not empty
         return {
             id: doc.id,
-            name: data.name,
-            // If neighborhoods are empty in Firestore, use the hardcoded ones.
+            name: data.name || doc.id,
             neighborhoods: (data.neighborhoods && data.neighborhoods.length > 0) 
                            ? data.neighborhoods 
-                           : (hardcodedData ? hardcodedData.neighborhoods : [])
+                           : []
         } as Loja
     });
     return lojasList;
   } catch (error) {
     console.error("Error fetching lojas from client:", error);
     // Fallback to hardcoded data on error
+    console.warn("Falling back to hardcoded loja data due to fetch error.");
     return hardcodedLojas;
   }
 }
