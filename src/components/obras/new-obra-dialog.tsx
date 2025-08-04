@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +42,10 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
   const [unidade, setUnidade] = useState('');
   const [etapa, setEtapa] = useState('');
   const [foto, setFoto] = useState<File | null>(null);
+
+  useEffect(() => {
+    console.log('[NewObraDialog] Received lojas prop:', lojas); // Log para depuração
+  }, [lojas]);
 
   const handleLocation = () => {
     setIsLocating(true);
@@ -185,7 +189,7 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
                       <SelectValue placeholder="Selecione a unidade responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                      {lojas.map(loja => (
+                      {lojas && lojas.map(loja => (
                         <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
                       ))}
                   </SelectContent>

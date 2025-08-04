@@ -6,7 +6,6 @@ import { KanbanBoard } from '@/components/obras/kanban-board';
 import { NewObraDialog } from '@/components/obras/new-obra-dialog';
 import { getObras, getUsers, getLojas } from '@/lib/mock-data';
 import type { Obra, User, Loja } from '@/lib/mock-data';
-import type { Metadata } from 'next';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ObrasPage() {
@@ -24,6 +23,7 @@ export default function ObrasPage() {
           getUsers(),
           getLojas(),
         ]);
+        console.log('[ObrasPage] Lojas fetched:', lojasData); // Log para depuração
         setInitialObras(obrasData);
         setSellers(sellersData);
         setLojas(lojasData);
