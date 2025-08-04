@@ -17,6 +17,7 @@ export type Obra = {
   street: string;
   number: string;
   neighborhood: string;
+  contactPhone?: string;
   photoUrl?: string;
   gmapsUrl?: string;
   lojaId: string;

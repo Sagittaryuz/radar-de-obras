@@ -35,6 +35,7 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
 
   // States for form fields
   const [client, setClient] = useState('');
+  const [phone, setPhone] = useState('');
   const [rua, setRua] = useState('');
   const [numero, setNumero] = useState('');
   const [bairro, setBairro] = useState('');
@@ -99,6 +100,7 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
     try {
         const newObra = {
             clientName: client,
+            contactPhone: phone,
             street: rua,
             number: numero,
             neighborhood: bairro,
@@ -153,6 +155,11 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
             <div>
               <Label htmlFor="client">Cliente</Label>
               <Input id="client" placeholder="Nome do cliente ou construtora" required value={client} onChange={e => setClient(e.target.value)} />
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Telefone de Contato</Label>
+              <Input id="phone" placeholder="(XX) XXXXX-XXXX" value={phone} onChange={e => setPhone(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-3 gap-2">
