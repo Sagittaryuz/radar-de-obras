@@ -1,10 +1,10 @@
+
 'use client';
 
 import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +13,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { loginAction } from '../actions';
 import { Loader2 } from 'lucide-react';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
-  password: z.string().min(1, { message: 'Por favor, insira sua senha.' }),
+  password: z.string().min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -24,7 +26,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export function LoginForm() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -36,20 +37,47 @@ export function LoginForm() {
 
   const onSubmit = (data: LoginFormValues) => {
     startTransition(async () => {
-      const result = await loginAction(data);
-      if (result?.error) {
+      try {
+        // 1. Authenticate with Firebase on the client
+        const auth = getAuth(app);
+        await signInWithEmailAndPassword(auth, data.email, data.password);
+
+        // 2. If Firebase auth is successful, call the server action
+        // to set the session cookie.
+        const result = await loginAction(data);
+
+        if (result?.error) {
+          toast({
+            variant: 'destructive',
+            title: 'Erro de Login',
+            description: result.error,
+          });
+        } else {
+          toast({
+            title: 'Login bem-sucedido!',
+            description: 'Redirecionando para o dashboard...',
+          });
+          // Force a full page reload to ensure the new session is picked up by the server layout.
+          window.location.href = '/dashboard';
+        }
+      } catch (error: any) {
+        // Handle Firebase authentication errors
+        let errorMessage = 'Ocorreu um erro. Verifique suas credenciais.';
+        switch (error.code) {
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-credential':
+                errorMessage = 'Email ou senha inválidos.';
+                break;
+            case 'auth/invalid-email':
+                errorMessage = 'O formato do email é inválido.';
+                break;
+        }
         toast({
           variant: 'destructive',
-          title: 'Erro de Login',
-          description: result.error,
+          title: 'Erro de Autenticação',
+          description: errorMessage,
         });
-      } else {
-        toast({
-          title: 'Login bem-sucedido!',
-          description: 'Redirecionando para o dashboard...',
-        });
-        // Force a full page reload to ensure the new session is picked up by the server layout.
-        window.location.href = '/dashboard';
       }
     });
   };
@@ -89,9 +117,6 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-             <p className="text-xs text-center text-muted-foreground">
-              (Use qualquer email da lista de usuários e a senha '123456' para o login de teste)
-            </p>
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Entrar

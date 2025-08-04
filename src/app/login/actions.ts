@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -10,6 +11,8 @@ const loginSchema = z.object({
 });
 
 export async function loginAction(credentials: unknown) {
+  // This server action now only handles setting the cookie after
+  // the client has successfully authenticated with Firebase.
   const validatedCredentials = loginSchema.safeParse(credentials);
 
   if (!validatedCredentials.success) {
@@ -19,6 +22,9 @@ export async function loginAction(credentials: unknown) {
   const { email, password } = validatedCredentials.data;
   
   try {
+    // This login function no longer checks the password. It finds the user
+    // and sets the cookie. The actual password check must happen on the client
+    // before this action is called.
     const result = await login(email, password);
     if (result.error) {
       return { error: result.error };
