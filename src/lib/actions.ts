@@ -3,11 +3,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { getFirestore } from 'firebase-admin/firestore';
-import { dbAdmin } from './firebase-admin';
 
 export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: string[]) {
   try {
-    const db = getFirestore(dbAdmin);
+    const db = getFirestore();
     const lojaRef = db.collection('lojas').doc(lojaId);
     await lojaRef.update({ neighborhoods });
 

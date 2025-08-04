@@ -5,19 +5,14 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
 // This function ensures that we only initialize the app once.
-function getAdminApp(): App {
-  if (getApps().length > 0) {
-    return getApps()[0];
-  }
+let adminApp: App;
 
-  // When running in a Google Cloud environment, the SDK automatically
-  // finds the service account credentials. For local development,
-  // you would set the GOOGLE_APPLICATION_CREDENTIALS environment variable.
-  const app = initializeApp();
-  return app;
+if (getApps().length === 0) {
+  adminApp = initializeApp();
+} else {
+  adminApp = getApps()[0];
 }
 
-const adminApp = getAdminApp();
 const dbAdmin = getFirestore(adminApp);
 const authAdmin = getAuth(adminApp);
 
