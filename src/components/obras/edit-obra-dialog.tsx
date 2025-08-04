@@ -84,6 +84,7 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
                 title: "Nenhuma Alteração",
                 description: "Nenhuma informação foi modificada.",
             });
+            setOpen(false);
             return;
         }
 
@@ -127,7 +128,7 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
           <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <div>
               <Label htmlFor="client">Cliente</Label>
-              <Input id="client" placeholder="Nome do cliente ou construtora" required value={client} onChange={e => setClient(e.target.value)} />
+              <Input id="client" placeholder="Nome do cliente ou construtora" value={client} onChange={e => setClient(e.target.value)} />
             </div>
 
             <div>
