@@ -16,13 +16,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, MapPin } from 'lucide-react';
+import { PlusCircle, MapPin, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja } from '@/lib/mock-data';
 import { getLojas } from '@/lib/mock-data';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export function NewObraDialog() {
   const { toast } = useToast();
@@ -38,8 +39,9 @@ export function NewObraDialog() {
   const [bairro, setBairro] = useState('');
   const [unidade, setUnidade] = useState('');
   const [etapa, setEtapa] = useState('');
-  const [foto, setFoto] = useState<File | null>(null);
+  const [fotos, setFotos] = useState<File[]>([]);
   const [lojas, setLojas] = useState<Loja[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
 
   // Fetch Lojas when the dialog is about to open or is open
   useEffect(() => {
@@ -47,10 +49,27 @@ export function NewObraDialog() {
       const fetchLojas = async () => {
         const lojasData = await getLojas();
         setLojas(lojasData);
+        console.log("Lojas carregadas para o diálogo:", lojasData);
       };
       fetchLojas();
     }
+     // Cleanup previews on unmount
+    return () => {
+      previews.forEach(preview => URL.revokeObjectURL(preview));
+    };
   }, [open]);
+
+  useEffect(() => {
+    // Create previews whenever 'fotos' state changes
+    const newPreviews = fotos.map(file => URL.createObjectURL(file));
+    setPreviews(newPreviews);
+
+    // Cleanup function
+    return () => {
+      newPreviews.forEach(preview => URL.revokeObjectURL(preview));
+    };
+  }, [fotos]);
+
 
   const handleLocation = () => {
     setIsLocating(true);
@@ -99,10 +118,16 @@ export function NewObraDialog() {
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setFoto(event.target.files[0]);
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files);
+      setFotos(prevFotos => [...prevFotos, ...newFiles]);
     }
   };
+
+  const handleRemoveFile = (index: number) => {
+    setFotos(prevFotos => prevFotos.filter((_, i) => i !== index));
+  };
+
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -118,14 +143,16 @@ export function NewObraDialog() {
             stage: etapa,
             status: 'Entrada', // Initial status
             sellerId: null,
-            // photoUrl would be handled by an upload service in a real app
+            // photoUrls would be handled by an upload service in a real app
+            // We're just logging the number of files for now
         };
 
+        console.log("Salvando nova obra com", fotos.length, "fotos.");
         await addDoc(collection(db, 'obras'), newObra);
 
         toast({
             title: "Obra Criada",
-            description: "A nova prospecção foi registrada com sucesso no Firestore.",
+            description: "A nova prospecção foi registrada com sucesso.",
         });
         setOpen(false);
         router.refresh(); // Refresh the page to show the new obra
@@ -218,9 +245,35 @@ export function NewObraDialog() {
             </div>
 
             <div>
-              <Label htmlFor="foto">Foto da Fachada</Label>
-              <Input id="foto" type="file" accept="image/*" onChange={handleFileChange} />
+              <Label htmlFor="fotos">Fotos da Fachada</Label>
+              <Input id="fotos" type="file" accept="image/*" multiple onChange={handleFileChange} />
             </div>
+
+             {previews.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                    {previews.map((preview, index) => (
+                        <div key={index} className="relative">
+                            <Image
+                                src={preview}
+                                alt={`Pré-visualização da imagem ${index + 1}`}
+                                width={100}
+                                height={100}
+                                className="rounded-md object-cover aspect-square"
+                            />
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                onClick={() => handleRemoveFile(index)}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+             )}
+
 
           </div>
           <DialogFooter>
