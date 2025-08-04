@@ -71,6 +71,7 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
     startTransition(async () => {
         const updatedData: Partial<Obra> = {};
 
+        // Only add fields to the update object if they have actually changed.
         if (client !== obra.clientName) updatedData.clientName = client;
         if (phone !== (obra.contactPhone || '')) updatedData.contactPhone = phone;
         if (rua !== obra.street) updatedData.street = rua;
@@ -87,7 +88,6 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
             setOpen(false);
             return;
         }
-
 
         const result = await updateObra(obra.id, updatedData);
 

@@ -1,19 +1,78 @@
 
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/main-sidebar';
 import type { User } from '@/lib/mock-data';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function MainLayout({
+
+function MainLayoutSkeleton() {
+    return (
+        <div className="flex min-h-screen w-full bg-background">
+            <div className="hidden md:block">
+                 <div className="flex h-svh w-[16rem] flex-col p-2 gap-2">
+                    <div className="p-2 border-b">
+                        <Skeleton className="h-10 w-4/5" />
+                    </div>
+                    <div className="flex-1 p-2 space-y-2">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                    </div>
+                    <div className="p-2 border-t">
+                        <Skeleton className="h-12 w-full" />
+                    </div>
+                </div>
+            </div>
+            <main className="flex-1 p-6">
+                <Skeleton className="h-full w-full" />
+            </main>
+        </div>
+    )
+}
+
+
+export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getSession();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await getSession();
+      if (!session) {
+        // Allow unauthenticated access only to login page which is not under this layout
+        // For any other page, redirect to login.
+        if (pathname !== '/login') {
+            router.push('/login');
+        } else {
+            setLoading(false);
+        }
+      } else {
+        setUser(session);
+        setLoading(false);
+      }
+    };
+    checkSession();
+  }, [router, pathname]);
+
+  if (loading) {
+    return <MainLayoutSkeleton />;
+  }
+  
   if (!user) {
-    redirect('/login');
+    // This case handles the brief moment before the redirect happens,
+    // or if the user somehow lands here without a session.
+    return <MainLayoutSkeleton />;
   }
 
   return (
