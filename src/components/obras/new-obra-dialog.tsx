@@ -19,15 +19,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlusCircle, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja } from '@/lib/mock-data';
+import { getLojas } from '@/lib/mock-data';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
-interface NewObraDialogProps {
-  lojas: Loja[];
-}
-
-export function NewObraDialog({ lojas }: NewObraDialogProps) {
+export function NewObraDialog() {
   const { toast } = useToast();
   const [isLocating, setIsLocating] = useState(false);
   const [open, setOpen] = useState(false);
@@ -42,10 +39,18 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
   const [unidade, setUnidade] = useState('');
   const [etapa, setEtapa] = useState('');
   const [foto, setFoto] = useState<File | null>(null);
+  const [lojas, setLojas] = useState<Loja[]>([]);
 
+  // Fetch Lojas when the dialog is about to open or is open
   useEffect(() => {
-    console.log('[NewObraDialog] Received lojas prop:', lojas); // Log para depuração
-  }, [lojas]);
+    if (open) {
+      const fetchLojas = async () => {
+        const lojasData = await getLojas();
+        setLojas(lojasData);
+      };
+      fetchLojas();
+    }
+  }, [open]);
 
   const handleLocation = () => {
     setIsLocating(true);
@@ -189,7 +194,7 @@ export function NewObraDialog({ lojas }: NewObraDialogProps) {
                       <SelectValue placeholder="Selecione a unidade responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                      {lojas && lojas.map(loja => (
+                      {lojas.map(loja => (
                         <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
                       ))}
                   </SelectContent>
