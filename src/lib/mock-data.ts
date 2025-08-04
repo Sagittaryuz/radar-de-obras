@@ -1,5 +1,6 @@
 
-import { dbAdmin } from './firebase-admin'; // Use the admin instance for server-side fetching
+import { db } from './firebase'; // Use the client instance for all data fetching
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 export type User = {
   id: string;
@@ -31,56 +32,55 @@ export type Loja = {
   neighborhoods: string[];
 };
 
-// These functions run on the server, so they should use the admin DB instance.
+// These functions will now be called from client components
 export async function getObras(): Promise<Obra[]> {
   try {
-    const obrasCol = dbAdmin.collection('obras');
-    const obrasSnapshot = await obrasCol.get();
+    const obrasCol = collection(db, 'obras');
+    const obrasSnapshot = await getDocs(obrasCol);
     const obrasList = obrasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Obra));
     return obrasList;
   } catch (error) {
-    console.error("Error fetching obras:", error);
-    // Return empty array on error to prevent breaking the UI
+    console.error("Error fetching obras from client:", error);
     return [];
   }
 }
 
 export async function getUsers(): Promise<User[]> {
   try {
-    const usersCol = dbAdmin.collection('users');
-    const usersSnapshot = await usersCol.get();
+    const usersCol = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCol);
     const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
     return usersList;
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("Error fetching users from client:", error);
     return [];
   }
 }
 
 export async function getLojas(): Promise<Loja[]> {
   try {
-    const lojasCol = dbAdmin.collection('lojas');
-    const lojasSnapshot = await lojasCol.get();
+    const lojasCol = collection(db, 'lojas');
+    const lojasSnapshot = await getDocs(lojasCol);
     const lojasList = lojasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Loja));
     return lojasList;
   } catch (error) {
-    console.error("Error fetching lojas:", error);
+    console.error("Error fetching lojas from client:", error);
     return [];
   }
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
-    const usersRef = dbAdmin.collection('users');
-    const q = usersRef.where('email', '==', email);
-    const querySnapshot = await q.get();
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
       return null;
     }
     const userDoc = querySnapshot.docs[0];
     return { id: userDoc.id, ...userDoc.data() } as User;
   } catch (error) {
-    console.error("Error fetching user by email:", error);
+    console.error("Error fetching user by email from client:", error);
     return null;
   }
 }

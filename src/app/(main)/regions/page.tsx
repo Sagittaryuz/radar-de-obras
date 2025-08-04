@@ -1,14 +1,39 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
 import { getLojas } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
-import type { Metadata } from 'next';
+import type { Loja } from '@/lib/mock-data';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata: Metadata = {
-  title: 'Regiões | JCR Radar',
-};
+export default function RegionsPage() {
+  const [lojas, setLojas] = useState<Loja[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function RegionsPage() {
-  const lojas = await getLojas();
+  useEffect(() => {
+    const fetchLojas = async () => {
+      setLoading(true);
+      const lojasData = await getLojas();
+      setLojas(lojasData);
+      setLoading(false);
+    };
+    fetchLojas();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-1/3" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

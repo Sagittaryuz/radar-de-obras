@@ -1,22 +1,54 @@
 
+'use client';
+
+import { useEffect, useState } from 'react';
 import { getObras, getLojas } from '@/lib/mock-data';
 import { DashboardCharts } from '@/components/dashboard/charts';
 import type { Obra, Loja } from '@/lib/mock-data';
 import type { Metadata } from 'next';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata: Metadata = {
-  title: 'Dashboard | JCR Radar',
-};
+// This is now a Client Component to fetch data client-side.
+export default function DashboardPage() {
+  const [obras, setObras] = useState<Obra[] | null>(null);
+  const [lojas, setLojas] = useState<Loja[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
-// This is now a Server Component. It fetches data on the server.
-export default async function DashboardPage() {
-  // Data is fetched on the server and passed to the client component.
-  const obras = await getObras();
-  const lojas = await getLojas();
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [obrasData, lojasData] = await Promise.all([
+          getObras(),
+          getLojas()
+        ]);
+        setObras(obrasData);
+        setLojas(lojasData);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        // Handle error state if necessary
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading || !obras || !lojas) {
+    return (
+       <div className="space-y-6">
+          <Skeleton className="h-8 w-1/3" />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <Skeleton className="h-80 w-full" />
+              <Skeleton className="h-80 w-full" />
+              <Skeleton className="h-80 w-full" />
+          </div>
+       </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* The interactive chart component is now separate */}
       <DashboardCharts allObras={obras} allLojas={lojas} />
     </div>
   );
