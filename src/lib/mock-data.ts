@@ -1,6 +1,6 @@
 
 import { db } from './firebase'; // Use the client instance for all data fetching
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 
 export type User = {
   id: string;
@@ -89,6 +89,22 @@ export async function getObras(): Promise<Obra[]> {
   }
 }
 
+export async function getObraById(id: string): Promise<Obra | null> {
+    try {
+        const obraRef = doc(db, 'obras', id);
+        const obraSnap = await getDoc(obraRef);
+        if (obraSnap.exists()) {
+            return { id: obraSnap.id, ...obraSnap.data() } as Obra;
+        } else {
+            console.log("No such document!");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching obra by ID:", error);
+        return null;
+    }
+}
+
 export async function getUsers(): Promise<User[]> {
   try {
     const usersCol = collection(db, 'users');
@@ -100,6 +116,22 @@ export async function getUsers(): Promise<User[]> {
     return [];
   }
 }
+
+export async function getUserById(id: string): Promise<User | null> {
+    try {
+        const userRef = doc(db, 'users', id);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            return { id: userSnap.id, ...userSnap.data() } as User;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching user by ID:", error);
+        return null;
+    }
+}
+
 
 export async function getLojas(): Promise<Loja[]> {
   try {

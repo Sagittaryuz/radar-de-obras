@@ -11,6 +11,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 
 type KanbanBoardProps = {
@@ -107,29 +108,36 @@ export function KanbanBoard({ initialObras, sellers }: KanbanBoardProps) {
               .map(obra => {
                 const seller = obra.sellerId ? sellerMap[obra.sellerId] : null;
                 return (
-                  <Card
-                    key={obra.id}
-                    draggable
-                    onDragStart={e => handleDragStart(e, obra)}
-                    className={cn(
-                      "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing",
-                      draggedItem?.id === obra.id && "opacity-50"
-                    )}
-                  >
-                    <CardContent className="p-4 space-y-2">
-                      <p className="font-bold">{obra.clientName}</p>
-                      <p className="text-sm text-muted-foreground">{obra.address}</p>
-                      <div className="flex justify-between items-center pt-2">
-                         <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{obra.stage}</span>
-                         {seller && (
-                           <Avatar className="h-7 w-7">
-                             <AvatarImage src={seller.avatar} />
-                             <AvatarFallback>{getInitials(seller.name)}</AvatarFallback>
-                           </Avatar>
-                         )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <Link key={obra.id} href={`/obras/${obra.id}`} passHref>
+                    <div
+                      draggable
+                      onDragStart={e => handleDragStart(e, obra)}
+                      className="h-full"
+                    >
+                      <Card
+                        className={cn(
+                          "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing h-full",
+                          draggedItem?.id === obra.id && "opacity-50"
+                        )}
+                      >
+                        <CardContent className="p-4 space-y-2 flex flex-col justify-between h-full">
+                          <div>
+                            <p className="font-bold">{obra.clientName}</p>
+                            <p className="text-sm text-muted-foreground">{obra.address}</p>
+                          </div>
+                          <div className="flex justify-between items-center pt-2">
+                            <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{obra.stage}</span>
+                            {seller && (
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={seller.avatar} />
+                                <AvatarFallback>{getInitials(seller.name)}</AvatarFallback>
+                              </Avatar>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </Link>
                 );
               })}
           </div>

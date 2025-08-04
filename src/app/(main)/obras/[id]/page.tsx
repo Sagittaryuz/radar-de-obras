@@ -1,0 +1,170 @@
+
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, notFound } from 'next/navigation';
+import { getObraById, getUserById } from '@/lib/mock-data';
+import type { Obra, User } from '@/lib/mock-data';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { User as UserIcon, MapPin, Phone, Building, Wrench } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
+
+function ObraDetailSkeleton() {
+    return (
+        <div className="space-y-6">
+            <Skeleton className="h-10 w-3/4" />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <Skeleton className="h-8 w-1/2" />
+                        <Skeleton className="h-4 w-1/3" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-6 w-6 rounded-full" />
+                            <Skeleton className="h-6 w-full" />
+                        </div>
+                         <div className="flex items-center gap-4">
+                            <Skeleton className="h-6 w-6 rounded-full" />
+                            <Skeleton className="h-6 w-full" />
+                        </div>
+                         <div className="flex items-center gap-4">
+                            <Skeleton className="h-6 w-6 rounded-full" />
+                            <Skeleton className="h-6 w-full" />
+                        </div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <Skeleton className="h-8 w-1/2" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-40 w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    )
+}
+
+export default function ObraDetailPage() {
+  const params = useParams();
+  const obraId = params.id as string;
+
+  const [obra, setObra] = useState<Obra | null>(null);
+  const [seller, setSeller] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!obraId) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const obraData = await getObraById(obraId);
+        if (obraData) {
+          setObra(obraData);
+          if (obraData.sellerId) {
+            const sellerData = await getUserById(obraData.sellerId);
+            setSeller(sellerData);
+          }
+        } else {
+           notFound();
+        }
+      } catch (error) {
+        console.error("Failed to fetch obra details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [obraId]);
+
+  if (loading) {
+    return <ObraDetailSkeleton />;
+  }
+
+  if (!obra) {
+    // This will be caught by the notFound() in a real app,
+    // but client-side we can just show a message.
+    return <div>Obra não encontrada.</div>;
+  }
+  
+  const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(obra.address)}&zoom=16&size=600x400&maptype=roadmap&markers=color:red%7Clabel:O%7C${encodeURIComponent(obra.address)}&key=${GOOGLE_MAPS_API_KEY}`;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+         <h1 className="font-headline text-3xl font-bold tracking-tight">
+            Detalhes da Obra
+         </h1>
+      </div>
+      
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+         <div className="lg:col-span-2 space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">{obra.clientName}</CardTitle>
+                    <CardDescription>{obra.address}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <Phone className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm">{obra.contactPhone || 'Não informado'}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Wrench className="h-5 w-5 text-muted-foreground" />
+                        <Badge variant="secondary">{obra.stage}</Badge>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Building className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm">Loja ID: {obra.lojaId}</span>
+                    </div>
+                    {seller && (
+                        <div className="flex items-center gap-3">
+                            <UserIcon className="h-5 w-5 text-muted-foreground" />
+                            <span className="text-sm">Vendedor: {seller.name}</span>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Status Atual</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Badge variant="default" className="text-base px-4 py-2">{obra.status}</Badge>
+                </CardContent>
+            </Card>
+         </div>
+         
+         <div className="space-y-6">
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        Localização
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="relative aspect-video w-full">
+                        <Image 
+                            src={mapUrl}
+                            alt={`Mapa da localização da obra em ${obra.address}`}
+                            fill
+                            className="rounded-md object-cover"
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+         </div>
+      </div>
+    </div>
+  );
+}
