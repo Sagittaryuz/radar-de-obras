@@ -16,6 +16,12 @@ import { EditObraDialog } from '@/components/obras/edit-obra-dialog';
 import { DeleteObraDialog } from '@/components/obras/delete-obra-dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { InteractiveMap } from '@/components/obras/interactive-map';
+import { getCoordinatesForAddress } from '@/lib/actions';
+
+interface Coordinates {
+    lat: number;
+    lng: number;
+}
 
 
 function ObraDetailSkeleton() {
@@ -64,6 +70,7 @@ export default function ObraDetailPage() {
   const [obra, setObra] = useState<Obra | null>(null);
   const [seller, setSeller] = useState<User | null>(null);
   const [lojas, setLojas] = useState<Loja[]>([]);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [loading, setLoading] = useState(true);
 
   // This function will be called by the dialog on successful update to refresh the page data.
@@ -86,6 +93,12 @@ export default function ObraDetailPage() {
         if (obraData) {
           setObra(obraData);
           setLojas(lojasData);
+          
+          if (obraData.address) {
+              const coords = await getCoordinatesForAddress(obraData.address);
+              setCoordinates(coords);
+          }
+
           if (obraData.sellerId) {
             const sellerData = await getUserById(obraData.sellerId);
             setSeller(sellerData);
@@ -227,7 +240,7 @@ export default function ObraDetailPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="relative aspect-video w-full">
-                        <InteractiveMap address={obra.address} />
+                       <InteractiveMap coordinates={coordinates} />
                     </div>
                 </CardContent>
             </Card>

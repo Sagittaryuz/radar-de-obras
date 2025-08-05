@@ -8,6 +8,9 @@ import { getStorage } from 'firebase-admin/storage';
 import type { Obra } from './mock-data';
 import { z } from 'zod';
 
+const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
+
+
 // Initialize Firebase Admin SDK if not already initialized
 if (getApps().length === 0) {
   initializeApp({
@@ -202,4 +205,29 @@ export async function deleteObra(obraId: string) {
     console.error("Error deleting obra:", error);
     return { error: 'Falha ao excluir a obra. Tente novamente.' };
   }
+}
+
+
+export async function getCoordinatesForAddress(address: string): Promise<{lat: number, lng: number} | null> {
+    if (!address) return null;
+
+    try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+            address
+          )}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const data = await response.json();
+
+        if (data.status === 'OK' && data.results && data.results.length > 0) {
+          const { lat, lng } = data.results[0].geometry.location;
+          return { lat, lng };
+        } else {
+          console.error(`[Server Action] Geocoding failed for address: ${address}`, data.status, data.error_message);
+          return null;
+        }
+      } catch (error) {
+        console.error('[Server Action] Geocoding API call error:', error);
+        return null;
+      }
 }
