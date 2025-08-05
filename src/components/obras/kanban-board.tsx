@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, DragEvent } from 'react';
+import { useState, useMemo, DragEvent, useEffect } from 'react';
 import type { Obra, User } from '@/lib/mock-data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,7 +17,7 @@ import { Building2 } from 'lucide-react';
 
 
 type KanbanBoardProps = {
-  initialObras: Obra[];
+  obras: Obra[];
   sellers: User[];
 };
 
@@ -30,11 +30,15 @@ function getInitials(name: string) {
     return initials.slice(0, 2).toUpperCase();
 }
 
-export function KanbanBoard({ initialObras, sellers }: KanbanBoardProps) {
-  const [obras, setObras] = useState<Obra[]>(initialObras);
+export function KanbanBoard({ obras: obrasProp, sellers }: KanbanBoardProps) {
+  const [obras, setObras] = useState<Obra[]>(obrasProp);
   const [draggedItem, setDraggedItem] = useState<Obra | null>(null);
   const { toast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    setObras(obrasProp);
+  }, [obrasProp]);
 
   const sellerMap = useMemo(() => {
     return sellers.reduce((acc, seller) => {
