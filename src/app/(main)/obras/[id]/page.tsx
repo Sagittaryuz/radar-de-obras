@@ -67,7 +67,7 @@ export default function ObraDetailPage() {
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // This function will be called by the dialog on successful update
+  // This function will be called by the dialog on successful update to refresh the page data.
   const handleSuccess = () => {
     router.refresh();
   };
@@ -101,7 +101,7 @@ export default function ObraDetailPage() {
     };
 
     fetchData();
-  }, [obraId]);
+  }, [obraId, router]); // Add router to dependency array to satisfy ESLint
 
   if (loading) {
     return <ObraDetailSkeleton />;

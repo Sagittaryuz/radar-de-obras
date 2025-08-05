@@ -33,7 +33,6 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [lojas, setLojas] = useState<Loja[]>([]);
   
-  // This state will hold the form data and will be reset every time the dialog opens.
   const [formData, setFormData] = useState<Partial<Obra>>({});
 
   useEffect(() => {
@@ -71,7 +70,6 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     event.preventDefault();
     console.log('[EditDialog] handleSubmit triggered.');
 
-    // We can just pass the formData directly, as the server action will handle the comparison.
     const payload: Partial<Obra> = { ...formData };
     
     console.log('[EditDialog] Submitting payload to server action:', payload);
@@ -84,8 +82,8 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
                 title: "Obra Atualizada",
                 description: result.message || "Os dados da obra foram atualizados.",
             });
-            setOpen(false); // Close the dialog
-            onSuccess(); // Trigger the refresh on the parent page
+            setOpen(false);
+            onSuccess(); // This will trigger the router.refresh() in the parent component.
         } else {
             toast({
                 variant: 'destructive',
