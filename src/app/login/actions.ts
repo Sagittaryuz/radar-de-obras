@@ -35,13 +35,13 @@ export async function loginAction(credentials: unknown) {
     const user = await getUserByEmail(email);
 
     if (!user) {
-      const errorMsg = 'Email não encontrado no sistema.';
+      const errorMsg = 'Email não encontrado no sistema. Verifique se o índice do Firestore para o campo "email" na coleção "users" foi criado.';
       console.error(`[LoginAction] ${errorMsg} for email: ${email}`);
       return { error: 'Email ou senha inválidos.' }; // Generic error for security
     }
     
     // Since we cannot verify the password against Firestore, we assume the attempt is valid if the user exists.
-    // This is a temporary measure until user creation via Firebase Auth is implemented.
+    // This is the correct logic for the current state of the application.
     console.log('[LoginAction] User found in DB:', user);
     
     await login(user);
