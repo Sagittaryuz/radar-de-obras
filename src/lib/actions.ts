@@ -27,9 +27,9 @@ export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: str
   }
 }
 
-export async function updateObra(obraId: string, newData: Partial<Obra>) {
+export async function updateObra(obraId: string, formData: Partial<Obra>) {
   console.log(`[Action: updateObra] Received request for obraId: ${obraId}`);
-  console.log('[Action: updateObra] Received data for update:', newData);
+  console.log('[Action: updateObra] Received form data:', formData);
 
   try {
     const obraRef = doc(dbAdmin, 'obras', obraId);
@@ -44,29 +44,38 @@ export async function updateObra(obraId: string, newData: Partial<Obra>) {
 
     const updatePayload: Record<string, any> = {};
 
-    // Compare line by line and build the payload
-    for (const key in newData) {
-      const typedKey = key as keyof Obra;
-      if (newData[typedKey] !== currentData[typedKey]) {
-        updatePayload[typedKey] = newData[typedKey];
-      }
+    // Compare form data with current data to find what changed
+    for (const key in formData) {
+        const typedKey = key as keyof Obra;
+        if (formData[typedKey] !== currentData[typedKey]) {
+            updatePayload[typedKey] = formData[typedKey];
+        }
     }
     
-    // If address components were changed, rebuild the full address field
-    const wasAddressChanged = updatePayload.street || updatePayload.number || updatePayload.neighborhood;
-    if (wasAddressChanged) {
-        const newStreet = updatePayload.street || currentData.street;
-        const newNumber = updatePayload.number || currentData.number;
-        const newNeighborhood = updatePayload.neighborhood || currentData.neighborhood;
-        updatePayload.address = `${newStreet}, ${newNumber}, ${newNeighborhood}`;
-    }
+    console.log('[Action: updateObra] Detected changes:', updatePayload);
 
-    console.log('[Action: updateObra] Final payload for updateDoc:', updatePayload);
+    // If any address component was changed, rebuild the full address field
+    const wasAddressChanged = updatePayload.street || updatePayload.number || updatePayload.neighborhood;
+    
+    if (wasAddressChanged) {
+        const newStreet = formData.street || currentData.street;
+        const newNumber = formData.number || currentData.number;
+        const newNeighborhood = formData.neighborhood || currentData.neighborhood;
+        const newAddress = `${newStreet}, ${newNumber}, ${newNeighborhood}`;
+
+        // Only add the address to the payload if it actually changed
+        if (newAddress !== currentData.address) {
+           updatePayload.address = newAddress;
+           console.log(`[Action: updateObra] Address was changed. New address: ${newAddress}`);
+        }
+    }
 
     if (Object.keys(updatePayload).length === 0) {
        console.log('[Action: updateObra] No changes detected. Skipping update.');
        return { success: true, data: { id: currentDocSnap.id, ...currentData } as Obra, message: "Nenhuma alteração foi feita." };
     }
+
+    console.log('[Action: updateObra] Final payload for updateDoc:', updatePayload);
 
     await updateDoc(obraRef, updatePayload);
     console.log('[Action: updateObra] updateDoc successful.');
@@ -91,7 +100,7 @@ export async function deleteObra(obraId: string) {
   try {
     const obraRef = doc(dbAdmin, 'obras', obraId);
     await deleteDoc(obraRef);
-    revalidatePath('/obras');
+revalidatePath('/obras');
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {

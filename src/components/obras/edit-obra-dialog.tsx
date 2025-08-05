@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition, useMemo } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -27,41 +27,44 @@ interface EditObraDialogProps {
   onObraUpdated: (updatedObra: Obra) => void;
 }
 
-// Helper to map obra data to form data
-const mapObraToFormData = (obra: Obra) => ({
-    client: obra.clientName || '',
-    phone: obra.contactPhone || '',
-    rua: obra.street || '',
-    numero: obra.number || '',
-    bairro: obra.neighborhood || '',
-    unidade: obra.lojaId || '',
-    etapa: obra.stage || '',
-});
-
 export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const [formData, setFormData] = useState(mapObraToFormData(obra));
+  const [formData, setFormData] = useState({
+      client: '',
+      phone: '',
+      rua: '',
+      numero: '',
+      bairro: '',
+      unidade: '',
+      etapa: '',
+  });
 
   const [lojas, setLojas] = useState<Loja[]>([]);
 
-  // Memoize the original form data to prevent re-renders from changing it
-  const originalFormData = useMemo(() => mapObraToFormData(obra), [obra]);
-
   useEffect(() => {
+    if (obra) {
+        setFormData({
+            client: obra.clientName || '',
+            phone: obra.contactPhone || '',
+            rua: obra.street || '',
+            numero: obra.number || '',
+            bairro: obra.neighborhood || '',
+            unidade: obra.lojaId || '',
+            etapa: obra.stage || '',
+        });
+    }
+
     if (open) {
-      // Reset form data to the current obra's state when the dialog is opened
-      setFormData(mapObraToFormData(obra));
-      
       const fetchLojas = async () => {
         const lojasData = await getLojas();
         setLojas(lojasData);
       };
       fetchLojas();
     }
-  }, [open, obra]);
+  }, [obra, open]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -75,33 +78,21 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log('[EditDialog] handleSubmit triggered.');
-
-    const changes: Partial<Obra> = {};
-    if (formData.client !== originalFormData.client) changes.clientName = formData.client;
-    if (formData.phone !== originalFormData.phone) changes.contactPhone = formData.phone;
-    if (formData.rua !== originalFormData.rua) changes.street = formData.rua;
-    if (formData.numero !== originalFormData.numero) changes.number = formData.numero;
-    if (formData.bairro !== originalFormData.bairro) changes.neighborhood = formData.bairro;
-    if (formData.unidade !== originalFormData.unidade) changes.lojaId = formData.unidade;
-    if (formData.etapa !== originalFormData.etapa) changes.stage = formData.etapa as Obra['stage'];
-
-    console.log('[EditDialog] Original Obra mapped to form:', originalFormData);
-    console.log('[EditDialog] Current Form State:', formData);
-    console.log('[EditDialog] Number of changes:', Object.keys(changes).length);
     
-    if (Object.keys(changes).length === 0) {
-        toast({
-            title: "Nenhuma Alteração",
-            description: "Nenhum campo foi modificado.",
-        });
-        return;
-    }
-    
-    console.log('[EditDialog] Data being sent to server action:', changes);
+    const payload: Partial<Obra> = {
+        clientName: formData.client,
+        contactPhone: formData.phone,
+        street: formData.rua,
+        number: formData.numero,
+        neighborhood: formData.bairro,
+        lojaId: formData.unidade,
+        stage: formData.etapa as Obra['stage'],
+    };
+
+    console.log('[EditDialog] Submitting payload to server action:', payload);
 
     startTransition(async () => {
-      const result = await updateObra(obra.id, changes);
+      const result = await updateObra(obra.id, payload);
 
       if (result.success && result.data) {
         toast({
