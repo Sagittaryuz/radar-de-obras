@@ -17,7 +17,7 @@ import { DeleteObraDialog } from '@/components/obras/delete-obra-dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
 
 function ObraDetailSkeleton() {
     return (
