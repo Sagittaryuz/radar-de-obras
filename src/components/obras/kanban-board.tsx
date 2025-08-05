@@ -12,6 +12,8 @@ import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
+import { Building2 } from 'lucide-react';
 
 
 type KanbanBoardProps = {
@@ -107,6 +109,7 @@ export function KanbanBoard({ initialObras, sellers }: KanbanBoardProps) {
               .filter(obra => obra.status === status)
               .map(obra => {
                 const seller = obra.sellerId ? sellerMap[obra.sellerId] : null;
+                const coverPhoto = obra.photoUrls && obra.photoUrls.length > 0 ? obra.photoUrls[0] : null;
                 return (
                   <Link key={obra.id} href={`/obras/${obra.id}`} passHref>
                     <div
@@ -116,14 +119,28 @@ export function KanbanBoard({ initialObras, sellers }: KanbanBoardProps) {
                     >
                       <Card
                         className={cn(
-                          "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing h-full",
+                          "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing h-full overflow-hidden",
                           draggedItem?.id === obra.id && "opacity-50"
                         )}
                       >
-                        <CardContent className="p-4 space-y-2 flex flex-col justify-between h-full">
+                         {coverPhoto ? (
+                            <div className="relative aspect-video w-full">
+                                <Image 
+                                    src={coverPhoto} 
+                                    alt={`Foto da obra de ${obra.clientName}`}
+                                    fill
+                                    className="object-cover"
+                                />
+                            </div>
+                         ) : (
+                            <div className="flex aspect-video w-full items-center justify-center bg-muted">
+                                <Building2 className="h-10 w-10 text-muted-foreground" />
+                            </div>
+                         )}
+                        <CardContent className="p-4 space-y-2 flex flex-col justify-between">
                           <div>
-                            <p className="font-bold">{obra.clientName}</p>
-                            <p className="text-sm text-muted-foreground">{obra.address}</p>
+                            <p className="font-bold truncate">{obra.clientName}</p>
+                            <p className="text-sm text-muted-foreground truncate">{obra.address}</p>
                           </div>
                           <div className="flex justify-between items-center pt-2">
                             <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{obra.stage}</span>
