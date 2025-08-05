@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import type { Obra } from './mock-data';
+import type { Obra, User } from './mock-data';
 import { z } from 'zod';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
@@ -183,11 +183,7 @@ export async function deleteObra(obraId: string) {
             const bucket = storageAdmin.bucket();
             for (const url of data.photoUrls) {
                 try {
-                    // Correctly extract file path from URL
-                    // Example URL: https://storage.googleapis.com/jcr-radar.firebasestorage.app/obras%2F171959...
                     const urlObject = new URL(url);
-                    // The pathname will be like /jcr-radar.firebasestorage.app/obras%2F...
-                    // We need to decode it and remove the leading slash and bucket name.
                     const decodedPath = decodeURIComponent(urlObject.pathname);
                     const bucketName = `/${storageAdmin.bucket().name}/`;
                     if (decodedPath.startsWith(bucketName)) {
@@ -202,8 +198,6 @@ export async function deleteObra(obraId: string) {
                     }
                 } catch (storageError) {
                     console.error(`Failed to delete photo from storage: ${url}`, storageError);
-                    // Don't block document deletion if photo deletion fails,
-                    // but it might indicate a bigger issue.
                 }
             }
         }
@@ -242,4 +236,41 @@ export async function getCoordinatesForAddress(address: string): Promise<{lat: n
         console.error('[Server Action] Geocoding API call error:', error);
         return null;
       }
+}
+
+export async function updateUserProfile(userId: string, name: string, avatarDataUrl?: string) {
+    try {
+        const userRef = dbAdmin.collection('users').doc(userId);
+        const updateData: { name: string; avatar?: string } = { name };
+
+        if (avatarDataUrl) {
+            const matches = avatarDataUrl.match(/^data:(.+);base64,(.+)$/);
+            if (!matches) {
+                throw new Error("Formato de imagem de avatar inválido.");
+            }
+            
+            const mimeType = matches[1];
+            const base64Data = matches[2];
+            const buffer = Buffer.from(base64Data, 'base64');
+            const fileName = `avatars/${userId}-${Date.now()}.jpg`;
+            const file = storageAdmin.bucket().file(fileName);
+
+            await file.save(buffer, {
+                metadata: { contentType: mimeType },
+                public: true,
+            });
+
+            updateData.avatar = `https://storage.googleapis.com/${storageAdmin.bucket().name}/${fileName}`;
+        }
+
+        await userRef.update(updateData);
+
+        revalidatePath('/settings');
+        return { success: true, updatedAvatarUrl: updateData.avatar };
+
+    } catch (error) {
+        console.error("Error updating user profile:", error);
+        const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+        return { error: `Falha ao atualizar o perfil. Detalhes: ${errorMessage}` };
+    }
 }
