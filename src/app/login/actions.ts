@@ -15,45 +15,52 @@ const loginSchema = z.object({
 });
 
 export async function loginAction(credentials: unknown) {
+  console.log('[LoginAction] Received request with credentials:', credentials);
   const validatedCredentials = loginSchema.safeParse(credentials);
   if (!validatedCredentials.success) {
-    return { error: 'Credenciais inválidas.' };
+    const errorMsg = 'Credenciais inválidas.';
+    console.error('[LoginAction] Validation failed:', validatedCredentials.error);
+    return { error: errorMsg };
   }
 
   const { email, password } = validatedCredentials.data;
+  console.log(`[LoginAction] Attempting login for email: ${email}`);
 
   try {
-    const response = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          returnSecureToken: true,
-        }),
-      }
-    );
+    const firebaseApiUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
+    console.log('[LoginAction] Calling Firebase Auth API:', firebaseApiUrl);
+    
+    const response = await fetch(firebaseApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
+    });
 
     const result = await response.json();
+    console.log('[LoginAction] Firebase Auth API response status:', response.status);
+    console.log('[LoginAction] Firebase Auth API response body:', result);
 
     if (!response.ok || result.error) {
-      console.error('Firebase Auth Error:', result.error);
+      const errorMsg = result.error?.message || 'Email ou senha inválidos.';
+      console.error('[LoginAction] Firebase Auth Error:', errorMsg);
       return { error: 'Email ou senha inválidos.' };
     }
 
+    console.log('[LoginAction] Firebase Auth successful. Fetching user from DB...');
     const user = await getUserByEmail(email);
+
     if (!user) {
-      return { error: 'Usuário não encontrado no banco de dados do aplicativo.' };
+      const errorMsg = 'Usuário não encontrado no banco de dados do aplicativo.';
+      console.error(`[LoginAction] ${errorMsg} for email: ${email}`);
+      return { error: errorMsg };
     }
     
+    console.log('[LoginAction] User found in DB:', user);
     await login(user);
+    console.log('[LoginAction] Session cookie set. Login process complete.');
 
   } catch (error) {
-    console.error('Login Action Error:', error);
+    console.error('[LoginAction] CATCH BLOCK: Unhandled error during login:', error);
     return { error: 'Ocorreu um erro no servidor durante o login.' };
   }
 

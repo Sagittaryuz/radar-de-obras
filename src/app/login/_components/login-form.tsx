@@ -34,16 +34,21 @@ export function LoginForm() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
+    console.log('[LoginForm] onSubmit triggered with data:', data);
     startTransition(async () => {
+      console.log('[LoginForm] Calling loginAction...');
       const result = await loginAction(data);
+      console.log('[LoginForm] loginAction returned:', result);
 
       if (result?.error) {
+        console.error('[LoginForm] Login failed with error:', result.error);
         toast({
           variant: 'destructive',
           title: 'Erro de Login',
           description: result.error,
         });
       } else {
+        console.log('[LoginForm] Login successful.');
         toast({
           title: 'Login bem-sucedido!',
           description: 'Redirecionando para o dashboard...',
