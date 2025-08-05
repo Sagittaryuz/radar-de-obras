@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Loja, Obra } from '@/lib/mock-data';
 import { getLojas } from '@/lib/mock-data';
 import { updateObra } from '@/lib/actions';
+import { useRouter } from 'next/navigation';
 
 interface EditObraDialogProps {
   obra: Obra;
@@ -32,12 +33,13 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [lojas, setLojas] = useState<Loja[]>([]);
+  const router = useRouter();
   
   const [formData, setFormData] = useState<Partial<Obra>>({});
 
   useEffect(() => {
     // When the dialog opens, initialize form data with the current obra data.
-    // This ensures the form is always fresh and not using stale state.
+    // This ensures the form is always fresh and not using stale state from previous edits.
     if (open) {
       setFormData({
         clientName: obra.clientName || '',
