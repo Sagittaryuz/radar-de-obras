@@ -5,7 +5,6 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { getUsers, getLojas } from "@/lib/mock-data";
-import type { Metadata } from 'next';
 import { useEffect, useState } from "react";
 import { User, Loja } from "@/lib/mock-data";
 import { Skeleton } from "@/components/ui/skeleton";

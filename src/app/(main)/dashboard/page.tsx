@@ -36,7 +36,10 @@ export default function DashboardPage() {
   if (loading || !obras || !lojas) {
     return (
        <div className="space-y-6">
-          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-8 w-full max-w-sm" />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+              <Skeleton className="h-[24rem] w-full" />
+          </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <Skeleton className="h-80 w-full" />
               <Skeleton className="h-80 w-full" />
