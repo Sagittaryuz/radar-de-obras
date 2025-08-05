@@ -19,6 +19,7 @@ import { Building2 } from 'lucide-react';
 type KanbanBoardProps = {
   obras: Obra[];
   sellers: User[];
+  defaultTab?: string;
 };
 
 const columns = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida'] as const;
@@ -30,7 +31,7 @@ function getInitials(name: string) {
     return initials.slice(0, 2).toUpperCase();
 }
 
-export function KanbanBoard({ obras: obrasProp, sellers }: KanbanBoardProps) {
+export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoardProps) {
   const [obras, setObras] = useState<Obra[]>(obrasProp);
   const [draggedItem, setDraggedItem] = useState<Obra | null>(null);
   const { toast } = useToast();
@@ -94,7 +95,7 @@ export function KanbanBoard({ obras: obrasProp, sellers }: KanbanBoardProps) {
   };
 
   return (
-    <Tabs defaultValue={columns[0]} className="w-full">
+    <Tabs defaultValue={defaultTab || columns[0]} className="w-full">
       <TabsList className="grid w-full grid-cols-6">
         {columns.map(status => (
           <TabsTrigger key={status} value={status}>{status}</TabsTrigger>

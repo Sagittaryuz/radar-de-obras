@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { KanbanBoard } from '@/components/obras/kanban-board';
 import { NewObraDialog } from '@/components/obras/new-obra-dialog';
 import { getObras, getUsers, getLojas } from '@/lib/mock-data';
@@ -15,7 +16,14 @@ export default function ObrasPage() {
   const [sellers, setSellers] = useState<User[]>([]);
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLoja, setSelectedLoja] = useState('all');
+  
+  const searchParams = useSearchParams();
+  const initialLoja = searchParams.get('lojaId') || 'all';
+  const initialStatus = searchParams.get('status') as Obra['status'] | null;
+  const initialStage = searchParams.get('stage') as Obra['stage'] | null;
+
+  const [selectedLoja, setSelectedLoja] = useState(initialLoja);
+  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,11 +47,21 @@ export default function ObrasPage() {
   }, []);
 
   const filteredObras = useMemo(() => {
-    if (selectedLoja === 'all') {
-      return initialObras;
+    let obras = initialObras;
+    if (selectedLoja !== 'all') {
+      obras = obras.filter(obra => obra.lojaId === selectedLoja);
     }
-    return initialObras.filter(obra => obra.lojaId === selectedLoja);
-  }, [initialObras, selectedLoja]);
+    if (initialStatus) {
+        obras = obras.filter(obra => obra.status === initialStatus);
+    }
+    if (initialStage) {
+        obras = obras.filter(obra => obra.stage === initialStage);
+    }
+    return obras;
+  }, [initialObras, selectedLoja, initialStatus, initialStage]);
+  
+  // Set default tab on Kanban board if status is provided
+  const defaultKanbanTab = initialStatus || undefined;
 
   if (loading) {
      return (
@@ -79,7 +97,7 @@ export default function ObrasPage() {
         </div>
         <NewObraDialog />
       </div>
-      <KanbanBoard obras={filteredObras} sellers={sellers} />
+      <KanbanBoard obras={filteredObras} sellers={sellers} defaultTab={defaultKanbanTab} />
     </div>
   );
 }

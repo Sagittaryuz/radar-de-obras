@@ -7,6 +7,7 @@ import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Obra, Loja } from '@/lib/mock-data';
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface DashboardChartsProps {
   allObras: Obra[];
@@ -34,11 +35,20 @@ const obraStatuses: Obra['status'][] = ['Entrada', 'Triagem', 'Atribuída', 'Em 
 
 export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   const [selectedLoja, setSelectedLoja] = useState('all');
+  const router = useRouter();
 
   const lojaMap = useMemo(() => {
     if (!allLojas) return {};
     return allLojas.reduce((acc, loja) => {
       acc[loja.id] = loja.name;
+      return acc;
+    }, {} as Record<string, string>);
+  }, [allLojas]);
+  
+  const lojaIdMap = useMemo(() => {
+    if (!allLojas) return {};
+    return allLojas.reduce((acc, loja) => {
+      acc[loja.name] = loja.id;
       return acc;
     }, {} as Record<string, string>);
   }, [allLojas]);
@@ -90,6 +100,38 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   }, [obras]);
   
 
+  const handleBarClick = (data: any, filterKey: 'status' | 'stage') => {
+    if (!data || !data.activePayload || data.activePayload.length === 0) return;
+    const payload = data.activePayload[0].payload;
+    const filterValue = payload.name;
+    const query = new URLSearchParams();
+    query.append(filterKey, filterValue);
+    if(selectedLoja !== 'all') {
+        query.append('lojaId', selectedLoja)
+    }
+    router.push(`/obras?${query.toString()}`);
+  }
+
+  const handleSummaryBarClick = (data: any) => {
+    if (!data || !data.activePayload || data.activePayload.length === 0) return;
+    
+    // The clicked bar's dataKey is the status
+    const status = data.activePayload[0].dataKey;
+    // The category on the x-axis is the loja name
+    const lojaName = data.activeLabel;
+    
+    const lojaId = lojaIdMap[lojaName];
+
+    if (!lojaId || !status) return;
+
+    const query = new URLSearchParams();
+    query.append('lojaId', lojaId);
+    query.append('status', status);
+
+    router.push(`/obras?${query.toString()}`);
+  };
+
+
   if (!allObras || !allLojas) {
     return null; // Or a loading indicator
   }
@@ -99,18 +141,18 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
         <Card className="col-span-full">
             <CardHeader>
               <CardTitle className="font-headline">Resumo de Obras por Loja</CardTitle>
-              <CardDescription>Distribuição de obras por status em cada loja.</CardDescription>
+              <CardDescription>Distribuição de obras por status em cada loja. Clique para filtrar.</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer config={{}} className="h-80 w-full">
-                <BarChart data={summaryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <BarChart data={summaryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} onClick={handleSummaryBarClick}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
                   <YAxis allowDecimals={false} />
                   <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
                   <Legend />
                   {obraStatuses.map(status => (
-                    <Bar key={`summary-${status}`} dataKey={status} stackId="a" fill={statusColors[status]} radius={[4, 4, 0, 0]} />
+                    <Bar key={`summary-${status}`} dataKey={status} stackId="a" fill={statusColors[status]} radius={[4, 4, 0, 0]} className='cursor-pointer' />
                   ))}
                 </BarChart>
               </ChartContainer>
@@ -144,14 +186,14 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
             </CardHeader>
             <CardContent>
               <ChartContainer config={{}} className="h-64 w-full">
-                <BarChart data={obrasByStatus} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <BarChart data={obrasByStatus} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} onClick={(data) => handleBarClick(data, 'status')}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
                   <YAxis allowDecimals={false} />
                   <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
                   <Bar dataKey="value" radius={4}>
                     {obrasByStatus.map((entry) => (
-                      <Cell key={entry.name} fill={entry.fill} />
+                      <Cell key={entry.name} fill={entry.fill} className='cursor-pointer'/>
                     ))}
                   </Bar>
                 </BarChart>
@@ -167,9 +209,18 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
               <ChartContainer config={{}} className="h-64 w-full">
                 <PieChart>
                   <Tooltip content={<ChartTooltipContent nameKey="name" />} />
-                  <Pie data={obrasByStage} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                  <Pie 
+                    data={obrasByStage} 
+                    dataKey="value" 
+                    nameKey="name" 
+                    cx="50%" 
+                    cy="50%" 
+                    outerRadius={80} 
+                    label
+                    onClick={(data) => handleBarClick({ activePayload: [{ payload: data }] } as any, 'stage')}
+                    >
                     {obrasByStage.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} className='cursor-pointer' />
                     ))}
                   </Pie>
                   <Legend />
