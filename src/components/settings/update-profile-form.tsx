@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { User } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser } from '@/lib/auth';
+import { updateUser } from '@/lib/actions';
 import { useTransition, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -70,7 +70,7 @@ export default function UpdateProfileForm({ user }: { user: User }) {
                 });
             }
 
-            const result = await updateUser(data.name, avatarDataUrl);
+            const result = await updateUser(user.id, data.name, avatarDataUrl);
 
             if (result.error) {
               throw new Error(result.error);

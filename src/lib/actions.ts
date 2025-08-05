@@ -259,7 +259,10 @@ export async function getCoordinatesForAddress(address: string): Promise<{lat: n
       }
 }
 
-export async function updateUserProfile(userId: string, name: string, avatarDataUrl?: string) {
+// Since auth is mocked, we need a way to update the "user" profile.
+// This will update the user record in Firestore. The mock getSession will
+// need to be updated separately if we want the change to be reflected immediately.
+export async function updateUser(userId: string, name: string, avatarDataUrl?: string) {
     try {
         const userRef = dbAdmin.collection('users').doc(userId);
         const updateData: { name: string; avatar?: string } = { name };
@@ -286,7 +289,10 @@ export async function updateUserProfile(userId: string, name: string, avatarData
 
         await userRef.update(updateData);
 
+        // We need to revalidate paths that show user info
         revalidatePath('/settings');
+        revalidatePath('/(main)', 'layout');
+
         return { success: true, updatedAvatarUrl: updateData.avatar };
 
     } catch (error) {
