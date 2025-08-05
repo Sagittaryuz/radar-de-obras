@@ -13,9 +13,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { loginAction } from '../actions';
 import { Loader2 } from 'lucide-react';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { app } from '@/lib/firebase';
-import type { User } from '@/lib/mock-data';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
@@ -37,64 +34,22 @@ export function LoginForm() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    console.log('Login attempt with data:', data);
     startTransition(async () => {
-      try {
-        console.log('Attempting Firebase sign-in...');
-        const auth = getAuth(app);
-        const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-        const firebaseUser = userCredential.user;
-        console.log('Firebase sign-in successful.');
+      const result = await loginAction(data);
 
-        if (!firebaseUser) {
-           throw new Error("Usuário não encontrado no Firebase.");
-        }
-
-        const userPayload: User = {
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName || 'Usuário',
-            email: firebaseUser.email!,
-            avatar: firebaseUser.photoURL || '',
-            role: firebaseUser.email === 'marcos.pires@jcruzeiro.com' ? 'Admin' : 'Vendedor'
-        };
-
-        console.log('Calling login server action...');
-        const result = await loginAction(userPayload);
-        console.log('Server action result:', result);
-
-        if (result?.error) {
-          toast({
-            variant: 'destructive',
-            title: 'Erro de Login',
-            description: result.error,
-          });
-        } else {
-          toast({
-            title: 'Login bem-sucedido!',
-            description: 'Redirecionando para o dashboard...',
-          });
-          // Force a full page reload to ensure session is read correctly
-          window.location.href = '/dashboard';
-        }
-      } catch (error: any) {
-        console.error('Authentication Error:', error);
-        let errorMessage = 'Ocorreu um erro. Verifique suas credenciais.';
-        // Firebase Auth error codes
-        switch (error.code) {
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-            case 'auth/invalid-credential':
-                errorMessage = 'Email ou senha inválidos.';
-                break;
-            case 'auth/invalid-email':
-                errorMessage = 'O formato do email é inválido.';
-                break;
-        }
+      if (result?.error) {
         toast({
           variant: 'destructive',
-          title: 'Erro de Autenticação',
-          description: errorMessage,
+          title: 'Erro de Login',
+          description: result.error,
         });
+      } else {
+        toast({
+          title: 'Login bem-sucedido!',
+          description: 'Redirecionando para o dashboard...',
+        });
+        // Force a full page reload to ensure session is read correctly
+        window.location.href = '/dashboard';
       }
     });
   };

@@ -2,40 +2,61 @@
 'use server';
 
 import { z } from 'zod';
-import { login, logout } from '@/lib/auth'; // Import logout
+import { login, logout } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { getUserByEmail } from '@/lib/mock-data';
 import type { User } from '@/lib/mock-data';
 
-// This schema validates the user data coming from the client form.
-const userSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
+
+const loginSchema = z.object({
   email: z.string().email(),
-  avatar: z.string().url().or(z.literal('')),
-  role: z.enum(['Vendedor', 'Admin']),
+  password: z.string(),
 });
 
-export async function loginAction(userData: User) {
-  // 1. Validate the user data received from the client.
-  const validatedUser = userSchema.safeParse(userData);
-
-  if (!validatedUser.success) {
-    console.error("Invalid user data received by server action:", validatedUser.error);
-    return { error: 'Dados do usuário inválidos.' };
+export async function loginAction(credentials: unknown) {
+  const validatedCredentials = loginSchema.safeParse(credentials);
+  if (!validatedCredentials.success) {
+    return { error: 'Credenciais inválidas.' };
   }
 
-  // 2. The user is already authenticated by Firebase on the client.
-  // We just need to create the session cookie.
+  const { email, password } = validatedCredentials.data;
+
   try {
-    await login(validatedUser.data);
+    const response = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          returnSecureToken: true,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || result.error) {
+      console.error('Firebase Auth Error:', result.error);
+      return { error: 'Email ou senha inválidos.' };
+    }
+
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return { error: 'Usuário não encontrado no banco de dados do aplicativo.' };
+    }
+    
+    await login(user);
+
   } catch (error) {
-    // This will now have the detailed error from the auth.ts file
-    return { error: 'Ocorreu um erro no servidor ao criar a sessão.' };
+    console.error('Login Action Error:', error);
+    return { error: 'Ocorreu um erro no servidor durante o login.' };
   }
 
-  // 3. The 'redirect' function should not be called here.
-  // The client will handle the redirect after this action completes.
-  // This is a more robust pattern.
   return { success: true };
 }
 
