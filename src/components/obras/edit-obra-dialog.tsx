@@ -32,29 +32,31 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  // Unified form state
   const [formData, setFormData] = useState({
-      client: '',
-      phone: '',
-      rua: '',
-      numero: '',
-      bairro: '',
-      unidade: '',
-      etapa: '',
+    clientName: '',
+    contactPhone: '',
+    street: '',
+    number: '',
+    neighborhood: '',
+    lojaId: '',
+    stage: '',
   });
 
   const [lojas, setLojas] = useState<Loja[]>([]);
 
+  // Effect to sync form state when `obra` prop changes or dialog opens
   useEffect(() => {
     if (obra) {
-        setFormData({
-            client: obra.clientName || '',
-            phone: obra.contactPhone || '',
-            rua: obra.street || '',
-            numero: obra.number || '',
-            bairro: obra.neighborhood || '',
-            unidade: obra.lojaId || '',
-            etapa: obra.stage || '',
-        });
+      setFormData({
+        clientName: obra.clientName || '',
+        contactPhone: obra.contactPhone || '',
+        street: obra.street || '',
+        number: obra.number || '',
+        neighborhood: obra.neighborhood || '',
+        lojaId: obra.lojaId || '',
+        stage: obra.stage || '',
+      });
     }
 
     if (open) {
@@ -71,22 +73,23 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSelectChange = (id: string, value: string) => {
+  const handleSelectChange = (id: 'lojaId' | 'stage', value: string) => {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
+    console.log('[EditDialog] handleSubmit triggered.');
+
     const payload: Partial<Obra> = {
-        clientName: formData.client,
-        contactPhone: formData.phone,
-        street: formData.rua,
-        number: formData.numero,
-        neighborhood: formData.bairro,
-        lojaId: formData.unidade,
-        stage: formData.etapa as Obra['stage'],
+        clientName: formData.clientName,
+        contactPhone: formData.contactPhone,
+        street: formData.street,
+        number: formData.number,
+        neighborhood: formData.neighborhood,
+        lojaId: formData.lojaId,
+        stage: formData.stage as Obra['stage'],
     };
 
     console.log('[EditDialog] Submitting payload to server action:', payload);
@@ -129,35 +132,35 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <div>
-              <Label htmlFor="client">Cliente</Label>
-              <Input id="client" placeholder="Nome do cliente ou construtora" value={formData.client} onChange={handleInputChange} />
+              <Label htmlFor="clientName">Cliente</Label>
+              <Input id="clientName" placeholder="Nome do cliente ou construtora" value={formData.clientName} onChange={handleInputChange} />
             </div>
 
             <div>
-              <Label htmlFor="phone">Telefone de Contato</Label>
-              <Input id="phone" placeholder="(XX) XXXXX-XXXX" value={formData.phone} onChange={handleInputChange} />
+              <Label htmlFor="contactPhone">Telefone de Contato</Label>
+              <Input id="contactPhone" placeholder="(XX) XXXXX-XXXX" value={formData.contactPhone} onChange={handleInputChange} />
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div className='col-span-2'>
-                <Label htmlFor="rua">Rua</Label>
-                <Input id="rua" placeholder="Ex: Av. Brasil" value={formData.rua} onChange={handleInputChange} />
+                <Label htmlFor="street">Rua</Label>
+                <Input id="street" placeholder="Ex: Av. Brasil" value={formData.street} onChange={handleInputChange} />
               </div>
                <div>
-                <Label htmlFor="numero">N.º</Label>
-                <Input id="numero" placeholder="Ex: 123" value={formData.numero} onChange={handleInputChange} />
+                <Label htmlFor="number">N.º</Label>
+                <Input id="number" placeholder="Ex: 123" value={formData.number} onChange={handleInputChange} />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="bairro">Bairro</Label>
-              <Input id="bairro" placeholder="Ex: Centro" value={formData.bairro} onChange={handleInputChange} />
+              <Label htmlFor="neighborhood">Bairro</Label>
+              <Input id="neighborhood" placeholder="Ex: Centro" value={formData.neighborhood} onChange={handleInputChange} />
             </div>
 
             <div>
-              <Label htmlFor="unidade">Unidade J. Cruzeiro</Label>
-              <Select onValueChange={(value) => handleSelectChange('unidade', value)} value={formData.unidade}>
-                  <SelectTrigger id="unidade">
+              <Label htmlFor="lojaId">Unidade J. Cruzeiro</Label>
+              <Select onValueChange={(value) => handleSelectChange('lojaId', value)} value={formData.lojaId}>
+                  <SelectTrigger id="lojaId">
                       <SelectValue placeholder="Selecione a unidade responsável" />
                   </SelectTrigger>
                   <SelectContent>
@@ -169,9 +172,9 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
             </div>
 
             <div>
-              <Label htmlFor="etapa">Etapa da Obra</Label>
-              <Select onValueChange={(value) => handleSelectChange('etapa', value)} value={formData.etapa}>
-                  <SelectTrigger id="etapa">
+              <Label htmlFor="stage">Etapa da Obra</Label>
+              <Select onValueChange={(value) => handleSelectChange('stage', value)} value={formData.stage}>
+                  <SelectTrigger id="stage">
                       <SelectValue placeholder="Selecione a etapa da obra" />
                   </SelectTrigger>
                   <SelectContent>
