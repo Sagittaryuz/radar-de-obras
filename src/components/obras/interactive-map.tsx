@@ -28,6 +28,7 @@ const InteractiveMapComponent = memo(function InteractiveMapComponent({ address 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: ['geocoding'], // Ensure geocoding library is loaded
   });
 
   const [center, setCenter] = useState<Coordinates | null>(null);
