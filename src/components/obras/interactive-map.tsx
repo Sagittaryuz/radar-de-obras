@@ -43,21 +43,21 @@ function InteractiveMapComponent({ address }: InteractiveMapProps) {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
             address
-          )}&format=json&limit=1`
+          )}&key=${GOOGLE_MAPS_API_KEY}`
         );
         const data = await response.json();
 
-        if (data && data.length > 0) {
-          const { lat, lon } = data[0];
-          setCenter({ lat: parseFloat(lat), lng: parseFloat(lon) });
+        if (data.status === 'OK' && data.results && data.results.length > 0) {
+          const { lat, lng } = data.results[0].geometry.location;
+          setCenter({ lat, lng });
         } else {
-          console.error(`Geocoding failed for address: ${address}`);
+          console.error(`Geocoding failed for address: ${address}`, data.status, data.error_message);
           toast({
             variant: 'destructive',
             title: 'Erro de Localização',
-            description: 'Não foi possível encontrar as coordenadas para o endereço fornecido.',
+            description: data.error_message || 'Não foi possível encontrar as coordenadas para o endereço fornecido.',
           });
           setCenter(null);
         }
@@ -74,14 +74,16 @@ function InteractiveMapComponent({ address }: InteractiveMapProps) {
       }
     };
 
-    geocodeAddress();
-  }, [address, toast]);
+    if (isLoaded) {
+      geocodeAddress();
+    }
+  }, [address, toast, isLoaded]);
 
   if (loadError) {
     return (
         <div className="flex flex-col items-center justify-center h-full bg-destructive/10 rounded-md p-4 text-center">
-            <p className="text-sm font-semibold text-destructive">Erro ao carregar o mapa.</p>
-            <p className="text-xs text-destructive/80">Verifique se a "Maps JavaScript API" está ativada no seu projeto Google Cloud.</p>
+            <p className="text-sm font-semibold text-destructive">Erro ao carregar o script do mapa.</p>
+            <p className="text-xs text-destructive/80">Verifique a console do navegador e as configurações da sua chave de API no Google Cloud.</p>
         </div>
     );
   }
@@ -92,8 +94,8 @@ function InteractiveMapComponent({ address }: InteractiveMapProps) {
 
   if (!center) {
      return (
-        <div className="flex items-center justify-center h-full bg-muted rounded-md">
-            <p className="text-sm text-muted-foreground">Endereço não localizado.</p>
+        <div className="flex items-center justify-center h-full bg-muted rounded-md p-4 text-center">
+            <p className="text-sm text-muted-foreground">Endereço não localizado ou inválido.</p>
         </div>
      );
   }
