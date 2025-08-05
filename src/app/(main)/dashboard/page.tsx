@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { getObras, getLojas } from '@/lib/mock-data';
-import { DashboardCharts } from '@/components/dashboard/charts';
+import { DashboardTabs } from '@/components/dashboard/dashboard-tabs';
 import type { Obra, Loja } from '@/lib/mock-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -51,7 +51,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <DashboardCharts allObras={obras} allLojas={lojas} />
+      <DashboardTabs allObras={obras} allLojas={lojas} />
     </div>
   );
 }

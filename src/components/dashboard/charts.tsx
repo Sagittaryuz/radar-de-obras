@@ -104,6 +104,24 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   
   return (
     <>
+      <div className="flex justify-between items-center mb-6">
+          <h1 className="font-headline text-3xl font-bold tracking-tight">
+            {selectedLoja === 'all' ? 'Dashboard Geral' : `Dashboard ${lojaMap[selectedLoja]}`}
+          </h1>
+          <div className="w-full max-w-xs">
+               <Select value={selectedLoja} onValueChange={setSelectedLoja}>
+                  <SelectTrigger>
+                      <SelectValue placeholder="Filtrar por loja..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">Todas as Lojas</SelectItem>
+                      {allLojas.map(loja => (
+                          <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+          </div>
+      </div>
       <div className="space-y-6">
         <Card className="col-span-full">
             <CardHeader>
@@ -127,25 +145,6 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
               </ChartContainer>
             </CardContent>
         </Card>
-
-        <div className="flex justify-between items-center">
-            <h1 className="font-headline text-3xl font-bold tracking-tight">
-              {selectedLoja === 'all' ? 'Dashboard Geral' : `Dashboard ${lojaMap[selectedLoja]}`}
-            </h1>
-            <div className="w-full max-w-xs">
-                 <Select value={selectedLoja} onValueChange={setSelectedLoja}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Filtrar por loja..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todas as Lojas</SelectItem>
-                        {allLojas.map(loja => (
-                            <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card>
@@ -212,3 +211,4 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
     </>
   );
 }
+
