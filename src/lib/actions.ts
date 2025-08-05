@@ -4,15 +4,19 @@
 import { revalidatePath } from 'next/cache';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import type { Obra } from './mock-data';
+import { z } from 'zod';
 
 // Initialize Firebase Admin SDK if not already initialized
 if (getApps().length === 0) {
   initializeApp({
     projectId: "jcr-radar",
+    storageBucket: "jcr-radar.firebasestorage.app",
   });
 }
 const dbAdmin = getFirestore();
+const storageAdmin = getStorage();
 
 export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: string[]) {
   try {
@@ -27,6 +31,80 @@ export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: str
     return { error: 'Falha ao atualizar os bairros. Tente novamente.' };
   }
 }
+
+const ObraSchema = z.object({
+  clientName: z.string().min(1, "Nome do cliente é obrigatório."),
+  contactPhone: z.string().optional(),
+  street: z.string().min(1, "Rua é obrigatória."),
+  number: z.string().min(1, "Número é obrigatório."),
+  neighborhood: z.string().min(1, "Bairro é obrigatório."),
+  lojaId: z.string().min(1, "Unidade é obrigatória."),
+  stage: z.enum(['Fundação', 'Alvenaria', 'Acabamento', 'Pintura', 'Telhado']),
+  photoDataUrl: z.string().optional(),
+});
+
+
+export async function addObra(formData: FormData) {
+    const rawData = Object.fromEntries(formData.entries());
+
+    const validatedFields = ObraSchema.safeParse(rawData);
+
+    if (!validatedFields.success) {
+        console.error("Validation failed", validatedFields.error.flatten().fieldErrors);
+        return {
+            error: "Dados inválidos. Verifique os campos.",
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
+    }
+    
+    const { photoDataUrl, ...obraData } = validatedFields.data;
+    let finalPhotoUrl = '';
+
+    try {
+        if (photoDataUrl) {
+            const matches = photoDataUrl.match(/^data:(.+);base64,(.+)$/);
+            if (!matches) {
+                throw new Error("Formato de imagem inválido.");
+            }
+            
+            const mimeType = matches[1];
+            const base64Data = matches[2];
+            const buffer = Buffer.from(base64Data, 'base64');
+            const fileName = `obras/${Date.now()}-${Math.round(Math.random() * 1E9)}.jpg`;
+            const file = storageAdmin.bucket().file(fileName);
+
+            await file.save(buffer, {
+                metadata: { contentType: mimeType },
+                public: true, // Make file publicly readable
+            });
+
+            // The public URL format is https://storage.googleapis.com/<bucket-name>/<file-path>
+            finalPhotoUrl = `https://storage.googleapis.com/${storageAdmin.bucket().name}/${fileName}`;
+        }
+
+        const newObraPayload = {
+            ...obraData,
+            address: `${obraData.street}, ${obraData.number}, ${obraData.neighborhood}`,
+            status: 'Entrada',
+            sellerId: null,
+            photoUrls: finalPhotoUrl ? [finalPhotoUrl] : [],
+            createdAt: new Date().toISOString(),
+        };
+
+        const docRef = await dbAdmin.collection('obras').add(newObraPayload);
+
+        revalidatePath('/obras');
+        revalidatePath('/dashboard');
+
+        return { success: true, message: `Obra "${obraData.clientName}" criada com sucesso!`, id: docRef.id };
+
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+        return { error: `Falha ao salvar a obra. Detalhes: ${errorMessage}` };
+    }
+}
+
 
 export async function updateObra(obraId: string, payload: Partial<Obra>) {
   console.log(`[Action: updateObra] Received request for obraId: ${obraId}`);
@@ -95,6 +173,27 @@ export async function updateObra(obraId: string, payload: Partial<Obra>) {
 export async function deleteObra(obraId: string) {
   try {
     const obraRef = dbAdmin.collection('obras').doc(obraId);
+    // Optional: Delete associated photos from storage before deleting the document
+    const docSnap = await obraRef.get();
+    if (docSnap.exists) {
+        const data = docSnap.data() as Obra;
+        if (data.photoUrls && data.photoUrls.length > 0) {
+            const bucket = storageAdmin.bucket();
+            for (const url of data.photoUrls) {
+                try {
+                    // Extract file path from URL
+                    const filePath = new URL(url).pathname.split('/').slice(3).join('/');
+                    if (filePath) {
+                       await bucket.file(filePath).delete();
+                    }
+                } catch (storageError) {
+                    console.error(`Failed to delete photo from storage: ${url}`, storageError);
+                    // Don't block document deletion if photo deletion fails
+                }
+            }
+        }
+    }
+    
     await obraRef.delete();
     revalidatePath('/obras');
     revalidatePath('/dashboard');

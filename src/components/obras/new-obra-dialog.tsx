@@ -20,11 +20,12 @@ import { PlusCircle, MapPin, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja } from '@/lib/mock-data';
 import { getLojas } from '@/lib/mock-data';
-import { addDoc, collection } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { addObra } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export function NewObraDialog() {
   const { toast } = useToast();
@@ -41,9 +42,12 @@ export function NewObraDialog() {
   const [bairro, setBairro] = useState('');
   const [unidade, setUnidade] = useState('');
   const [etapa, setEtapa] = useState('');
-  const [fotos, setFotos] = useState<File[]>([]);
   const [lojas, setLojas] = useState<Loja[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  
+  // State for photo preview and data
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoDataUrl, setPhotoDataUrl] = useState<string>('');
+
 
   // Fetch Lojas when the dialog is about to open or is open
   useEffect(() => {
@@ -54,23 +58,19 @@ export function NewObraDialog() {
       };
       fetchLojas();
     }
-     // Cleanup previews on unmount
-    return () => {
-      previews.forEach(preview => URL.revokeObjectURL(preview));
-    };
   }, [open]);
 
-  useEffect(() => {
-    // Create previews whenever 'fotos' state changes
-    const newPreviews = fotos.map(file => URL.createObjectURL(file));
-    setPreviews(newPreviews);
-
-    // Cleanup function
-    return () => {
-      newPreviews.forEach(preview => URL.revokeObjectURL(preview));
-    };
-  }, [fotos]);
-
+  const resetForm = () => {
+    setClient('');
+    setPhone('');
+    setRua('');
+    setNumero('');
+    setBairro('');
+    setUnidade('');
+    setEtapa('');
+    setPhotoPreview(null);
+    setPhotoDataUrl('');
+  };
 
   const handleLocation = () => {
     setIsLocating(true);
@@ -119,63 +119,56 @@ export function NewObraDialog() {
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files);
-      setFotos(prevFotos => [...prevFotos, ...newFiles]);
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast({
+          variant: 'destructive',
+          title: 'Arquivo muito grande',
+          description: `O tamanho máximo da foto é ${MAX_FILE_SIZE_MB}MB.`,
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(URL.createObjectURL(file));
+        setPhotoDataUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveFile = (index: number) => {
-    setFotos(prevFotos => prevFotos.filter((_, i) => i !== index));
+  const handleRemoveFile = () => {
+    setPhotoPreview(null);
+    setPhotoDataUrl('');
   };
-
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    
+    // Add photo data to form data if it exists
+    if (photoDataUrl) {
+      formData.set('photoDataUrl', photoDataUrl);
+    }
+
     startTransition(async () => {
-        try {
-            // 1. Upload photos to Firebase Storage
-            const photoUrls = await Promise.all(
-                fotos.map(async (file) => {
-                    const storageRef = ref(storage, `obras/${Date.now()}-${file.name}`);
-                    await uploadBytes(storageRef, file);
-                    const downloadURL = await getDownloadURL(storageRef);
-                    return downloadURL;
-                })
-            );
-
-            // 2. Create obra document data
-            const newObra = {
-                clientName: client,
-                contactPhone: phone,
-                street: rua,
-                number: numero,
-                neighborhood: bairro,
-                address: `${rua}, ${numero}, ${bairro}`,
-                lojaId: unidade,
-                stage: etapa,
-                status: 'Entrada', // Initial status
-                sellerId: null,
-                photoUrls: photoUrls, // Add the array of photo URLs
-            };
-
-            // 3. Save to Firestore
-            await addDoc(collection(db, 'obras'), newObra);
-
-            toast({
-                title: "Obra Criada",
-                description: "A nova prospecção foi registrada com sucesso.",
-            });
-            setOpen(false);
-            router.refresh(); // Refresh the page to show the new obra
-        } catch (e) {
-            console.error("Error adding document: ", e);
-            toast({
-                variant: 'destructive',
-                title: "Erro ao Salvar",
-                description: "Não foi possível salvar a obra. Verifique o console para mais detalhes.",
-            });
-        }
+      const result = await addObra(formData);
+      if (result.success) {
+        toast({
+          title: "Obra Criada",
+          description: result.message,
+        });
+        setOpen(false);
+        resetForm();
+        router.refresh();
+      } else {
+        toast({
+          variant: 'destructive',
+          title: "Erro ao Salvar",
+          description: result.error || "Ocorreu um erro desconhecido.",
+        });
+      }
     });
   };
 
@@ -202,35 +195,35 @@ export function NewObraDialog() {
             </Button>
             
             <div>
-              <Label htmlFor="client">Cliente</Label>
-              <Input id="client" placeholder="Nome do cliente ou construtora" required value={client} onChange={e => setClient(e.target.value)} />
+              <Label htmlFor="clientName">Cliente</Label>
+              <Input id="clientName" name="clientName" placeholder="Nome do cliente ou construtora" required value={client} onChange={e => setClient(e.target.value)} />
             </div>
 
             <div>
-              <Label htmlFor="phone">Telefone de Contato</Label>
-              <Input id="phone" placeholder="(XX) XXXXX-XXXX" value={phone} onChange={e => setPhone(e.target.value)} />
+              <Label htmlFor="contactPhone">Telefone de Contato</Label>
+              <Input id="contactPhone" name="contactPhone" placeholder="(XX) XXXXX-XXXX" value={phone} onChange={e => setPhone(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div className='col-span-2'>
-                <Label htmlFor="rua">Rua</Label>
-                <Input id="rua" placeholder="Ex: Av. Brasil" required value={rua} onChange={e => setRua(e.target.value)} />
+                <Label htmlFor="street">Rua</Label>
+                <Input id="street" name="street" placeholder="Ex: Av. Brasil" required value={rua} onChange={e => setRua(e.target.value)} />
               </div>
                <div>
-                <Label htmlFor="numero">N.º</Label>
-                <Input id="numero" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value)} />
+                <Label htmlFor="number">N.º</Label>
+                <Input id="number" name="number" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value)} />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="bairro">Bairro</Label>
-              <Input id="bairro" placeholder="Ex: Centro" required value={bairro} onChange={e => setBairro(e.target.value)} />
+              <Label htmlFor="neighborhood">Bairro</Label>
+              <Input id="neighborhood" name="neighborhood" placeholder="Ex: Centro" required value={bairro} onChange={e => setBairro(e.target.value)} />
             </div>
 
             <div>
-              <Label htmlFor="unidade">Unidade J. Cruzeiro</Label>
-              <Select required onValueChange={setUnidade} value={unidade}>
-                  <SelectTrigger id="unidade">
+              <Label htmlFor="lojaId">Unidade J. Cruzeiro</Label>
+              <Select required name="lojaId" onValueChange={setUnidade} value={unidade}>
+                  <SelectTrigger id="lojaId">
                       <SelectValue placeholder="Selecione a unidade responsável" />
                   </SelectTrigger>
                   <SelectContent>
@@ -243,7 +236,7 @@ export function NewObraDialog() {
 
             <div>
               <Label htmlFor="stage">Etapa da Obra</Label>
-              <Select required onValueChange={setEtapa} value={etapa}>
+              <Select required name="stage" onValueChange={setEtapa} value={etapa}>
                   <SelectTrigger id="stage">
                       <SelectValue placeholder="Selecione a etapa da obra" />
                   </SelectTrigger>
@@ -258,40 +251,34 @@ export function NewObraDialog() {
             </div>
 
             <div>
-              <Label htmlFor="fotos">Fotos da Fachada</Label>
-              <Input id="fotos" type="file" accept="image/*" multiple onChange={handleFileChange} />
+              <Label htmlFor="photo">Foto da Fachada</Label>
+              <Input id="photo" name="photo" type="file" accept="image/*" onChange={handleFileChange} />
             </div>
 
-             {previews.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                    {previews.map((preview, index) => (
-                        <div key={index} className="relative">
-                            <Image
-                                src={preview}
-                                alt={`Pré-visualização da imagem ${index + 1}`}
-                                width={100}
-                                height={100}
-                                className="rounded-md object-cover aspect-square"
-                            />
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                onClick={() => handleRemoveFile(index)}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
+             {photoPreview && (
+                <div className="relative w-fit">
+                    <Image
+                        src={photoPreview}
+                        alt="Pré-visualização da imagem"
+                        width={100}
+                        height={100}
+                        className="rounded-md object-cover aspect-square"
+                    />
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                        onClick={handleRemoveFile}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
                 </div>
              )}
-
-
           </div>
           <DialogFooter>
             <DialogClose asChild>
-                <Button type="button" variant="secondary" disabled={isSaving}>
+                <Button type="button" variant="secondary" disabled={isSaving} onClick={resetForm}>
                     Cancelar
                 </Button>
             </DialogClose>
