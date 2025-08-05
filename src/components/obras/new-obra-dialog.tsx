@@ -16,16 +16,30 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, MapPin, X, Loader2 } from 'lucide-react';
+import { PlusCircle, MapPin, X, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Loja } from '@/lib/mock-data';
+import type { Loja, ObraContact, ContactType } from '@/lib/mock-data';
 import { getLojas } from '@/lib/mock-data';
 import { addObra } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Textarea } from '../ui/textarea';
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+const contactTypes: ContactType[] = [
+  'Dono da obra',
+  'Mestre de Obras',
+  'Engenheiro/Arquiteto',
+  'Pedreiro',
+  'Pintor',
+  'Eletricista',
+  'Encanador',
+  'Gesseiro',
+  'Carpinteiro',
+  'Marceneiro',
+];
 
 export function NewObraDialog() {
   const { toast } = useToast();
@@ -35,8 +49,8 @@ export function NewObraDialog() {
   const router = useRouter();
 
   // States for form fields
-  const [client, setClient] = useState('');
-  const [phone, setPhone] = useState('');
+  const [details, setDetails] = useState('');
+  const [contacts, setContacts] = useState<Partial<ObraContact>[]>([{ type: undefined, phone: '' }]);
   const [rua, setRua] = useState('');
   const [numero, setNumero] = useState('');
   const [bairro, setBairro] = useState('');
@@ -45,8 +59,8 @@ export function NewObraDialog() {
   const [lojas, setLojas] = useState<Loja[]>([]);
   
   // State for photo preview and data
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoDataUrl, setPhotoDataUrl] = useState<string>('');
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([]);
 
 
   // Fetch Lojas when the dialog is about to open or is open
@@ -61,15 +75,15 @@ export function NewObraDialog() {
   }, [open]);
 
   const resetForm = () => {
-    setClient('');
-    setPhone('');
+    setDetails('');
+    setContacts([{ type: undefined, phone: '' }]);
     setRua('');
     setNumero('');
     setBairro('');
     setUnidade('');
     setEtapa('');
-    setPhotoPreview(null);
-    setPhotoDataUrl('');
+    setPhotoPreviews([]);
+    setPhotoDataUrls([]);
   };
 
   const handleLocation = () => {
@@ -117,40 +131,81 @@ export function NewObraDialog() {
       { enableHighAccuracy: true }
     );
   };
+  
+  const handleContactChange = (index: number, field: keyof ObraContact, value: string) => {
+    const newContacts = [...contacts];
+    newContacts[index] = { ...newContacts[index], [field]: value };
+    setContacts(newContacts);
+  };
+
+  const addContact = () => {
+    setContacts([...contacts, { type: undefined, phone: '' }]);
+  };
+
+  const removeContact = (index: number) => {
+    const newContacts = contacts.filter((_, i) => i !== index);
+    setContacts(newContacts);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > MAX_FILE_SIZE_BYTES) {
-        toast({
-          variant: 'destructive',
-          title: 'Arquivo muito grande',
-          description: `O tamanho máximo da foto é ${MAX_FILE_SIZE_MB}MB.`,
-        });
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(URL.createObjectURL(file));
-        setPhotoDataUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = event.target.files;
+    if (files) {
+      const newPreviews: string[] = [];
+      const newDataUrls: string[] = [];
+      const fileList = Array.from(files);
+
+      let hasError = false;
+      fileList.forEach(file => {
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+          toast({
+            variant: 'destructive',
+            title: 'Arquivo muito grande',
+            description: `O arquivo ${file.name} excede o tamanho máximo de ${MAX_FILE_SIZE_MB}MB.`,
+          });
+          hasError = true;
+        }
+      });
+      if(hasError) return;
+
+
+      fileList.forEach(file => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            newPreviews.push(URL.createObjectURL(file));
+            newDataUrls.push(reader.result as string);
+            if(newPreviews.length === fileList.length) {
+              setPhotoPreviews(prev => [...prev, ...newPreviews]);
+              setPhotoDataUrls(prev => [...prev, ...newDataUrls]);
+            }
+          };
+          reader.readAsDataURL(file);
+      });
     }
   };
 
-  const handleRemoveFile = () => {
-    setPhotoPreview(null);
-    setPhotoDataUrl('');
+  const handleRemoveFile = (index: number) => {
+    setPhotoPreviews(previews => previews.filter((_, i) => i !== index));
+    setPhotoDataUrls(dataUrls => dataUrls.filter((_, i) => i !== index));
   };
+  
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData();
     
-    // Add photo data to form data if it exists
-    if (photoDataUrl) {
-      formData.set('photoDataUrl', photoDataUrl);
-    }
+    formData.append('street', rua);
+    formData.append('number', numero);
+    formData.append('neighborhood', bairro);
+    formData.append('details', details);
+    formData.append('lojaId', unidade);
+    formData.append('stage', etapa);
+
+    const validContacts = contacts.filter(c => c.type && c.phone);
+    formData.append('contacts', JSON.stringify(validContacts));
+    
+    photoDataUrls.forEach((url) => {
+        formData.append('photoDataUrls', url);
+    });
 
     startTransition(async () => {
       const result = await addObra(formData);
@@ -180,29 +235,57 @@ export function NewObraDialog() {
           Nova Obra
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-headline">Nova Prospecção de Obra</DialogTitle>
           <DialogDescription>
-            Preencha os dados para registrar uma nova obra.
+            O NOME DA OBRA É O NOME DO ENDEREÇO. Preencha os dados para registrar uma nova obra.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+
+            <div>
+              <Label htmlFor="details">Detalhes</Label>
+              <Textarea id="details" name="details" placeholder="Detalhes sobre a obra, cliente ou prospecção." value={details} onChange={e => setDetails(e.target.value)} />
+            </div>
+
+            <div className="space-y-3">
+              <Label>Contatos</Label>
+              {contacts.map((contact, index) => (
+                <div key={index} className="flex items-center gap-2">
+                   <Select 
+                      value={contact.type} 
+                      onValueChange={(value) => handleContactChange(index, 'type', value)}
+                   >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Tipo de Contato" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {contactTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Input 
+                    placeholder="(XX) XXXXX-XXXX" 
+                    value={contact.phone} 
+                    onChange={(e) => handleContactChange(index, 'phone', e.target.value)}
+                  />
+                  <Button type="button" size="icon" variant="ghost" onClick={() => removeContact(index)} disabled={contacts.length === 1}>
+                      <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button type="button" size="sm" variant="outline" onClick={addContact} className="gap-2">
+                <Plus className="h-4 w-4" /> Adicionar Contato
+              </Button>
+            </div>
+            
             <Button type="button" variant="outline" className="w-full" onClick={handleLocation} disabled={isLocating}>
               <MapPin className="mr-2 h-4 w-4" />
               {isLocating ? 'Obtendo localização...' : 'Usar Localização Atual'}
             </Button>
-            
-            <div>
-              <Label htmlFor="clientName">Cliente</Label>
-              <Input id="clientName" name="clientName" placeholder="Nome do cliente ou construtora" required value={client} onChange={e => setClient(e.target.value)} />
-            </div>
-
-            <div>
-              <Label htmlFor="contactPhone">Telefone de Contato</Label>
-              <Input id="contactPhone" name="contactPhone" placeholder="(XX) XXXXX-XXXX" value={phone} onChange={e => setPhone(e.target.value)} />
-            </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div className='col-span-2'>
@@ -219,7 +302,7 @@ export function NewObraDialog() {
               <Label htmlFor="neighborhood">Bairro</Label>
               <Input id="neighborhood" name="neighborhood" placeholder="Ex: Centro" required value={bairro} onChange={e => setBairro(e.target.value)} />
             </div>
-
+            
             <div>
               <Label htmlFor="lojaId">Unidade J. Cruzeiro</Label>
               <Select required name="lojaId" onValueChange={setUnidade} value={unidade}>
@@ -227,9 +310,9 @@ export function NewObraDialog() {
                       <SelectValue placeholder="Selecione a unidade responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                      {lojas.map(loja => (
-                        <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
-                      ))}
+                      <SelectItem value="matriz">Matriz</SelectItem>
+                      <SelectItem value="catedral">Catedral</SelectItem>
+                      <SelectItem value="said-abdala">Said Abdala</SelectItem>
                   </SelectContent>
               </Select>
             </div>
@@ -251,28 +334,32 @@ export function NewObraDialog() {
             </div>
 
             <div>
-              <Label htmlFor="photo">Foto da Fachada</Label>
-              <Input id="photo" name="photo" type="file" accept="image/*" onChange={handleFileChange} />
+              <Label htmlFor="photos">Fotos</Label>
+              <Input id="photos" name="photos" type="file" accept="image/*" multiple onChange={handleFileChange} />
             </div>
 
-             {photoPreview && (
-                <div className="relative w-fit">
-                    <Image
-                        src={photoPreview}
-                        alt="Pré-visualização da imagem"
-                        width={100}
-                        height={100}
-                        className="rounded-md object-cover aspect-square"
-                    />
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                        onClick={handleRemoveFile}
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
+             {photoPreviews.length > 0 && (
+                <div className="flex flex-wrap gap-4">
+                  {photoPreviews.map((preview, index) => (
+                    <div key={index} className="relative w-fit">
+                        <Image
+                            src={preview}
+                            alt={`Pré-visualização da imagem ${index + 1}`}
+                            width={100}
+                            height={100}
+                            className="rounded-md object-cover aspect-square"
+                        />
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                            onClick={() => handleRemoveFile(index)}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                  ))}
                 </div>
              )}
           </div>

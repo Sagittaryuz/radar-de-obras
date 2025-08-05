@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import type { Obra, User } from './mock-data';
+import type { Obra, ObraContact } from './mock-data';
 import { z } from 'zod';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
@@ -36,19 +36,28 @@ export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: str
 }
 
 const ObraSchema = z.object({
-  clientName: z.string().min(1, "Nome do cliente é obrigatório."),
-  contactPhone: z.string().optional(),
   street: z.string().min(1, "Rua é obrigatória."),
   number: z.string().min(1, "Número é obrigatório."),
   neighborhood: z.string().min(1, "Bairro é obrigatório."),
+  details: z.string().optional(),
+  contacts: z.string().transform((val) => JSON.parse(val) as ObraContact[]).optional(),
   lojaId: z.string().min(1, "Unidade é obrigatória."),
   stage: z.enum(['Fundação', 'Alvenaria', 'Acabamento', 'Pintura', 'Telhado']),
-  photoDataUrl: z.string().optional(),
+  photoDataUrls: z.array(z.string()).optional(),
 });
 
 
 export async function addObra(formData: FormData) {
-    const rawData = Object.fromEntries(formData.entries());
+    const rawData = {
+        street: formData.get('street'),
+        number: formData.get('number'),
+        neighborhood: formData.get('neighborhood'),
+        details: formData.get('details'),
+        contacts: formData.get('contacts'),
+        lojaId: formData.get('lojaId'),
+        stage: formData.get('stage'),
+        photoDataUrls: formData.getAll('photoDataUrls'),
+    };
 
     const validatedFields = ObraSchema.safeParse(rawData);
 
@@ -60,37 +69,41 @@ export async function addObra(formData: FormData) {
         };
     }
     
-    const { photoDataUrl, ...obraData } = validatedFields.data;
-    let finalPhotoUrl = '';
+    const { photoDataUrls, ...obraData } = validatedFields.data;
+    const finalPhotoUrls: string[] = [];
 
     try {
-        if (photoDataUrl) {
-            const matches = photoDataUrl.match(/^data:(.+);base64,(.+)$/);
-            if (!matches) {
-                throw new Error("Formato de imagem inválido.");
+        if (photoDataUrls && photoDataUrls.length > 0) {
+            for (const photoDataUrl of photoDataUrls) {
+                const matches = photoDataUrl.match(/^data:(.+);base64,(.+)$/);
+                if (!matches) {
+                    console.warn("Formato de imagem inválido ignorado.");
+                    continue;
+                }
+                
+                const mimeType = matches[1];
+                const base64Data = matches[2];
+                const buffer = Buffer.from(base64Data, 'base64');
+                const fileName = `obras/${Date.now()}-${Math.round(Math.random() * 1E9)}.jpg`;
+                const file = storageAdmin.bucket().file(fileName);
+
+                await file.save(buffer, {
+                    metadata: { contentType: mimeType },
+                    public: true,
+                });
+
+                finalPhotoUrls.push(`https://storage.googleapis.com/${storageAdmin.bucket().name}/${fileName}`);
             }
-            
-            const mimeType = matches[1];
-            const base64Data = matches[2];
-            const buffer = Buffer.from(base64Data, 'base64');
-            const fileName = `obras/${Date.now()}-${Math.round(Math.random() * 1E9)}.jpg`;
-            const file = storageAdmin.bucket().file(fileName);
-
-            await file.save(buffer, {
-                metadata: { contentType: mimeType },
-                public: true, // Make file publicly readable
-            });
-
-            // The public URL format is https://storage.googleapis.com/<bucket-name>/<file-path>
-            finalPhotoUrl = `https://storage.googleapis.com/${storageAdmin.bucket().name}/${fileName}`;
         }
 
+        const address = `${obraData.street}, ${obraData.number}, ${obraData.neighborhood}`;
         const newObraPayload = {
             ...obraData,
-            address: `${obraData.street}, ${obraData.number}, ${obraData.neighborhood}`,
+            clientName: address,
+            address: address,
             status: 'Entrada',
             sellerId: null,
-            photoUrls: finalPhotoUrl ? [finalPhotoUrl] : [],
+            photoUrls: finalPhotoUrls,
             createdAt: new Date().toISOString(),
         };
 
@@ -99,7 +112,7 @@ export async function addObra(formData: FormData) {
         revalidatePath('/obras');
         revalidatePath('/dashboard');
 
-        return { success: true, message: `Obra "${obraData.clientName}" criada com sucesso!`, id: docRef.id };
+        return { success: true, message: `Obra "${address}" criada com sucesso!`, id: docRef.id };
 
     } catch (error) {
         console.error("Error adding document: ", error);
@@ -141,7 +154,9 @@ export async function updateObra(obraId: string, payload: Partial<Obra>) {
         const newStreet = payload.street ?? currentData.street;
         const newNumber = payload.number ?? currentData.number;
         const newNeighborhood = payload.neighborhood ?? currentData.neighborhood;
-        updatePayload.address = `${newStreet}, ${newNumber}, ${newNeighborhood}`;
+        const newAddress = `${newStreet}, ${newNumber}, ${newNeighborhood}`;
+        updatePayload.address = newAddress;
+        updatePayload.clientName = newAddress; // Update clientName as well
     }
 
     if (Object.keys(updatePayload).length === 0) {
@@ -183,21 +198,19 @@ export async function deleteObra(obraId: string) {
             const bucket = storageAdmin.bucket();
             for (const url of data.photoUrls) {
                 try {
-                    // Correctly parse the URL and extract the file path
                     const urlObject = new URL(url);
-                    const decodedPath = decodeURIComponent(urlObject.pathname);
-                    // The pathname is like /v0/b/bucket-name/o/file-path-with-slashes
-                    // We need to extract just the file-path-with-slashes part.
-                    const pathPrefix = `/v0/b/${bucket.name}/o/`;
-                    let filePath = '';
-                    if (decodedPath.startsWith(pathPrefix)) {
-                        filePath = decodedPath.substring(pathPrefix.length);
-                    } else {
-                         // Fallback for direct storage links like https://storage.googleapis.com/bucket-name/file-path
-                         const directPrefix = `/${bucket.name}/`;
-                         if (decodedPath.startsWith(directPrefix)) {
-                            filePath = decodedPath.substring(directPrefix.length);
-                         }
+                    let filePath = decodeURIComponent(urlObject.pathname).substring(1);
+                    
+                    const bucketName = bucket.name;
+                    const prefixesToRemove = [
+                      `v0/b/${bucketName}/o/`,
+                      `${bucketName}/`
+                    ];
+
+                    for (const prefix of prefixesToRemove) {
+                      if (filePath.startsWith(prefix)) {
+                        filePath = filePath.substring(prefix.length);
+                      }
                     }
 
                     if (filePath) {
@@ -208,8 +221,6 @@ export async function deleteObra(obraId: string) {
                          console.warn(`Could not extract a valid file path from URL: ${url}`);
                     }
                 } catch (storageError) {
-                    // Log the error but don't stop the deletion process.
-                    // This can happen if the file was already deleted manually.
                     console.error(`Failed to delete photo from storage: ${url}`, storageError);
                 }
             }

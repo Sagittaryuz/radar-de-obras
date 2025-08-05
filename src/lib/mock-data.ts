@@ -10,20 +10,40 @@ export type User = {
   role: 'Vendedor' | 'Admin';
 };
 
+export type ContactType = 
+  | 'Dono da obra' 
+  | 'Mestre de Obras' 
+  | 'Engenheiro/Arquiteto' 
+  | 'Pedreiro' 
+  | 'Pintor' 
+  | 'Eletricista' 
+  | 'Encanador' 
+  | 'Gesseiro' 
+  | 'Carpinteiro' 
+  | 'Marceneiro';
+
+export interface ObraContact {
+  type: ContactType;
+  phone: string;
+}
+
 export type Obra = {
   id: string;
-  clientName: string;
+  clientName: string; // Will be the address
   address: string;
   street: string;
   number: string;
   neighborhood: string;
-  contactPhone?: string;
+  details?: string;
+  contacts?: ObraContact[];
   photoUrls?: string[];
   gmapsUrl?: string;
   lojaId: string;
   stage: 'Fundação' | 'Alvenaria' | 'Acabamento' | 'Pintura' | 'Telhado';
   status: 'Entrada' | 'Triagem' | 'Atribuída' | 'Em Negociação' | 'Ganha' | 'Perdida';
   sellerId: string | null;
+  // Deprecated - will be replaced by contacts array
+  contactPhone?: string;
 };
 
 export type Loja = {

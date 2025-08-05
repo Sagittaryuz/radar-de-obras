@@ -8,7 +8,7 @@ import type { Obra, User, Loja } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera } from 'lucide-react';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -151,38 +151,55 @@ export default function ObraDetailPage() {
                     <CardDescription>{obra.address}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 grid md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                        <Phone className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm">{obra.contactPhone || 'Não informado'}</span>
-                    </div>
                      <div className="flex items-center gap-3">
                         <Wrench className="h-5 w-5 text-muted-foreground" />
                         <Badge variant="secondary">{obra.stage}</Badge>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Home className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm">Rua: {obra.street}</span>
-                    </div>
-                     <div className="flex items-center gap-3">
-                        <Hash className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm">Nº: {obra.number}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <MapPin className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm">Bairro: {obra.neighborhood}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <Building className="h-5 w-5 text-muted-foreground" />
                         <span className="text-sm">Unidade: {lojaName}</span>
                     </div>
                     {seller && (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 md:col-span-2">
                             <UserIcon className="h-5 w-5 text-muted-foreground" />
                             <span className="text-sm">Vendedor: {seller.name}</span>
                         </div>
                     )}
                 </CardContent>
             </Card>
+
+            {obra.details && (
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="font-headline flex items-center gap-2">
+                          <AlignLeft className="h-5 w-5 text-primary" />
+                          Detalhes
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <p className="text-sm whitespace-pre-wrap">{obra.details}</p>
+                  </CardContent>
+              </Card>
+            )}
+
+            {obra.contacts && obra.contacts.length > 0 && (
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="font-headline flex items-center gap-2">
+                          <PhoneCall className="h-5 w-5 text-primary" />
+                          Contatos
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                      {obra.contacts.map((contact, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                              <span className="text-sm font-medium">{contact.type}</span>
+                              <span className="text-sm">{contact.phone}</span>
+                          </div>
+                      ))}
+                  </CardContent>
+              </Card>
+            )}
             
             {obra.photoUrls && obra.photoUrls.length > 0 && (
                 <Card>

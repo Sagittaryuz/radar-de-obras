@@ -22,6 +22,7 @@ import type { Loja, Obra } from '@/lib/mock-data';
 import { getLojas } from '@/lib/mock-data';
 import { updateObra } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
+import { Textarea } from '../ui/textarea';
 
 interface EditObraDialogProps {
   obra: Obra;
@@ -39,16 +40,15 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
 
   useEffect(() => {
     // When the dialog opens, initialize form data with the current obra data.
-    // This ensures the form is always fresh and not using stale state from previous edits.
     if (open) {
       setFormData({
-        clientName: obra.clientName || '',
-        contactPhone: obra.contactPhone || '',
         street: obra.street || '',
         number: obra.number || '',
         neighborhood: obra.neighborhood || '',
+        details: obra.details || '',
         lojaId: obra.lojaId || '',
         stage: obra.stage || '',
+        // contacts and photos are not editable here for simplicity
       });
 
       const fetchLojas = async () => {
@@ -59,7 +59,7 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     }
   }, [open, obra]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
   };
@@ -109,21 +109,12 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
         <DialogHeader>
           <DialogTitle className="font-headline">Editar Obra</DialogTitle>
           <DialogDescription>
-            Modifique os dados da obra abaixo.
+            Modifique os dados da obra abaixo. Contatos e fotos não podem ser editados.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
-            <div>
-              <Label htmlFor="clientName">Cliente</Label>
-              <Input id="clientName" placeholder="Nome do cliente ou construtora" value={formData.clientName} onChange={handleInputChange} />
-            </div>
-
-            <div>
-              <Label htmlFor="contactPhone">Telefone de Contato</Label>
-              <Input id="contactPhone" placeholder="(XX) XXXXX-XXXX" value={formData.contactPhone} onChange={handleInputChange} />
-            </div>
-
+            
             <div className="grid grid-cols-3 gap-2">
               <div className='col-span-2'>
                 <Label htmlFor="street">Rua</Label>
@@ -138,6 +129,11 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
             <div>
               <Label htmlFor="neighborhood">Bairro</Label>
               <Input id="neighborhood" placeholder="Ex: Centro" value={formData.neighborhood} onChange={handleInputChange} />
+            </div>
+
+             <div>
+              <Label htmlFor="details">Detalhes</Label>
+              <Textarea id="details" placeholder="Detalhes da obra" value={formData.details} onChange={handleInputChange} />
             </div>
 
             <div>
