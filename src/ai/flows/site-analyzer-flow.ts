@@ -28,22 +28,20 @@ const SiteAnalyzerOutputSchema = z.object({
 export type SiteAnalyzerOutput = z.infer<typeof SiteAnalyzerOutputSchema>;
 
 // This function will read all files and return their content as a single string.
-// Note: In a real-world scenario, you might want to exclude node_modules, .next, etc.
 async function getProjectContext(): Promise<string> {
   const projectRoot = process.cwd();
   const filesToRead: string[] = [];
+  const excludedDirs = ['node_modules', '.next', '.firebase', 'dist', 'build', '.vercel', '.vscode'];
 
   async function readDirectory(dir: string) {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        // Exclude common unnecessary directories
-        if (entry.name !== 'node_modules' && entry.name !== '.next' && entry.name !== '.firebase' && !entry.name.startsWith('.')) {
+        if (!excludedDirs.includes(entry.name) && !entry.name.startsWith('.')) {
           await readDirectory(fullPath);
         }
       } else {
-        // Only include relevant file types
          if (/\.(tsx|ts|js|jsx|json|css|md|yaml)$/.test(entry.name)) {
            filesToRead.push(fullPath);
          }
