@@ -81,7 +81,6 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
     event.preventDefault();
     console.log('[EditDialog] handleSubmit triggered.');
 
-    // The server action will handle the comparison logic. We send the whole form data.
     const payload: Partial<Obra> = {
         clientName: formData.clientName,
         contactPhone: formData.contactPhone,
