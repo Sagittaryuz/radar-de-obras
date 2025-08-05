@@ -15,9 +15,8 @@ import { Button } from '@/components/ui/button';
 import { EditObraDialog } from '@/components/obras/edit-obra-dialog';
 import { DeleteObraDialog } from '@/components/obras/delete-obra-dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { InteractiveMap } from '@/components/obras/interactive-map';
 
-
-const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
 
 function ObraDetailSkeleton() {
     return (
@@ -113,7 +112,6 @@ export default function ObraDetailPage() {
     return <div>Obra não encontrada.</div>;
   }
   
-  const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(obra.address)}&zoom=16&size=600x400&maptype=roadmap&markers=color:red%7Clabel:O%7C${encodeURIComponent(obra.address)}&key=${GOOGLE_MAPS_API_KEY}`;
   const lojaName = lojas.find(l => l.id === obra.lojaId)?.name || obra.lojaId;
 
   return (
@@ -228,11 +226,7 @@ export default function ObraDetailPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="relative aspect-video w-full">
-                        <img 
-                            src={mapUrl}
-                            alt={`Mapa da localização da obra em ${obra.address}`}
-                            className="absolute inset-0 h-full w-full rounded-md object-cover"
-                        />
+                        <InteractiveMap address={obra.address} />
                     </div>
                 </CardContent>
             </Card>
@@ -241,4 +235,3 @@ export default function ObraDetailPage() {
     </div>
   );
 }
-
