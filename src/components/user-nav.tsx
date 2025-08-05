@@ -1,3 +1,4 @@
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, Settings } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/mock-data';
-import { logoutAction } from '@/app/login/actions';
 
 function getInitials(name: string) {
     const names = name.split(' ');
@@ -55,14 +55,7 @@ export function UserNav({ user }: { user: User }) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <form action={logoutAction}>
-          <DropdownMenuItem asChild>
-              <button type="submit" className="w-full">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-              </button>
-          </DropdownMenuItem>
-        </form>
+        {/* The logout button is removed as login is disabled. */}
       </DropdownMenuContent>
     </DropdownMenu>
   );

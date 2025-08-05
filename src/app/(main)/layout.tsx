@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/main-sidebar';
@@ -43,35 +42,18 @@ export default function MainLayout({
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    const checkSession = async () => {
+    const loadUser = async () => {
+      // The new getSession() always returns a mock user, so no need for redirects.
       const session = await getSession();
-      if (!session) {
-        // Allow unauthenticated access only to login page which is not under this layout
-        // For any other page, redirect to login.
-        if (pathname !== '/login') {
-            router.push('/login');
-        } else {
-            setLoading(false);
-        }
-      } else {
-        setUser(session);
-        setLoading(false);
-      }
+      setUser(session);
+      setLoading(false);
     };
-    checkSession();
-  }, [router, pathname]);
+    loadUser();
+  }, []);
 
-  if (loading) {
-    return <MainLayoutSkeleton />;
-  }
-  
-  if (!user) {
-    // This case handles the brief moment before the redirect happens,
-    // or if the user somehow lands here without a session.
+  if (loading || !user) {
     return <MainLayoutSkeleton />;
   }
 
