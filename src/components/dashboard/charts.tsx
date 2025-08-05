@@ -14,21 +14,24 @@ interface DashboardChartsProps {
 }
 
 const statusColors: Record<string, string> = {
-  'Entrada': 'hsl(var(--chart-1))',
-  'Triagem': 'hsl(var(--chart-2))',
-  'Atribuída': 'hsl(var(--chart-3))',
-  'Em Negociação': 'hsl(var(--chart-4))',
-  'Ganha': 'hsl(var(--chart-5))',
-  'Perdida': 'hsl(var(--destructive))',
+  'Entrada': '#1f77b4',       // Muted Blue
+  'Triagem': '#ff7f0e',      // Safety Orange
+  'Atribuída': '#2ca02c',     // Cooked Asparagus Green
+  'Em Negociação': '#d62728', // Brick Red
+  'Ganha': '#9467bd',         // Muted Purple
+  'Perdida': '#8c564b',       // Chestnut Brown
 };
 
-const stageColors = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
+const stageColors: Record<string, string> = {
+  'Fundação': '#1f77b4',
+  'Alvenaria': '#ff7f0e',
+  'Acabamento': '#2ca02c',
+  'Pintura': '#d62728',
+  'Telhado': '#9467bd',
+};
+
+const lojaColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+
 
 const obraStatuses: Obra['status'][] = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida'];
 
@@ -76,7 +79,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
       acc[obra.status] = (acc[obra.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    return Object.entries(counts).map(([name, value]) => ({ name, value, fill: statusColors[name] }));
   }, [obras]);
 
   const obrasByStage = useMemo(() => {
@@ -85,7 +88,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
       acc[obra.stage] = (acc[obra.stage] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    return Object.entries(counts).map(([name, value]) => ({ name, value, fill: stageColors[name] }));
   }, [obras]);
 
   const obrasByLoja = useMemo(() => {
@@ -95,7 +98,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
       acc[lojaName] = (acc[lojaName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    return Object.entries(counts).map(([name, value], index) => ({ name, value, fill: lojaColors[index % lojaColors.length] }));
   }, [allObras, lojaMap]);
 
   if (!allObras || !allLojas) {
@@ -157,7 +160,11 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
                   <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
                   <YAxis allowDecimals={false} />
                   <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
+                  <Bar dataKey="value" radius={4}>
+                    {obrasByStatus.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ChartContainer>
             </CardContent>
@@ -173,7 +180,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
                   <Tooltip content={<ChartTooltipContent nameKey="name" />} />
                   <Pie data={obrasByStage} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                     {obrasByStage.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={stageColors[index % stageColors.length]} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
                   <Legend />
@@ -193,7 +200,11 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
                   <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} width={80} />
                   <XAxis type="number" allowDecimals={false} />
                   <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
+                   <Bar dataKey="value" radius={4}>
+                    {obrasByLoja.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ChartContainer>
             </CardContent>
