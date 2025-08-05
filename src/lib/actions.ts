@@ -45,24 +45,31 @@ export async function updateObra(obraId: string, formData: Partial<Obra>) {
 
     // Compare form data with current data to find what changed
     (Object.keys(formData) as (keyof Partial<Obra>)[]).forEach(key => {
-      if (formData[key] !== undefined && formData[key] !== currentData[key]) {
-        updatePayload[key] = formData[key];
-      }
+        // Ensure we handle undefined or null values from the form correctly.
+        const formValue = formData[key];
+        const currentValue = currentData[key as keyof Obra];
+        
+        // Add to payload if the form value is different from the current value.
+        // This handles changes from a value to an empty string, but not the other way if the form sends undefined.
+        if (formValue !== undefined && formValue !== currentValue) {
+            updatePayload[key] = formValue;
+        }
     });
     
-    console.log('[Action: updateObra] Detected changes (before address check):', updatePayload);
+    // Check if the address needs to be reconstructed
+    const addressFields = ['street', 'number', 'neighborhood'];
+    const addressChanged = addressFields.some(field => field in updatePayload);
 
-    const addressChanged = 'street' in updatePayload || 'number' in updatePayload || 'neighborhood' in updatePayload;
-    
     if (addressChanged) {
+        // Reconstruct the full address using new data, falling back to old data if a field wasn't changed.
         const newStreet = formData.street ?? currentData.street;
         const newNumber = formData.number ?? currentData.number;
         const newNeighborhood = formData.neighborhood ?? currentData.neighborhood;
         const newAddress = `${newStreet}, ${newNumber}, ${newNeighborhood}`;
 
+        // Only add the address to the payload if it has actually changed.
         if (newAddress !== currentData.address) {
            updatePayload.address = newAddress;
-           console.log(`[Action: updateObra] Address was changed. New address: ${newAddress}`);
         }
     }
 

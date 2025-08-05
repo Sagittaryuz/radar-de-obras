@@ -33,18 +33,23 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [lojas, setLojas] = useState<Loja[]>([]);
   
+  // Initialize form state directly from the obra prop.
+  // This state will now be the single source of truth for the form.
   const [formData, setFormData] = useState({
-    clientName: '',
-    contactPhone: '',
-    street: '',
-    number: '',
-    neighborhood: '',
-    lojaId: '',
-    stage: '',
+    clientName: obra.clientName || '',
+    contactPhone: obra.contactPhone || '',
+    street: obra.street || '',
+    number: obra.number || '',
+    neighborhood: obra.neighborhood || '',
+    lojaId: obra.lojaId || '',
+    stage: obra.stage || '',
   });
 
+  // When the dialog opens, fetch the necessary data (lojas) and reset the form
+  // state to match the current `obra` prop. This ensures the form is always
+  // fresh when it's opened.
   useEffect(() => {
-    if (obra) {
+    if (open) {
       setFormData({
         clientName: obra.clientName || '',
         contactPhone: obra.contactPhone || '',
@@ -54,23 +59,21 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
         lojaId: obra.lojaId || '',
         stage: obra.stage || '',
       });
-    }
 
-    if (open) {
       const fetchLojas = async () => {
         const lojasData = await getLojas();
         setLojas(lojasData);
       };
       fetchLojas();
     }
-  }, [obra, open]);
+  }, [open, obra]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSelectChange = (id: 'lojaId' | 'stage', value: string) => {
+  const handleSelectChange = (id: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
@@ -78,6 +81,7 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
     event.preventDefault();
     console.log('[EditDialog] handleSubmit triggered.');
 
+    // The server action will handle the comparison logic. We send the whole form data.
     const payload: Partial<Obra> = {
         clientName: formData.clientName,
         contactPhone: formData.contactPhone,
@@ -88,25 +92,24 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
         stage: formData.stage as Obra['stage'],
     };
 
-    console.log('[EditDialog] Submitting payload to server action:', payload);
-
     startTransition(async () => {
-      const result = await updateObra(obra.id, payload);
+        console.log('[EditDialog] Submitting payload to server action:', payload);
+        const result = await updateObra(obra.id, payload);
 
-      if (result.success && result.data) {
-        toast({
-          title: "Obra Atualizada",
-          description: result.message || "Os dados da obra foram atualizados.",
-        });
-        onObraUpdated(result.data); 
-        setOpen(false);
-      } else {
-        toast({
-          variant: 'destructive',
-          title: "Erro ao Atualizar",
-          description: result.error,
-        });
-      }
+        if (result.success && result.data) {
+            toast({
+                title: "Obra Atualizada",
+                description: result.message || "Os dados da obra foram atualizados.",
+            });
+            onObraUpdated(result.data);
+            setOpen(false);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: "Erro ao Atualizar",
+                description: result.error,
+            });
+        }
     });
   };
 
