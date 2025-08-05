@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { getUserByEmail } from '@/lib/mock-data';
 import type { User } from '@/lib/mock-data';
 
-const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
+const FIREBASE_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
 
 const loginSchema = z.object({
   email: z.string().email(),
