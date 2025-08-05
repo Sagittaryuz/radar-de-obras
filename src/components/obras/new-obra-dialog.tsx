@@ -50,7 +50,7 @@ export function NewObraDialog() {
 
   // States for form fields
   const [details, setDetails] = useState('');
-  const [contacts, setContacts] = useState<Partial<ObraContact>[]>([{ type: undefined, phone: '' }]);
+  const [contacts, setContacts] = useState<Partial<ObraContact>[]>([{ name: '', type: undefined, phone: '' }]);
   const [rua, setRua] = useState('');
   const [numero, setNumero] = useState('');
   const [bairro, setBairro] = useState('');
@@ -76,7 +76,7 @@ export function NewObraDialog() {
 
   const resetForm = () => {
     setDetails('');
-    setContacts([{ type: undefined, phone: '' }]);
+    setContacts([{ name: '', type: undefined, phone: '' }]);
     setRua('');
     setNumero('');
     setBairro('');
@@ -92,6 +92,7 @@ export function NewObraDialog() {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
+          // Using a free, no-key-required service for reverse geocoding
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
           const data = await response.json();
 
@@ -139,7 +140,7 @@ export function NewObraDialog() {
   };
 
   const addContact = () => {
-    setContacts([...contacts, { type: undefined, phone: '' }]);
+    setContacts([...contacts, { name: '', type: undefined, phone: '' }]);
   };
 
   const removeContact = (index: number) => {
@@ -200,7 +201,7 @@ export function NewObraDialog() {
     formData.append('lojaId', unidade);
     formData.append('stage', etapa);
 
-    const validContacts = contacts.filter(c => c.type && c.phone);
+    const validContacts = contacts.filter(c => c.type && c.phone && c.name);
     formData.append('contacts', JSON.stringify(validContacts));
     
     photoDataUrls.forEach((url) => {
@@ -235,7 +236,7 @@ export function NewObraDialog() {
           Nova Obra
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-headline">Nova Prospecção de Obra</DialogTitle>
           <DialogDescription>
@@ -253,13 +254,19 @@ export function NewObraDialog() {
             <div className="space-y-3">
               <Label>Contatos</Label>
               {contacts.map((contact, index) => (
-                <div key={index} className="flex items-center gap-2">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-4 items-center gap-2">
+                   <Input 
+                    placeholder="Nome do Contato"
+                    className="md:col-span-2" 
+                    value={contact.name} 
+                    onChange={(e) => handleContactChange(index, 'name', e.target.value)}
+                  />
                    <Select 
                       value={contact.type} 
-                      onValueChange={(value) => handleContactChange(index, 'type', value)}
+                      onValueChange={(value) => handleContactChange(index, 'type', value as ContactType)}
                    >
                     <SelectTrigger>
-                        <SelectValue placeholder="Tipo de Contato" />
+                        <SelectValue placeholder="Função" />
                     </SelectTrigger>
                     <SelectContent>
                         {contactTypes.map(type => (
@@ -267,14 +274,16 @@ export function NewObraDialog() {
                         ))}
                     </SelectContent>
                   </Select>
-                  <Input 
-                    placeholder="(XX) XXXXX-XXXX" 
-                    value={contact.phone} 
-                    onChange={(e) => handleContactChange(index, 'phone', e.target.value)}
-                  />
-                  <Button type="button" size="icon" variant="ghost" onClick={() => removeContact(index)} disabled={contacts.length === 1}>
-                      <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      placeholder="(XX) XXXXX-XXXX" 
+                      value={contact.phone} 
+                      onChange={(e) => handleContactChange(index, 'phone', e.target.value)}
+                    />
+                    <Button type="button" size="icon" variant="ghost" onClick={() => removeContact(index)} disabled={contacts.length === 1}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
               <Button type="button" size="sm" variant="outline" onClick={addContact} className="gap-2">

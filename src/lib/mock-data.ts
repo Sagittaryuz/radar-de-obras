@@ -23,13 +23,14 @@ export type ContactType =
   | 'Marceneiro';
 
 export interface ObraContact {
+  name: string;
   type: ContactType;
   phone: string;
 }
 
 export type Obra = {
   id: string;
-  clientName: string; // Will be the address
+  clientName: string; // Will be the address in new obras, but might be a client name in old ones
   address: string;
   street: string;
   number: string;

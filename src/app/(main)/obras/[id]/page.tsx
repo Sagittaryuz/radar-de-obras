@@ -75,46 +75,47 @@ export default function ObraDetailPage() {
 
   // This function will be called by the dialog on successful update to refresh the page data.
   const handleSuccess = () => {
-    router.refresh();
+    // Re-trigger the data fetching to get the latest data.
+    fetchData();
   };
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!obraId) return;
-
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        console.log(`[getObraById] Fetching obra with ID: ${obraId}`);
-        const [obraData, lojasData] = await Promise.all([
-            getObraById(obraId),
-            getLojas()
-        ]);
+    setLoading(true);
+    try {
+      console.log(`[getObraById] Fetching obra with ID: ${obraId}`);
+      const [obraData, lojasData] = await Promise.all([
+          getObraById(obraId),
+          getLojas()
+      ]);
+      
+      if (obraData) {
+        setObra(obraData);
+        setLojas(lojasData);
         
-        if (obraData) {
-          setObra(obraData);
-          setLojas(lojasData);
-          
-          if (obraData.address) {
-              const coords = await getCoordinatesForAddress(obraData.address);
-              setCoordinates(coords);
-          }
-
-          if (obraData.sellerId) {
-            const sellerData = await getUserById(obraData.sellerId);
-            setSeller(sellerData);
-          }
-        } else {
-           notFound();
+        if (obraData.address) {
+            const coords = await getCoordinatesForAddress(obraData.address);
+            setCoordinates(coords);
         }
-      } catch (error) {
-        console.error("Failed to fetch obra details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
+        if (obraData.sellerId) {
+          const sellerData = await getUserById(obraData.sellerId);
+          setSeller(sellerData);
+        }
+      } else {
+         notFound();
+      }
+    } catch (error) {
+      console.error("Failed to fetch obra details:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
     fetchData();
-  }, [obraId, router]); // Add router to dependency array to satisfy ESLint
+  }, [obraId]); // Removed router from dependency array, it's stable
 
   if (loading) {
     return <ObraDetailSkeleton />;
@@ -127,6 +128,7 @@ export default function ObraDetailPage() {
   }
   
   const lojaName = lojas.find(l => l.id === obra.lojaId)?.name || obra.lojaId;
+  const isOldDataFormat = !obra.contacts || obra.contacts.length === 0;
 
   return (
     <div className="space-y-6">
@@ -146,7 +148,8 @@ export default function ObraDetailPage() {
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-3">
                         <Briefcase className="h-6 w-6 text-primary" />
-                        {obra.clientName}
+                        {/* If clientName is the same as address, it's new data, otherwise show old clientName */}
+                        {obra.clientName === obra.address ? "Obra" : `Cliente: ${obra.clientName}`}
                     </CardTitle>
                     <CardDescription>{obra.address}</CardDescription>
                 </CardHeader>
@@ -182,7 +185,7 @@ export default function ObraDetailPage() {
               </Card>
             )}
 
-            {obra.contacts && obra.contacts.length > 0 && (
+            {obra.contacts && obra.contacts.length > 0 ? (
               <Card>
                   <CardHeader>
                       <CardTitle className="font-headline flex items-center gap-2">
@@ -190,16 +193,38 @@ export default function ObraDetailPage() {
                           Contatos
                       </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="space-y-3">
                       {obra.contacts.map((contact, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                              <span className="text-sm font-medium">{contact.type}</span>
-                              <span className="text-sm">{contact.phone}</span>
+                          <div key={index} className="grid grid-cols-3 gap-2 p-3 rounded-lg bg-muted/50">
+                              <div className="col-span-1 flex flex-col">
+                                <span className="text-xs text-muted-foreground">Nome</span>
+                                <span className="text-sm font-semibold">{contact.name}</span>
+                              </div>
+                               <div className="col-span-1 flex flex-col">
+                                <span className="text-xs text-muted-foreground">Função</span>
+                                <span className="text-sm">{contact.type}</span>
+                              </div>
+                               <div className="col-span-1 flex flex-col">
+                                <span className="text-xs text-muted-foreground">Telefone</span>
+                                <span className="text-sm">{contact.phone}</span>
+                              </div>
                           </div>
                       ))}
                   </CardContent>
               </Card>
-            )}
+            ) : isOldDataFormat && obra.contactPhone ? (
+               <Card>
+                  <CardHeader>
+                      <CardTitle className="font-headline flex items-center gap-2">
+                          <PhoneCall className="h-5 w-5 text-primary" />
+                          Contato Principal
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <p className="text-sm">{obra.contactPhone}</p>
+                  </CardContent>
+              </Card>
+            ) : null }
             
             {obra.photoUrls && obra.photoUrls.length > 0 && (
                 <Card>

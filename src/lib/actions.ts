@@ -92,14 +92,14 @@ export async function addObra(formData: FormData) {
                     public: true,
                 });
 
-                finalPhotoUrls.push(`https://storage.googleapis.com/${storageAdmin.bucket().name}/${fileName}`);
+                finalPhotoUrls.push(file.publicUrl());
             }
         }
 
         const address = `${obraData.street}, ${obraData.number}, ${obraData.neighborhood}`;
         const newObraPayload = {
             ...obraData,
-            clientName: address,
+            clientName: address, // For backward compatibility and display name
             address: address,
             status: 'Entrada',
             sellerId: null,
@@ -199,20 +199,16 @@ export async function deleteObra(obraId: string) {
             for (const url of data.photoUrls) {
                 try {
                     const urlObject = new URL(url);
+                    // The actual path in the bucket is the pathname part of the URL, decoded and without the leading slash.
+                    // For publicUrl(), the pathname is /<bucket-name>/<file-path>. We need to remove the bucket name part.
                     let filePath = decodeURIComponent(urlObject.pathname).substring(1);
                     
                     const bucketName = bucket.name;
-                    const prefixesToRemove = [
-                      `v0/b/${bucketName}/o/`,
-                      `${bucketName}/`
-                    ];
-
-                    for (const prefix of prefixesToRemove) {
-                      if (filePath.startsWith(prefix)) {
-                        filePath = filePath.substring(prefix.length);
-                      }
+                    // Remove the bucket name prefix if it exists in the path
+                    if (filePath.startsWith(`${bucketName}/`)) {
+                        filePath = filePath.substring(`${bucketName}/`.length);
                     }
-
+                    
                     if (filePath) {
                         console.log(`Attempting to delete photo from storage: ${filePath}`);
                         await bucket.file(filePath).delete();
@@ -221,6 +217,7 @@ export async function deleteObra(obraId: string) {
                          console.warn(`Could not extract a valid file path from URL: ${url}`);
                     }
                 } catch (storageError) {
+                    // Log the error but continue, so that DB deletion can proceed even if one photo fails.
                     console.error(`Failed to delete photo from storage: ${url}`, storageError);
                 }
             }
@@ -284,7 +281,7 @@ export async function updateUserProfile(userId: string, name: string, avatarData
                 public: true,
             });
 
-            updateData.avatar = `https://storage.googleapis.com/${storageAdmin.bucket().name}/${fileName}`;
+            updateData.avatar = file.publicUrl();
         }
 
         await userRef.update(updateData);
