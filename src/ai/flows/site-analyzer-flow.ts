@@ -42,7 +42,7 @@ async function getProjectContext(): Promise<string> {
           await readDirectory(fullPath);
         }
       } else {
-         if (/\.(tsx|ts|js|jsx|json|css|md|yaml)$/.test(entry.name)) {
+         if (/\.(tsx|ts|js|jsx|json|css|md|yaml|yml)$/.test(entry.name)) {
            filesToRead.push(fullPath);
          }
       }
@@ -83,7 +83,6 @@ const prompt = ai.definePrompt({
 You will be given the entire codebase of a project, with each file's path and content provided.
 
 Your task is to perform a thorough code review and analysis. Identify potential bugs, logical errors, performance issues, and suggest improvements.
-Pay close attention to the user's recent issues, such as problems with data editing and state management.
 
 Provide a clear, concise, and actionable report in Markdown format. Structure your report with:
 1.  A brief summary of the project's health.
