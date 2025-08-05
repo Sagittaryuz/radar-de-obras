@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +23,7 @@ interface Coordinates {
   lng: number;
 }
 
-export function InteractiveMap({ address }: InteractiveMapProps) {
+function InteractiveMapComponent({ address }: InteractiveMapProps) {
   const { toast } = useToast();
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -35,9 +35,13 @@ export function InteractiveMap({ address }: InteractiveMapProps) {
 
   useEffect(() => {
     const geocodeAddress = async () => {
+      if (!address) {
+          setLoading(false);
+          setCenter(null);
+          return;
+      }
       setLoading(true);
       try {
-        // Using Nominatim as a free, no-key-required geocoding service
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
             address
@@ -55,7 +59,7 @@ export function InteractiveMap({ address }: InteractiveMapProps) {
             title: 'Erro de Localização',
             description: 'Não foi possível encontrar as coordenadas para o endereço fornecido.',
           });
-          setCenter(null); // Explicitly set to null on failure
+          setCenter(null);
         }
       } catch (error) {
         console.error('Geocoding API call error:', error);
@@ -64,7 +68,7 @@ export function InteractiveMap({ address }: InteractiveMapProps) {
           title: 'Erro de API',
           description: 'Falha ao se comunicar com o serviço de geocodificação.',
         });
-        setCenter(null); // Explicitly set to null on failure
+        setCenter(null);
       } finally {
         setLoading(false);
       }
@@ -74,7 +78,12 @@ export function InteractiveMap({ address }: InteractiveMapProps) {
   }, [address, toast]);
 
   if (loadError) {
-    return <div>Erro ao carregar o mapa. Por favor, verifique a chave da API do Google Maps.</div>;
+    return (
+        <div className="flex flex-col items-center justify-center h-full bg-destructive/10 rounded-md p-4 text-center">
+            <p className="text-sm font-semibold text-destructive">Erro ao carregar o mapa.</p>
+            <p className="text-xs text-destructive/80">Verifique se a "Maps JavaScript API" está ativada no seu projeto Google Cloud.</p>
+        </div>
+    );
   }
   
   if (!isLoaded || loading) {
@@ -82,9 +91,11 @@ export function InteractiveMap({ address }: InteractiveMapProps) {
   }
 
   if (!center) {
-     return <div className="flex items-center justify-center h-full bg-muted rounded-md">
-        <p className="text-sm text-muted-foreground">Endereço não localizado.</p>
-     </div>
+     return (
+        <div className="flex items-center justify-center h-full bg-muted rounded-md">
+            <p className="text-sm text-muted-foreground">Endereço não localizado.</p>
+        </div>
+     );
   }
 
   return (
@@ -92,8 +103,14 @@ export function InteractiveMap({ address }: InteractiveMapProps) {
       mapContainerStyle={containerStyle}
       center={center}
       zoom={16}
+      options={{
+        disableDefaultUI: true,
+        zoomControl: true,
+      }}
     >
       <MarkerF position={center} />
     </GoogleMap>
   );
 }
+
+export const InteractiveMap = memo(InteractiveMapComponent);
