@@ -34,16 +34,18 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
   const [lojas, setLojas] = useState<Loja[]>([]);
   
   const [formData, setFormData] = useState({
-    clientName: '',
-    contactPhone: '',
-    street: '',
-    number: '',
-    neighborhood: '',
-    lojaId: '',
-    stage: '',
+    clientName: obra.clientName || '',
+    contactPhone: obra.contactPhone || '',
+    street: obra.street || '',
+    number: obra.number || '',
+    neighborhood: obra.neighborhood || '',
+    lojaId: obra.lojaId || '',
+    stage: obra.stage || '',
   });
 
   useEffect(() => {
+    // This effect runs when the dialog is opened, ensuring the form
+    // is always populated with the latest 'obra' data.
     if (open) {
       setFormData({
         clientName: obra.clientName || '',
