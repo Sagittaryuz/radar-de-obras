@@ -46,13 +46,11 @@ export async function updateObra(obraId: string, payload: Partial<Obra>) {
 
     // Compare payload from client with current data to find what changed
     (Object.keys(payload) as (keyof Partial<Obra>)[]).forEach(key => {
-        // Ensure that we handle cases where a field might be "" (empty string) vs undefined/null
         if (payload[key] !== undefined && payload[key] !== currentData[key as keyof Obra]) {
             updatePayload[key] = payload[key];
         }
     });
     
-    // Check if the full address needs to be reconstructed
     const addressFields: (keyof Partial<Obra>)[] = ['street', 'number', 'neighborhood'];
     const addressChanged = addressFields.some(field => field in updatePayload);
 
