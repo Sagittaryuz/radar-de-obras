@@ -77,6 +77,7 @@ export default function ObraDetailPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
+        console.log(`[getObraById] Fetching obra with ID: ${obraId}`);
         const [obraData, lojasData] = await Promise.all([
             getObraById(obraId),
             getLojas()

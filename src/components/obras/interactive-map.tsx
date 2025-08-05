@@ -23,7 +23,7 @@ interface Coordinates {
   lng: number;
 }
 
-function InteractiveMapComponent({ address }: InteractiveMapProps) {
+const InteractiveMapComponent = memo(function InteractiveMapComponent({ address }: InteractiveMapProps) {
   const { toast } = useToast();
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -54,11 +54,13 @@ function InteractiveMapComponent({ address }: InteractiveMapProps) {
           setCenter({ lat, lng });
         } else {
           console.error(`Geocoding failed for address: ${address}`, data.status, data.error_message);
-          toast({
-            variant: 'destructive',
-            title: 'Erro de Localização',
-            description: data.error_message || 'Não foi possível encontrar as coordenadas para o endereço fornecido.',
-          });
+          if (data.status !== 'ZERO_RESULTS') {
+            toast({
+              variant: 'destructive',
+              title: 'Erro de Localização',
+              description: data.error_message || 'Não foi possível encontrar as coordenadas para o endereço fornecido.',
+            });
+          }
           setCenter(null);
         }
       } catch (error) {
@@ -113,6 +115,6 @@ function InteractiveMapComponent({ address }: InteractiveMapProps) {
       <MarkerF position={center} />
     </GoogleMap>
   );
-}
+});
 
-export const InteractiveMap = memo(InteractiveMapComponent);
+export { InteractiveMapComponent as InteractiveMap };
