@@ -59,6 +59,7 @@ function ObraDetailSkeleton() {
 
 export default function ObraDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const obraId = params.id as string;
 
   const [obra, setObra] = useState<Obra | null>(null);
@@ -66,10 +67,10 @@ export default function ObraDetailPage() {
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const handleObraUpdated = (updatedObra: Obra) => {
-    setObra(updatedObra);
+  // This function will be called by the dialog on successful update
+  const handleSuccess = () => {
+    router.refresh();
   };
-
 
   useEffect(() => {
     if (!obraId) return;
@@ -122,7 +123,7 @@ export default function ObraDetailPage() {
             Detalhes da Obra
          </h1>
          <div className="flex items-center gap-2">
-            <EditObraDialog obra={obra} onObraUpdated={handleObraUpdated}/>
+            <EditObraDialog obra={obra} onSuccess={handleSuccess}/>
             <DeleteObraDialog obraId={obra.id} />
          </div>
       </div>

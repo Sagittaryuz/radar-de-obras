@@ -24,28 +24,21 @@ import { updateObra } from '@/lib/actions';
 
 interface EditObraDialogProps {
   obra: Obra;
-  onObraUpdated: (updatedObra: Obra) => void;
+  onSuccess: () => void;
 }
 
-export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
+export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [lojas, setLojas] = useState<Loja[]>([]);
   
-  const [formData, setFormData] = useState({
-    clientName: obra.clientName || '',
-    contactPhone: obra.contactPhone || '',
-    street: obra.street || '',
-    number: obra.number || '',
-    neighborhood: obra.neighborhood || '',
-    lojaId: obra.lojaId || '',
-    stage: obra.stage || '',
-  });
+  // This state will hold the form data and will be reset every time the dialog opens.
+  const [formData, setFormData] = useState<Partial<Obra>>({});
 
   useEffect(() => {
-    // This effect runs when the dialog is opened, ensuring the form
-    // is always populated with the latest 'obra' data.
+    // When the dialog opens, initialize form data with the current obra data.
+    // This ensures the form is always fresh and not using stale state.
     if (open) {
       setFormData({
         clientName: obra.clientName || '',
@@ -78,28 +71,21 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
     event.preventDefault();
     console.log('[EditDialog] handleSubmit triggered.');
 
-    const payload: Partial<Obra> = {
-        clientName: formData.clientName,
-        contactPhone: formData.contactPhone,
-        street: formData.street,
-        number: formData.number,
-        neighborhood: formData.neighborhood,
-        lojaId: formData.lojaId,
-        stage: formData.stage as Obra['stage'],
-    };
+    // We can just pass the formData directly, as the server action will handle the comparison.
+    const payload: Partial<Obra> = { ...formData };
     
     console.log('[EditDialog] Submitting payload to server action:', payload);
 
     startTransition(async () => {
         const result = await updateObra(obra.id, payload);
 
-        if (result.success && result.data) {
+        if (result.success) {
             toast({
                 title: "Obra Atualizada",
                 description: result.message || "Os dados da obra foram atualizados.",
             });
-            onObraUpdated(result.data);
-            setOpen(false);
+            setOpen(false); // Close the dialog
+            onSuccess(); // Trigger the refresh on the parent page
         } else {
             toast({
                 variant: 'destructive',
