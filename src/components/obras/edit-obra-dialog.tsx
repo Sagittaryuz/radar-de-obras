@@ -91,9 +91,10 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
         lojaId: formData.lojaId,
         stage: formData.stage as Obra['stage'],
     };
+    
+    console.log('[EditDialog] Submitting payload to server action:', payload);
 
     startTransition(async () => {
-        console.log('[EditDialog] Submitting payload to server action:', payload);
         const result = await updateObra(obra.id, payload);
 
         if (result.success && result.data) {
