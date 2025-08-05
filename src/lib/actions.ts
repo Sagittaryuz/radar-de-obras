@@ -2,8 +2,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, doc, updateDoc, getDoc } from 'firebase-admin/firestore';
+import { initializeApp, getApps, deleteApp } from 'firebase-admin/app';
+import { getFirestore, doc, updateDoc, getDoc, deleteDoc } from 'firebase-admin/firestore';
 import type { Obra } from './mock-data';
 
 // Server-side action still needs its own admin instance for writing
@@ -39,27 +39,26 @@ export async function updateObra(obraId: string, formData: Partial<Obra>) {
         console.error(`[Action: updateObra] Error: Obra with ID ${obraId} not found.`);
         return { error: 'Obra não encontrada.' };
       }
+      
       const currentData = currentDocSnap.data() as Obra;
       console.log('[Action: updateObra] Current data in DB:', currentData);
   
       const updatePayload: Record<string, any> = {};
   
       // Compare form data with current data to find what changed
-      for (const key in formData) {
-          const typedKey = key as keyof Partial<Obra>;
-          // Ensure we are comparing same types and handle undefined/null cases
-          if (formData[typedKey] !== undefined && formData[typedKey] !== currentData[typedKey]) {
-              updatePayload[typedKey] = formData[typedKey];
-          }
-      }
+      Object.keys(formData).forEach(key => {
+        const typedKey = key as keyof Partial<Obra>;
+        if (formData[typedKey] !== undefined && formData[typedKey] !== currentData[typedKey]) {
+          updatePayload[typedKey] = formData[typedKey];
+        }
+      });
       
       console.log('[Action: updateObra] Detected changes (before address check):', updatePayload);
   
       // If any address component was changed, rebuild the full address field
-      const wasAddressChanged = updatePayload.street || updatePayload.number || updatePayload.neighborhood;
+      const addressChanged = 'street' in updatePayload || 'number' in updatePayload || 'neighborhood' in updatePayload;
       
-      if (wasAddressChanged) {
-          // Use new data if available, otherwise fall back to current data
+      if (addressChanged) {
           const newStreet = formData.street ?? currentData.street;
           const newNumber = formData.number ?? currentData.number;
           const newNeighborhood = formData.neighborhood ?? currentData.neighborhood;
@@ -74,7 +73,9 @@ export async function updateObra(obraId: string, formData: Partial<Obra>) {
   
       if (Object.keys(updatePayload).length === 0) {
          console.log('[Action: updateObra] No changes detected. Skipping update.');
-         return { success: true, data: { id: currentDocSnap.id, ...currentData } as Obra, message: "Nenhuma alteração foi feita." };
+         // We still return the full data to the client callback
+         const completeData = { id: currentDocSnap.id, ...currentData } as Obra;
+         return { success: true, data: completeData, message: "Nenhuma alteração foi feita." };
       }
   
       console.log('[Action: updateObra] Final payload for Firestore updateDoc:', updatePayload);
@@ -96,7 +97,9 @@ export async function updateObra(obraId: string, formData: Partial<Obra>) {
       return { success: true, data: updatedData, message: "Os dados da obra foram atualizados com sucesso." };
     } catch (error) {
       console.error("[Action: updateObra] CATCH BLOCK: Error updating obra:", error);
-      return { error: 'Falha ao atualizar a obra. Verifique os logs do servidor.' };
+      // It's helpful to know what kind of error it was
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return { error: `Falha ao atualizar a obra. Detalhes: ${errorMessage}` };
     }
 }
 
@@ -104,7 +107,7 @@ export async function deleteObra(obraId: string) {
   try {
     const obraRef = doc(dbAdmin, 'obras', obraId);
     await deleteDoc(obraRef);
-revalidatePath('/obras');
+    revalidatePath('/obras');
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {

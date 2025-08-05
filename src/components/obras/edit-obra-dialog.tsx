@@ -31,19 +31,18 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  // Unified form state
-  const [formData, setFormData] = useState({
-    clientName: '',
-    contactPhone: '',
-    street: '',
-    number: '',
-    neighborhood: '',
-    lojaId: '',
-    stage: '',
-  });
-
   const [lojas, setLojas] = useState<Loja[]>([]);
+  
+  // Unified form state, initialized with obra data
+  const [formData, setFormData] = useState({
+    clientName: obra.clientName || '',
+    contactPhone: obra.contactPhone || '',
+    street: obra.street || '',
+    number: obra.number || '',
+    neighborhood: obra.neighborhood || '',
+    lojaId: obra.lojaId || '',
+    stage: obra.stage || '',
+  });
 
   // Effect to sync form state when `obra` prop changes or dialog opens
   useEffect(() => {
@@ -100,7 +99,7 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
       if (result.success && result.data) {
         toast({
           title: "Obra Atualizada",
-          description: result.message,
+          description: result.message || "Os dados da obra foram atualizados.",
         });
         onObraUpdated(result.data); // Update the state on the detail page
         setOpen(false);
