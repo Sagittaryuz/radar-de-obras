@@ -176,7 +176,6 @@ export async function updateObra(obraId: string, payload: Partial<Obra>) {
 export async function deleteObra(obraId: string) {
   try {
     const obraRef = dbAdmin.collection('obras').doc(obraId);
-    // Optional: Delete associated photos from storage before deleting the document
     const docSnap = await obraRef.get();
     if (docSnap.exists) {
         const data = docSnap.data() as Obra;
@@ -184,14 +183,27 @@ export async function deleteObra(obraId: string) {
             const bucket = storageAdmin.bucket();
             for (const url of data.photoUrls) {
                 try {
-                    // Extract file path from URL
-                    const filePath = new URL(url).pathname.split('/').slice(3).join('/');
-                    if (filePath) {
-                       await bucket.file(filePath).delete();
+                    // Correctly extract file path from URL
+                    // Example URL: https://storage.googleapis.com/jcr-radar.firebasestorage.app/obras%2F171959...
+                    const urlObject = new URL(url);
+                    // The pathname will be like /jcr-radar.firebasestorage.app/obras%2F...
+                    // We need to decode it and remove the leading slash and bucket name.
+                    const decodedPath = decodeURIComponent(urlObject.pathname);
+                    const bucketName = `/${storageAdmin.bucket().name}/`;
+                    if (decodedPath.startsWith(bucketName)) {
+                        const filePath = decodedPath.substring(bucketName.length);
+                        console.log(`Attempting to delete photo from storage: ${filePath}`);
+                        if (filePath) {
+                            await bucket.file(filePath).delete();
+                            console.log(`Successfully deleted photo: ${filePath}`);
+                        }
+                    } else {
+                        console.warn(`Could not extract file path from URL: ${url}`);
                     }
                 } catch (storageError) {
                     console.error(`Failed to delete photo from storage: ${url}`, storageError);
-                    // Don't block document deletion if photo deletion fails
+                    // Don't block document deletion if photo deletion fails,
+                    // but it might indicate a bigger issue.
                 }
             }
         }
