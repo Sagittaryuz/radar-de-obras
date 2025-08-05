@@ -183,20 +183,33 @@ export async function deleteObra(obraId: string) {
             const bucket = storageAdmin.bucket();
             for (const url of data.photoUrls) {
                 try {
+                    // Correctly parse the URL and extract the file path
                     const urlObject = new URL(url);
                     const decodedPath = decodeURIComponent(urlObject.pathname);
-                    const bucketName = `/${storageAdmin.bucket().name}/`;
-                    if (decodedPath.startsWith(bucketName)) {
-                        const filePath = decodedPath.substring(bucketName.length);
-                        console.log(`Attempting to delete photo from storage: ${filePath}`);
-                        if (filePath) {
-                            await bucket.file(filePath).delete();
-                            console.log(`Successfully deleted photo: ${filePath}`);
-                        }
+                    // The pathname is like /v0/b/bucket-name/o/file-path-with-slashes
+                    // We need to extract just the file-path-with-slashes part.
+                    const pathPrefix = `/v0/b/${bucket.name}/o/`;
+                    let filePath = '';
+                    if (decodedPath.startsWith(pathPrefix)) {
+                        filePath = decodedPath.substring(pathPrefix.length);
                     } else {
-                        console.warn(`Could not extract file path from URL: ${url}`);
+                         // Fallback for direct storage links like https://storage.googleapis.com/bucket-name/file-path
+                         const directPrefix = `/${bucket.name}/`;
+                         if (decodedPath.startsWith(directPrefix)) {
+                            filePath = decodedPath.substring(directPrefix.length);
+                         }
+                    }
+
+                    if (filePath) {
+                        console.log(`Attempting to delete photo from storage: ${filePath}`);
+                        await bucket.file(filePath).delete();
+                        console.log(`Successfully deleted photo: ${filePath}`);
+                    } else {
+                         console.warn(`Could not extract a valid file path from URL: ${url}`);
                     }
                 } catch (storageError) {
+                    // Log the error but don't stop the deletion process.
+                    // This can happen if the file was already deleted manually.
                     console.error(`Failed to delete photo from storage: ${url}`, storageError);
                 }
             }
