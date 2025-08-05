@@ -1,14 +1,28 @@
 
 'use server';
 
-// This file is no longer in use as the login functionality has been removed.
-// It is kept to prevent breaking any residual imports, but its functions are now empty.
+import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { redirect } from 'next/navigation';
 
-export async function loginAction(credentials: unknown) {
-  console.log('[LoginAction] Login is disabled.');
-  return { error: 'O login está desativado.' };
+export async function loginAction(currentState: unknown, formData: FormData) {
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  if (!email || !password) {
+    return { error: 'E-mail e senha são obrigatórios.' };
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error: any) {
+    return { error: 'Credenciais inválidas.' };
+  }
+
+  redirect('/dashboard');
 }
 
 export async function logoutAction() {
-    console.log('[LogoutAction] Logout is disabled.');
+  await signOut(auth);
+  redirect('/login');
 }

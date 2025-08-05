@@ -1,7 +1,10 @@
 
-import { redirect } from 'next/navigation';
+import { LoginForm } from '@/app/login/_components/login-form';
 
 export default async function LoginPage() {
-  // Redirect immediately to the dashboard as login is no longer required.
-  redirect('/dashboard');
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+      <LoginForm />
+    </div>
+  );
 }
