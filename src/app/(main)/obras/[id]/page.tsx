@@ -228,12 +228,10 @@ export default function ObraDetailPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="relative aspect-video w-full">
-                        <Image 
+                        <img 
                             src={mapUrl}
                             alt={`Mapa da localização da obra em ${obra.address}`}
-                            fill
-                            className="rounded-md object-cover"
-                            unoptimized
+                            className="absolute inset-0 h-full w-full rounded-md object-cover"
                         />
                     </div>
                 </CardContent>
@@ -243,3 +241,4 @@ export default function ObraDetailPage() {
     </div>
   );
 }
+
