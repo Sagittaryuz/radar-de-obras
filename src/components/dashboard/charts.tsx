@@ -30,9 +30,6 @@ const stageColors: Record<string, string> = {
   'Telhado': '#9467bd',
 };
 
-const lojaColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
-
-
 const obraStatuses: Obra['status'][] = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida'];
 
 export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
@@ -46,6 +43,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
     }, {} as Record<string, string>);
   }, [allLojas]);
 
+  // Data for the filtered charts
   const obras = useMemo(() => {
     if (!allObras) return [];
     if (selectedLoja === 'all') {
@@ -54,7 +52,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
     return allObras.filter(obra => obra.lojaId === selectedLoja);
   }, [allObras, selectedLoja]);
 
-  // Data for the new summary chart (always shows all lojas)
+  // Data for the summary chart (always shows all lojas)
   const summaryData = useMemo(() => {
     if (!allLojas || !allObras) return [];
     const dataByLoja = allLojas.map(loja => {
@@ -90,42 +88,14 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
     }, {} as Record<string, number>);
     return Object.entries(counts).map(([name, value]) => ({ name, value, fill: stageColors[name] }));
   }, [obras]);
-
-  const obrasByLoja = useMemo(() => {
-    if (!allObras || !lojaMap) return []; // Always use allObras for this chart
-    const counts = allObras.reduce((acc, obra) => {
-      const lojaName = lojaMap[obra.lojaId] || 'Desconhecida';
-      acc[lojaName] = (acc[lojaName] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    return Object.entries(counts).map(([name, value], index) => ({ name, value, fill: lojaColors[index % lojaColors.length] }));
-  }, [allObras, lojaMap]);
+  
 
   if (!allObras || !allLojas) {
     return null; // Or a loading indicator
   }
   
   return (
-    <>
-      <div className="flex justify-between items-center mb-6">
-          <h1 className="font-headline text-3xl font-bold tracking-tight">
-            {selectedLoja === 'all' ? 'Dashboard Geral' : `Dashboard ${lojaMap[selectedLoja]}`}
-          </h1>
-          <div className="w-full max-w-xs">
-               <Select value={selectedLoja} onValueChange={setSelectedLoja}>
-                  <SelectTrigger>
-                      <SelectValue placeholder="Filtrar por loja..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">Todas as Lojas</SelectItem>
-                      {allLojas.map(loja => (
-                          <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
-          </div>
-      </div>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <Card className="col-span-full">
             <CardHeader>
               <CardTitle className="font-headline">Resumo de Obras por Loja</CardTitle>
@@ -147,7 +117,26 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
             </CardContent>
         </Card>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex justify-between items-center">
+            <h1 className="font-headline text-3xl font-bold tracking-tight">
+                {selectedLoja === 'all' ? 'Dashboard Geral' : `Dashboard ${lojaMap[selectedLoja]}`}
+            </h1>
+            <div className="w-full max-w-xs">
+                <Select value={selectedLoja} onValueChange={setSelectedLoja}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Filtrar por loja..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todas as Lojas</SelectItem>
+                        {allLojas.map(loja => (
+                            <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">Obras por Status</CardTitle>
@@ -188,29 +177,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
               </ChartContainer>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline">Obras por Loja</CardTitle>
-              <CardDescription>Contagem de obras por unidade.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={{}} className="h-64 w-full">
-                <BarChart data={obrasByLoja} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} width={80} />
-                  <XAxis type="number" allowDecimals={false} />
-                  <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                   <Bar dataKey="value" radius={4}>
-                    {obrasByLoja.map((entry) => (
-                      <Cell key={entry.name} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
         </div>
       </div>
-    </>
   );
 }
