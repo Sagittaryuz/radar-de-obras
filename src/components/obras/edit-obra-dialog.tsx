@@ -33,21 +33,16 @@ export function EditObraDialog({ obra, onObraUpdated }: EditObraDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [lojas, setLojas] = useState<Loja[]>([]);
   
-  // Initialize form state directly from the obra prop.
-  // This state will now be the single source of truth for the form.
   const [formData, setFormData] = useState({
-    clientName: obra.clientName || '',
-    contactPhone: obra.contactPhone || '',
-    street: obra.street || '',
-    number: obra.number || '',
-    neighborhood: obra.neighborhood || '',
-    lojaId: obra.lojaId || '',
-    stage: obra.stage || '',
+    clientName: '',
+    contactPhone: '',
+    street: '',
+    number: '',
+    neighborhood: '',
+    lojaId: '',
+    stage: '',
   });
 
-  // When the dialog opens, fetch the necessary data (lojas) and reset the form
-  // state to match the current `obra` prop. This ensures the form is always
-  // fresh when it's opened.
   useEffect(() => {
     if (open) {
       setFormData({
