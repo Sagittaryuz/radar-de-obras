@@ -90,6 +90,7 @@ export async function getObras(): Promise<Obra[]> {
 }
 
 export async function getObraById(id: string): Promise<Obra | null> {
+    console.log(`[getObraById] Fetching obra with ID: ${id}`);
     try {
         const obraRef = doc(db, 'obras', id);
         const obraSnap = await getDoc(obraRef);

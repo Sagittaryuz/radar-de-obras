@@ -77,6 +77,7 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     console.log('[EditDialog] Submitting payload to server action:', payload);
 
     startTransition(async () => {
+        console.log(`[EditObraDialog] Updating obra with ID: ${obra.id}`);
         const result = await updateObra(obra.id, payload);
 
         if (result.success) {

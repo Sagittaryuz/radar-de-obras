@@ -3,19 +3,21 @@
 
 import { revalidatePath } from 'next/cache';
 import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, doc, updateDoc, getDoc, deleteDoc } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import type { Obra } from './mock-data';
 
 // Initialize Firebase Admin SDK if not already initialized
 if (getApps().length === 0) {
-  initializeApp();
+  initializeApp({
+    projectId: "jcr-radar",
+  });
 }
 const dbAdmin = getFirestore();
 
 export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: string[]) {
   try {
-    const lojaRef = doc(dbAdmin, 'lojas', lojaId);
-    await updateDoc(lojaRef, { neighborhoods });
+    const lojaRef = dbAdmin.collection('lojas').doc(lojaId);
+    await lojaRef.update({ neighborhoods });
 
     revalidatePath('/admin');
     revalidatePath('/regions');
@@ -31,10 +33,10 @@ export async function updateObra(obraId: string, payload: Partial<Obra>) {
   console.log('[Action: updateObra] Received payload from client:', payload);
 
   try {
-    const obraRef = doc(dbAdmin, 'obras', obraId);
-    const docSnap = await getDoc(obraRef);
+    const obraRef = dbAdmin.collection('obras').doc(obraId);
+    const docSnap = await obraRef.get();
 
-    if (!docSnap.exists()) {
+    if (!docSnap.exists) {
       console.error(`[Action: updateObra] Error: Obra with ID ${obraId} not found.`);
       return { error: 'Obra não encontrada.' };
     }
@@ -63,16 +65,16 @@ export async function updateObra(obraId: string, payload: Partial<Obra>) {
 
     if (Object.keys(updatePayload).length === 0) {
        console.log('[Action: updateObra] No changes detected. Skipping update.');
-       const completeData = { id: docSnap.id, ...currentData } as Obra;
+       const completeData = { ...currentData, id: docSnap.id } as Obra;
        return { success: true, data: completeData, message: "Nenhuma alteração foi feita." };
     }
 
     console.log('[Action: updateObra] Final payload for Firestore updateDoc:', updatePayload);
 
-    await updateDoc(obraRef, updatePayload);
+    await obraRef.update(updatePayload);
     console.log('[Action: updateObra] updateDoc successful.');
 
-    const updatedSnap = await getDoc(obraRef);
+    const updatedSnap = await obraRef.get();
     const updatedData = { id: updatedSnap.id, ...updatedSnap.data() } as Obra;
     console.log('[Action: updateObra] Successfully fetched updated data to return:', updatedData);
 
@@ -92,8 +94,8 @@ export async function updateObra(obraId: string, payload: Partial<Obra>) {
 
 export async function deleteObra(obraId: string) {
   try {
-    const obraRef = doc(dbAdmin, 'obras', obraId);
-    await deleteDoc(obraRef);
+    const obraRef = dbAdmin.collection('obras').doc(obraId);
+    await obraRef.delete();
     revalidatePath('/obras');
     revalidatePath('/dashboard');
     return { success: true };
