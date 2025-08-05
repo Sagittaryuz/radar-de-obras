@@ -130,18 +130,16 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
             </CardHeader>
             <CardContent>
               <ChartContainer config={{}} className="h-80 w-full">
-                <ResponsiveContainer>
-                  <BarChart data={summaryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                    <Legend />
-                    {obraStatuses.map(status => (
-                      <Bar key={`summary-${status}`} dataKey={status} stackId="a" fill={statusColors[status]} radius={[4, 4, 0, 0]} />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={summaryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                  <Legend />
+                  {obraStatuses.map(status => (
+                    <Bar key={`summary-${status}`} dataKey={status} stackId="a" fill={statusColors[status]} radius={[4, 4, 0, 0]} />
+                  ))}
+                </BarChart>
               </ChartContainer>
             </CardContent>
         </Card>
@@ -154,15 +152,13 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
             </CardHeader>
             <CardContent>
               <ChartContainer config={{}} className="h-64 w-full">
-                <ResponsiveContainer>
-                  <BarChart data={obrasByStatus} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={obrasByStatus} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
+                </BarChart>
               </ChartContainer>
             </CardContent>
           </Card>
@@ -173,17 +169,15 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
             </CardHeader>
             <CardContent>
               <ChartContainer config={{}} className="h-64 w-full">
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Tooltip content={<ChartTooltipContent nameKey="name" />} />
-                    <Pie data={obrasByStage} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                      {obrasByStage.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={stageColors[index % stageColors.length]} />
-                      ))}
-                    </Pie>
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                <PieChart>
+                  <Tooltip content={<ChartTooltipContent nameKey="name" />} />
+                  <Pie data={obrasByStage} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    {obrasByStage.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={stageColors[index % stageColors.length]} />
+                    ))}
+                  </Pie>
+                  <Legend />
+                </PieChart>
               </ChartContainer>
             </CardContent>
           </Card>
@@ -194,15 +188,13 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
             </CardHeader>
             <CardContent>
               <ChartContainer config={{}} className="h-64 w-full">
-                <ResponsiveContainer>
-                  <BarChart data={obrasByLoja} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} width={80} />
-                    <XAxis type="number" allowDecimals={false} />
-                    <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={obrasByLoja} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} width={80} />
+                  <XAxis type="number" allowDecimals={false} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
+                </BarChart>
               </ChartContainer>
             </CardContent>
           </Card>
@@ -211,4 +203,3 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
     </>
   );
 }
-

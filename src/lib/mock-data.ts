@@ -140,7 +140,6 @@ export async function getLojas(): Promise<Loja[]> {
     const lojasSnapshot = await getDocs(lojasCol);
     
     if (lojasSnapshot.empty) {
-        console.warn("Firestore 'lojas' collection is empty. Returning hardcoded data.");
         return hardcodedLojas;
     }
 
@@ -159,7 +158,6 @@ export async function getLojas(): Promise<Loja[]> {
   } catch (error) {
     console.error("Error fetching lojas from client:", error);
     // Fallback to hardcoded data on error
-    console.warn("Falling back to hardcoded loja data due to fetch error.");
     return hardcodedLojas;
   }
 }
