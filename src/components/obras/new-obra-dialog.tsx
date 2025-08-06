@@ -253,16 +253,11 @@ export function NewObraDialog() {
                       <SelectValue placeholder="Selecione a unidade responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                      <SelectItem value="matriz">Matriz</SelectItem>
-                      <SelectItem value="catedral">Catedral</SelectItem>
-                      <SelectItem value="said-abdala">Said Abdala</SelectItem>
+                      {lojas.map(loja => (
+                        <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
+                      ))}
                   </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="details">Detalhes</Label>
-              <Textarea id="details" name="details" placeholder="Detalhes sobre a obra, cliente ou prospecção." value={details} onChange={e => setDetails(e.target.value)} />
             </div>
 
             <div className="space-y-3">
@@ -340,6 +335,11 @@ export function NewObraDialog() {
                       <SelectItem value="Telhado">Telhado</SelectItem>
                   </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="details">Detalhes</Label>
+              <Textarea id="details" name="details" placeholder="Detalhes sobre a obra, cliente ou prospecção." value={details} onChange={e => setDetails(e.target.value)} />
             </div>
 
             <div>
