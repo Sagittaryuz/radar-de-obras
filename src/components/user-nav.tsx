@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,14 +58,10 @@ export function UserNav({ user }: { user: User }) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <form action={logoutAction} className="w-full">
-            <button type="submit" className="w-full">
-                <DropdownMenuItem className="cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sair</span>
-                </DropdownMenuItem>
-            </button>
-        </form>
+        <DropdownMenuItem onClick={() => logoutAction()} className="cursor-pointer">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sair</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
