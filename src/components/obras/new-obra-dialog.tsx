@@ -259,6 +259,27 @@ export function NewObraDialog() {
                   </SelectContent>
               </Select>
             </div>
+            
+            <Button type="button" variant="outline" className="w-full" onClick={handleLocation} disabled={isLocating}>
+              <MapPin className="mr-2 h-4 w-4" />
+              {isLocating ? 'Obtendo localização...' : 'Usar Localização Atual'}
+            </Button>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className='col-span-2'>
+                <Label htmlFor="street">Rua</Label>
+                <Input id="street" name="street" placeholder="Ex: Av. Brasil" required value={rua} onChange={e => setRua(e.target.value)} />
+              </div>
+               <div>
+                <Label htmlFor="number">N.º</Label>
+                <Input id="number" name="number" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value)} />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="neighborhood">Bairro</Label>
+              <Input id="neighborhood" name="neighborhood" placeholder="Ex: Centro" required value={bairro} onChange={e => setBairro(e.target.value)} />
+            </div>
 
             <div className="space-y-3">
               <Label>Contatos</Label>
@@ -298,27 +319,6 @@ export function NewObraDialog() {
               <Button type="button" size="sm" variant="outline" onClick={addContact} className="gap-2">
                 <Plus className="h-4 w-4" /> Adicionar Contato
               </Button>
-            </div>
-            
-            <Button type="button" variant="outline" className="w-full" onClick={handleLocation} disabled={isLocating}>
-              <MapPin className="mr-2 h-4 w-4" />
-              {isLocating ? 'Obtendo localização...' : 'Usar Localização Atual'}
-            </Button>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className='col-span-2'>
-                <Label htmlFor="street">Rua</Label>
-                <Input id="street" name="street" placeholder="Ex: Av. Brasil" required value={rua} onChange={e => setRua(e.target.value)} />
-              </div>
-               <div>
-                <Label htmlFor="number">N.º</Label>
-                <Input id="number" name="number" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value)} />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="neighborhood">Bairro</Label>
-              <Input id="neighborhood" name="neighborhood" placeholder="Ex: Centro" required value={bairro} onChange={e => setBairro(e.target.value)} />
             </div>
 
             <div>
