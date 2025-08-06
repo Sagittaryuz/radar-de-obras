@@ -276,7 +276,7 @@ export function NewObraDialog() {
               </div>
                <div>
                 <Label htmlFor="number">N.º</Label>
-                <Input id="number" name="number" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value.replace(/\D/g, ''))} />
+                <Input id="number" name="number" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value.replace(/\\D/g, ''))} type="text" inputMode="numeric" />
               </div>
             </div>
 
@@ -313,6 +313,8 @@ export function NewObraDialog() {
                       placeholder="(XX) XXXXX-XXXX" 
                       value={contact.phone} 
                       onChange={(e) => handleContactChange(index, 'phone', e.target.value)}
+                      type="tel"
+                      inputMode='numeric'
                     />
                     <Button type="button" size="icon" variant="ghost" onClick={() => removeContact(index)} disabled={contacts.length === 1}>
                         <Trash2 className="h-4 w-4" />
@@ -392,4 +394,3 @@ export function NewObraDialog() {
     </Dialog>
   );
 }
-
