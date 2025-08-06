@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Building2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 type KanbanBoardProps = {
@@ -96,11 +97,13 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
 
   return (
     <Tabs defaultValue={defaultTab || columns[0]} className="w-full">
-      <TabsList className="grid w-full grid-cols-6">
-        {columns.map(status => (
-          <TabsTrigger key={status} value={status}>{status}</TabsTrigger>
-        ))}
-      </TabsList>
+        <ScrollArea className="w-full whitespace-nowrap">
+            <TabsList className="grid w-full grid-cols-6 min-w-[600px]">
+                {columns.map(status => (
+                <TabsTrigger key={status} value={status}>{status}</TabsTrigger>
+                ))}
+            </TabsList>
+        </ScrollArea>
       {columns.map(status => (
         <TabsContent 
           key={status} 

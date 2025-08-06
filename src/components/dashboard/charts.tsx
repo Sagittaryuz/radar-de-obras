@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Obra, Loja } from '@/lib/mock-data';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface DashboardChartsProps {
   allObras: Obra[];
@@ -144,18 +145,20 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
               <CardDescription>Distribuição de obras por status em cada loja. Clique para filtrar.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={{}} className="h-80 w-full">
-                <BarChart data={summaryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} onClick={handleSummaryBarClick}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                  <Legend />
-                  {obraStatuses.map(status => (
-                    <Bar key={`summary-${status}`} dataKey={status} stackId="a" fill={statusColors[status]} radius={[4, 4, 0, 0]} className='cursor-pointer' />
-                  ))}
-                </BarChart>
-              </ChartContainer>
+              <ScrollArea className="w-full whitespace-nowrap">
+                <ChartContainer config={{}} className="h-80 w-full min-w-[600px]">
+                  <BarChart data={summaryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} onClick={handleSummaryBarClick}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                    <Legend />
+                    {obraStatuses.map(status => (
+                      <Bar key={`summary-${status}`} dataKey={status} stackId="a" fill={statusColors[status]} radius={[4, 4, 0, 0]} className='cursor-pointer' />
+                    ))}
+                  </BarChart>
+                </ChartContainer>
+              </ScrollArea>
             </CardContent>
         </Card>
 
