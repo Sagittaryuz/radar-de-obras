@@ -23,6 +23,8 @@ export function LoginForm() {
     const formData = new FormData(event.currentTarget);
     setError(null);
 
+    // Log to check FormData content on the client
+    console.log('[LoginForm] FormData created. Email:', formData.get('email'), 'Password:', formData.get('password'));
     console.log('[LoginForm] Form submitted. Calling loginAction...');
 
     startTransition(async () => {

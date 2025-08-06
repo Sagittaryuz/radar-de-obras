@@ -9,8 +9,15 @@ import { getUserByEmail } from '@/lib/mock-data';
 
 export async function loginAction(currentState: unknown, formData: FormData) {
   console.log('[loginAction] Starting...');
+  
+  // Log the raw form data entries
+  console.log('[loginAction] FormData entries:', Array.from(formData.entries()));
+
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
+
+  console.log(`[loginAction] Extracted - Email: ${email}, Password: ${password ? '******' : '(empty)'}`);
+
 
   if (!email || !password) {
     console.log('[loginAction] Error: Email or password missing.');
