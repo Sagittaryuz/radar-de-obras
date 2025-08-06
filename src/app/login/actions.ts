@@ -8,24 +8,26 @@ import { getUserByEmail } from '@/lib/mock-data';
 
 
 export async function loginAction(currentState: unknown, formData: FormData) {
+  console.log('[loginAction] Starting...');
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
   if (!email || !password) {
+    console.log('[loginAction] Error: Email or password missing.');
     return { error: 'E-mail e senha são obrigatórios.' };
   }
+  
+  console.log(`[loginAction] Attempting to sign in with email: ${email}`);
 
   try {
-    // We will still sign in to get a session cookie, but the primary check is if the user exists in our DB.
-    // This assumes the password provided by the user is correct for an existing auth user.
     await signInWithEmailAndPassword(auth, email, password);
+    console.log(`[loginAction] Firebase sign-in successful for ${email}.`);
   } catch (error: any) {
-    console.error("Firebase auth sign in failed:", error);
-    // This mapping handles cases where the user is not in Firebase Auth or password is wrong.
+    console.error("[loginAction] Firebase auth sign in failed. Error Code:", error.code, "Error Message:", error.message);
     return { error: 'Credenciais inválidas. Verifique seu e-mail e senha.' };
   }
 
-  // Redirect to dashboard on successful Firebase sign-in
+  console.log('[loginAction] Redirecting to /dashboard');
   redirect('/dashboard');
 }
 
@@ -35,7 +37,6 @@ export async function logoutAction() {
         await signOut(auth);
     } catch (error) {
         console.error("Error signing out: ", error);
-        // Even if sign out fails on firebase, we still want to redirect the user.
     }
     redirect('/login');
 }
