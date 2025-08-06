@@ -2,7 +2,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, ListTodo, Map, Shield, LogOut, Settings } from 'lucide-react';
+import { Building2, LayoutDashboard, ListTodo, Map } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/mock-data';
 import { logoutAction } from '@/app/login/actions';
