@@ -247,6 +247,20 @@ export function NewObraDialog() {
           <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
 
             <div>
+              <Label htmlFor="lojaId">Unidade J. Cruzeiro</Label>
+              <Select required name="lojaId" onValueChange={setUnidade} value={unidade}>
+                  <SelectTrigger id="lojaId">
+                      <SelectValue placeholder="Selecione a unidade responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="matriz">Matriz</SelectItem>
+                      <SelectItem value="catedral">Catedral</SelectItem>
+                      <SelectItem value="said-abdala">Said Abdala</SelectItem>
+                  </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <Label htmlFor="details">Detalhes</Label>
               <Textarea id="details" name="details" placeholder="Detalhes sobre a obra, cliente ou prospecção." value={details} onChange={e => setDetails(e.target.value)} />
             </div>
@@ -310,20 +324,6 @@ export function NewObraDialog() {
             <div>
               <Label htmlFor="neighborhood">Bairro</Label>
               <Input id="neighborhood" name="neighborhood" placeholder="Ex: Centro" required value={bairro} onChange={e => setBairro(e.target.value)} />
-            </div>
-            
-            <div>
-              <Label htmlFor="lojaId">Unidade J. Cruzeiro</Label>
-              <Select required name="lojaId" onValueChange={setUnidade} value={unidade}>
-                  <SelectTrigger id="lojaId">
-                      <SelectValue placeholder="Selecione a unidade responsável" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="matriz">Matriz</SelectItem>
-                      <SelectItem value="catedral">Catedral</SelectItem>
-                      <SelectItem value="said-abdala">Said Abdala</SelectItem>
-                  </SelectContent>
-              </Select>
             </div>
 
             <div>
