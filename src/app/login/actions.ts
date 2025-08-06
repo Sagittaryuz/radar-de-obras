@@ -27,10 +27,12 @@ export async function loginAction(currentState: unknown, formData: FormData) {
   console.log(`[loginAction] Attempting to sign in with email: ${email}`);
 
   try {
-    await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log(`[loginAction] Firebase sign-in successful for ${email}.`);
+    console.log('[loginAction] UserCredential:', userCredential);
   } catch (error: any) {
-    console.error("[loginAction] Firebase auth sign in failed. Error Code:", error.code, "Error Message:", error.message);
+    console.error('[loginAction] Firebase auth sign in failed. Raw error:', error);
+    console.error('[loginAction] Firebase auth sign in failed. Error Code:', error.code, 'Error Message:', error.message);
     return { error: 'Credenciais inválidas. Verifique seu e-mail e senha.' };
   }
 

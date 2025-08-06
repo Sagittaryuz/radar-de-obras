@@ -28,29 +28,20 @@ export function LoginForm() {
     console.log('[LoginForm] Form submitted. Calling loginAction...');
 
     startTransition(async () => {
-      try {
-        const result = await loginAction(undefined, formData);
-        
-        console.log('[LoginForm] loginAction returned:', result);
+      console.log('[LoginForm] Calling loginAction...');
+      const result = await loginAction(undefined, formData);
+      console.log('[LoginForm] loginAction returned:', result);
 
-        if (result?.error) {
-          console.error('[LoginForm] Login failed with error from state:', result.error);
-          setError(result.error);
-          toast({
-            variant: 'destructive',
-            title: 'Erro de Login',
-            description: result.error,
-          });
-        }
-      } catch (e) {
-         const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
-         console.error('[LoginForm] Login failed with exception:', errorMessage);
-         setError(errorMessage);
-         toast({
-            variant: 'destructive',
-            title: 'Erro Inesperado',
-            description: errorMessage,
-         });
+      if (result?.error) {
+        console.error('[LoginForm] Login failed with error from state:', result.error);
+        setError(result.error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro de Login',
+          description: result.error,
+        });
+      } else {
+        console.log('[LoginForm] Login successful, redirect should have occurred.');
       }
     });
   };
