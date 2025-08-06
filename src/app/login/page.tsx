@@ -1,4 +1,6 @@
 
+'use client';
+
 import { LoginForm } from '@/app/login/_components/login-form';
 
 export default async function LoginPage() {
