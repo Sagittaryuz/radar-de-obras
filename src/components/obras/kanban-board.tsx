@@ -135,6 +135,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
                                     alt={`Foto da obra de ${obra.clientName}`}
                                     fill
                                     className="object-cover"
+                                    quality={50}
                                 />
                             </div>
                          ) : (
