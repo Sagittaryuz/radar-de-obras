@@ -35,8 +35,9 @@ export async function loginAction(currentState: unknown, formData: FormData) {
 export async function logoutAction() {
     try {
         await signOut(auth);
+        console.log('[logoutAction] Firebase sign-out successful.');
     } catch (error) {
-        console.error("Error signing out: ", error);
+        console.error("[logoutAction] Error signing out: ", error);
     }
     redirect('/login');
 }

@@ -1,33 +1,50 @@
 
 'use client';
 
+import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { loginAction } from '@/app/login/actions';
-import { useActionState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+
 
 export function LoginForm() {
-  const [state, formAction, isPending] = useActionState(loginAction, undefined);
   const { toast } = useToast();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log('[LoginForm] State updated:', state);
-    if (state?.error) {
-      console.error('[LoginForm] Login failed with error from state:', state.error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro de Login',
-        description: state.error,
-      });
-    }
-    if (state?.success) {
-      console.log('[LoginForm] Login successful, redirect should have happened on the server.');
-    }
-  }, [state, toast]);
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    setError(null);
+
+    console.log('[LoginForm] Form submitted. Calling loginAction...');
+
+    startTransition(async () => {
+      const result = await loginAction(undefined, formData);
+      
+      console.log('[LoginForm] loginAction returned:', result);
+
+      if (result?.error) {
+        console.error('[LoginForm] Login failed with error from state:', result.error);
+        setError(result.error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro de Login',
+          description: result.error,
+        });
+      }
+      
+      // The redirect is now handled by the server action itself upon success.
+      // If we are here and there is no error, it means the server action is redirecting.
+      // We don't need to do anything else.
+    });
+  };
 
   return (
     <Card className="shadow-lg">
@@ -36,7 +53,7 @@ export function LoginForm() {
         <CardDescription>Entre com seu e-mail e senha para acessar o sistema.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">E-mail</Label>
             <Input id="email" name="email" type="email" placeholder="seu@email.com" required />
@@ -45,9 +62,14 @@ export function LoginForm() {
             <Label htmlFor="password">Senha</Label>
             <Input id="password" name="password" type="password" required />
           </div>
-          {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Entrando...' : 'Entrar'}
+            {isPending ? (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <span>Entrando...</span>
+                </>
+            ) : 'Entrar'}
           </Button>
         </form>
       </CardContent>
