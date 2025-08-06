@@ -240,7 +240,7 @@ export function NewObraDialog() {
         <DialogHeader>
           <DialogTitle className="font-headline">Nova Prospecção de Obra</DialogTitle>
           <DialogDescription>
-            O NOME DA OBRA É O NOME DO ENDEREÇO. Preencha os dados para registrar uma nova obra.
+            Preencha os dados para registrar uma nova obra.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
