@@ -37,13 +37,13 @@ export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: str
 
 const ObraSchema = z.object({
   street: z.string().min(1, "Rua é obrigatória."),
-  number: z.string().min(1, "Número é obrigatório."),
+  number: z.string(), // Number can be empty
   neighborhood: z.string().min(1, "Bairro é obrigatório."),
   details: z.string().optional(),
   contacts: z.string().transform((val) => JSON.parse(val) as ObraContact[]).optional(),
   lojaId: z.string().min(1, "Unidade é obrigatória."),
   stage: z.enum(['Fundação', 'Alvenaria', 'Acabamento', 'Pintura', 'Telhado']),
-  photoDataUrls: z.array(z.string()).optional(),
+  photoUrls: z.string().transform(val => JSON.parse(val) as string[]).optional(),
 });
 
 
@@ -56,7 +56,7 @@ export async function addObra(formData: FormData) {
         contacts: formData.get('contacts'),
         lojaId: formData.get('lojaId'),
         stage: formData.get('stage'),
-        photoDataUrls: formData.getAll('photoDataUrls'),
+        photoUrls: formData.get('photoUrls'),
     };
 
     const validatedFields = ObraSchema.safeParse(rawData);
@@ -69,41 +69,16 @@ export async function addObra(formData: FormData) {
         };
     }
     
-    const { photoDataUrls, ...obraData } = validatedFields.data;
-    const finalPhotoUrls: string[] = [];
+    const { ...obraData } = validatedFields.data;
 
     try {
-        if (photoDataUrls && photoDataUrls.length > 0) {
-            for (const photoDataUrl of photoDataUrls) {
-                const matches = photoDataUrl.match(/^data:(.+);base64,(.+)$/);
-                if (!matches) {
-                    console.warn("Formato de imagem inválido ignorado.");
-                    continue;
-                }
-                
-                const mimeType = matches[1];
-                const base64Data = matches[2];
-                const buffer = Buffer.from(base64Data, 'base64');
-                const fileName = `obras/${Date.now()}-${Math.round(Math.random() * 1E9)}.jpg`;
-                const file = storageAdmin.bucket().file(fileName);
-
-                await file.save(buffer, {
-                    metadata: { contentType: mimeType },
-                    public: true,
-                });
-
-                finalPhotoUrls.push(file.publicUrl());
-            }
-        }
-
         const address = `${obraData.street}, ${obraData.number}, ${obraData.neighborhood}`;
         const newObraPayload = {
             ...obraData,
-            clientName: address, // For backward compatibility and display name
+            clientName: address, 
             address: address,
             status: 'Entrada',
             sellerId: null,
-            photoUrls: finalPhotoUrls,
             createdAt: new Date().toISOString(),
         };
 

@@ -24,6 +24,8 @@ import { addObra } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
+import { storage } from '@/lib/firebase';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -199,38 +201,61 @@ export function NewObraDialog() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData();
     
-    formData.append('street', rua);
-    formData.append('number', numero);
-    formData.append('neighborhood', bairro);
-    formData.append('details', details);
-    formData.append('lojaId', unidade);
-    formData.append('stage', etapa);
-
-    const validContacts = contacts.filter(c => c.type && c.phone && c.name);
-    formData.append('contacts', JSON.stringify(validContacts));
-    
-    photoDataUrls.forEach((url) => {
-        formData.append('photoDataUrls', url);
-    });
-
     startTransition(async () => {
-      const result = await addObra(formData);
-      if (result.success) {
-        toast({
-          title: "Obra Criada",
-          description: result.message,
-        });
-        setOpen(false);
-        resetForm();
-        router.refresh();
-      } else {
-        toast({
-          variant: 'destructive',
-          title: "Erro ao Salvar",
-          description: result.error || "Ocorreu um erro desconhecido.",
-        });
+      try {
+        let uploadedPhotoUrls: string[] = [];
+        
+        if (photoDataUrls.length > 0) {
+            toast({ title: 'Enviando fotos...', description: `0 de ${photoDataUrls.length} fotos enviadas.`});
+
+            const uploadPromises = photoDataUrls.map(async (dataUrl, index) => {
+                const fileName = `obras/${Date.now()}-${index}.jpg`;
+                const storageRef = ref(storage, fileName);
+                const uploadResult = await uploadString(storageRef, dataUrl, 'data_url');
+                toast({ title: 'Enviando fotos...', description: `${index + 1} de ${photoDataUrls.length} fotos enviadas.`});
+                return getDownloadURL(uploadResult.ref);
+            });
+
+            uploadedPhotoUrls = await Promise.all(uploadPromises);
+        }
+
+        const formData = new FormData();
+        
+        formData.append('street', rua);
+        formData.append('number', numero);
+        formData.append('neighborhood', bairro);
+        formData.append('details', details);
+        formData.append('lojaId', unidade);
+        formData.append('stage', etapa);
+        
+        const validContacts = contacts.filter(c => c.type && c.phone && c.name);
+        formData.append('contacts', JSON.stringify(validContacts));
+        formData.append('photoUrls', JSON.stringify(uploadedPhotoUrls));
+
+        const result = await addObra(formData);
+        if (result.success) {
+            toast({
+              title: "Obra Criada",
+              description: result.message,
+            });
+            setOpen(false);
+            resetForm();
+            router.refresh();
+        } else {
+            toast({
+              variant: 'destructive',
+              title: "Erro ao Salvar",
+              description: result.error || "Ocorreu um erro desconhecido.",
+            });
+        }
+      } catch(error) {
+         const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+         toast({
+            variant: 'destructive',
+            title: "Erro ao Salvar",
+            description: `Falha ao salvar a obra. Detalhes: ${errorMessage}`
+         });
       }
     });
   };
