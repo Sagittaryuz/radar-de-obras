@@ -1,4 +1,5 @@
 
+'''
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -8,24 +9,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { loginAction } from '@/app/login/actions';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-
 
 export function LoginForm() {
   const { toast } = useToast();
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  
+  // Use state to control form inputs
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
     setError(null);
 
-    // Log to check FormData content on the client
-    console.log('[LoginForm] FormData created. Email:', formData.get('email'), 'Password:', formData.get('password'));
-    console.log('[LoginForm] Form submitted. Calling loginAction...');
+    // Log the state values directly
+    console.log(`[LoginForm] Submitting with - Email: ${email}, Password: ${password ? '******' : '(empty)'}`);
+
+    // Manually create FormData
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('password', password);
+    
+    console.log('[LoginForm] FormData created manually. Calling loginAction...');
 
     startTransition(() => {
       loginAction(undefined, formData).then(result => {
@@ -56,11 +63,24 @@ export function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">E-mail</Label>
-            <Input id="email" name="email" type="email" placeholder="seu@email.com" />
+            <Input 
+              id="email" 
+              name="email" 
+              type="email" 
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" name="password" type="password" />
+            <Input 
+              id="password" 
+              name="password" 
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <Button type="submit" className="w-full" disabled={isPending}>
@@ -76,3 +96,4 @@ export function LoginForm() {
     </Card>
   );
 }
+''
