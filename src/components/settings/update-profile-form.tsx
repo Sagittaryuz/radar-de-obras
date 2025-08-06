@@ -15,6 +15,11 @@ import { useTransition, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
+import { storage } from '@/lib/firebase';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
@@ -60,28 +65,31 @@ export default function UpdateProfileForm({ user }: { user: User }) {
   const onSubmit = (data: ProfileFormValues) => {
     startTransition(async () => {
         try {
-            let avatarDataUrl: string | undefined = undefined;
+            const updatePayload: { name: string; avatar?: string } = { name: data.name };
+
             if (avatarFile) {
-                avatarDataUrl = await new Promise((resolve, reject) => {
+                const avatarReader = new Promise<string>((resolve, reject) => {
                     const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.onerror = reject;
                     reader.readAsDataURL(avatarFile);
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = (error) => reject(error);
                 });
+                const avatarDataUrl = await avatarReader;
+                
+                const fileName = `avatars/${user.id}-${Date.now()}.jpg`;
+                const storageRef = ref(storage, fileName);
+                const uploadResult = await uploadString(storageRef, avatarDataUrl, 'data_url');
+                updatePayload.avatar = await getDownloadURL(uploadResult.ref);
             }
 
-            const result = await updateUser(user.id, data.name, avatarDataUrl);
-
-            if (result.error) {
-              throw new Error(result.error);
-            }
+            const userRef = doc(db, 'users', user.id);
+            await updateDoc(userRef, updatePayload);
 
             toast({
                 title: 'Sucesso!',
                 description: 'Seu perfil foi atualizado. A alteração pode levar alguns instantes para ser refletida em toda a aplicação.',
             });
             
-            // Force a reload to get the new cookie and see avatar changes reflected everywhere.
             router.refresh();
 
         } catch (error) {
@@ -160,3 +168,4 @@ export default function UpdateProfileForm({ user }: { user: User }) {
     </Card>
   );
 }
+

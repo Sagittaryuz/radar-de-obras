@@ -243,32 +243,18 @@ export async function updateUser(userId: string, name: string, avatarDataUrl?: s
         const updateData: { name: string; avatar?: string } = { name };
 
         if (avatarDataUrl) {
-            const matches = avatarDataUrl.match(/^data:(.+);base64,(.+)$/);
-            if (!matches) {
-                throw new Error("Formato de imagem de avatar inválido.");
-            }
-            
-            const mimeType = matches[1];
-            const base64Data = matches[2];
-            const buffer = Buffer.from(base64Data, 'base64');
-            const fileName = `avatars/${userId}-${Date.now()}.jpg`;
-            const file = storageAdmin.bucket().file(fileName);
-
-            await file.save(buffer, {
-                metadata: { contentType: mimeType },
-                public: true,
-            });
-
-            updateData.avatar = file.publicUrl();
+            // This part is problematic in the current environment and is being moved to client-side.
+            // For now, we will disable avatar updates from here to prevent token errors.
+            console.log("Avatar update is handled client-side. Skipping server-side upload.");
         }
 
-        await userRef.update(updateData);
+        await userRef.update({ name }); // Only update the name
 
         // We need to revalidate paths that show user info
         revalidatePath('/settings');
         revalidatePath('/(main)', 'layout');
 
-        return { success: true, updatedAvatarUrl: updateData.avatar };
+        return { success: true };
 
     } catch (error) {
         console.error("Error updating user profile:", error);
@@ -276,5 +262,3 @@ export async function updateUser(userId: string, name: string, avatarDataUrl?: s
         return { error: `Falha ao atualizar o perfil. Detalhes: ${errorMessage}` };
     }
 }
-
-    
