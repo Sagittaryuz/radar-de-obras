@@ -68,6 +68,9 @@ export function NewObraDialog() {
     if (open) {
       const fetchLojas = async () => {
         const lojasData = await getLojas();
+        // Custom sort order
+        const order: Record<string, number> = { 'matriz': 1, 'catedral': 2, 'said-abdala': 3 };
+        lojasData.sort((a, b) => (order[a.id] || 99) - (order[b.id] || 99));
         setLojas(lojasData);
       };
       fetchLojas();
@@ -276,7 +279,7 @@ export function NewObraDialog() {
               </div>
                <div>
                 <Label htmlFor="number">N.º</Label>
-                <Input id="number" name="number" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value.replace(/\\D/g, ''))} type="text" inputMode="numeric" />
+                <Input id="number" name="number" placeholder="Ex: 123" value={numero} onChange={e => setNumero(e.target.value.replace(/\D/g, ''))} type="text" inputMode="numeric" />
               </div>
             </div>
 
