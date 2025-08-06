@@ -17,7 +17,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import { storage } from '@/lib/firebase';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 
@@ -65,7 +65,12 @@ export default function UpdateProfileForm({ user }: { user: User }) {
   const onSubmit = (data: ProfileFormValues) => {
     startTransition(async () => {
         try {
-            const updatePayload: { name: string; avatar?: string } = { name: data.name };
+            // Start with the existing user data to ensure all fields are present
+            const updatePayload: User = {
+                ...user, // Use the spread operator to get all fields from the current user
+                name: data.name,
+                email: data.email, // email is disabled, but good practice to include it
+            };
 
             if (avatarFile) {
                 const avatarReader = new Promise<string>((resolve, reject) => {
@@ -82,15 +87,19 @@ export default function UpdateProfileForm({ user }: { user: User }) {
                 updatePayload.avatar = await getDownloadURL(uploadResult.ref);
             }
 
+            // Use setDoc with merge: true instead of updateDoc.
+            // This will create the document if it doesn't exist, or update it if it does.
             const userRef = doc(db, 'users', user.id);
-            await updateDoc(userRef, updatePayload);
+            await setDoc(userRef, updatePayload, { merge: true });
 
             toast({
                 title: 'Sucesso!',
                 description: 'Seu perfil foi atualizado. A alteração pode levar alguns instantes para ser refletida em toda a aplicação.',
             });
             
-            router.refresh();
+            // Wait a bit before refreshing to allow data propagation
+            setTimeout(() => router.refresh(), 1000);
+
 
         } catch (error) {
              const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
@@ -168,4 +177,3 @@ export default function UpdateProfileForm({ user }: { user: User }) {
     </Card>
   );
 }
-
