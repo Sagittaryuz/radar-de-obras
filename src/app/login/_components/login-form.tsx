@@ -1,5 +1,3 @@
-
-'''
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -96,4 +94,3 @@ export function LoginForm() {
     </Card>
   );
 }
-''
