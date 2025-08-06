@@ -6,10 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { loginAction } from '@/app/login/actions';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 
 export function LoginForm() {
-  const [state, formAction] = useFormState(loginAction, undefined);
+  const [state, formAction] = useActionState(loginAction, undefined);
 
   return (
     <Card className="shadow-lg">
