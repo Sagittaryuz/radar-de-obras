@@ -16,13 +16,19 @@ export async function loginAction(currentState: unknown, formData: FormData) {
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (error: any) {
-    return { error: 'Credenciais inválidas.' };
+    // Firebase often returns generic auth errors. We'll map them to a user-friendly message.
+    return { error: 'Credenciais inválidas. Verifique seu e-mail e senha.' };
   }
 
   redirect('/dashboard');
 }
 
 export async function logoutAction() {
-  await signOut(auth);
-  redirect('/login');
+    try {
+        await signOut(auth);
+    } catch (error) {
+        console.error("Error signing out: ", error);
+        // Even if sign out fails on firebase, we still want to redirect the user.
+    }
+    redirect('/login');
 }
