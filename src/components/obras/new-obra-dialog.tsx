@@ -135,7 +135,11 @@ export function NewObraDialog() {
   
   const handleContactChange = (index: number, field: keyof ObraContact, value: string) => {
     const newContacts = [...contacts];
-    newContacts[index] = { ...newContacts[index], [field]: value };
+    let processedValue = value;
+    if (field === 'phone') {
+        processedValue = value.replace(/\D/g, ''); // Remove non-numeric characters
+    }
+    newContacts[index] = { ...newContacts[index], [field]: processedValue };
     setContacts(newContacts);
   };
 
@@ -272,7 +276,7 @@ export function NewObraDialog() {
               </div>
                <div>
                 <Label htmlFor="number">N.º</Label>
-                <Input id="number" name="number" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value)} />
+                <Input id="number" name="number" placeholder="Ex: 123" required value={numero} onChange={e => setNumero(e.target.value.replace(/\D/g, ''))} />
               </div>
             </div>
 
@@ -388,3 +392,4 @@ export function NewObraDialog() {
     </Dialog>
   );
 }
+
