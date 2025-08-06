@@ -276,3 +276,5 @@ export async function updateUser(userId: string, name: string, avatarDataUrl?: s
         return { error: `Falha ao atualizar o perfil. Detalhes: ${errorMessage}` };
     }
 }
+
+    
