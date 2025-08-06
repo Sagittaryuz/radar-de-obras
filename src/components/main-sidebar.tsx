@@ -23,14 +23,8 @@ const menuItems = [
   { href: '/regions', label: 'Regiões', icon: Map },
 ];
 
-const adminMenuItem = { href: '/admin', label: 'Admin', icon: Shield, adminOnly: true };
-
 export function MainSidebar({ user }: { user: User }) {
   const pathname = usePathname();
-
-  const allMenuItems = user.email === 'marcos.pires@jcruzeiro.com' 
-    ? [...menuItems, adminMenuItem] 
-    : menuItems;
 
   return (
     <>
@@ -47,7 +41,7 @@ export function MainSidebar({ user }: { user: User }) {
       </SidebarHeader>
       <SidebarContent className="p-2 flex-1">
         <SidebarMenu>
-          {allMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild

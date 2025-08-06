@@ -10,17 +10,6 @@ import { User, Loja } from "@/lib/mock-data";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminPage() {
-  // Session check can remain here, but data fetching moves to client-side.
-  useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession();
-      if (session?.email !== 'marcos.pires@jcruzeiro.com') {
-        redirect('/dashboard');
-      }
-    };
-    checkSession();
-  }, []);
-
   const [users, setUsers] = useState<User[]>([]);
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
