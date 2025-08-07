@@ -1,8 +1,12 @@
 
+import { LoginForm } from './_components/login-form';
+import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
-// This page is no longer needed as we are using a mock session.
-// Redirect any access to this page to the dashboard.
-export default function LoginPage() {
-    redirect('/dashboard');
+export default async function LoginPage() {
+    const session = await getSession();
+    if (session) {
+        redirect('/dashboard');
+    }
+    return <LoginForm />;
 }

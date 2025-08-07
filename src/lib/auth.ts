@@ -2,22 +2,32 @@
 'use server';
 
 import type { User } from '@/lib/mock-data';
-// We are mocking the session to avoid server-side auth errors during development
-// In a real app, you would uncomment the firebase-admin logic
-// import { auth } from './firebase-admin';
-// import { cookies } from 'next/headers';
+import { auth } from './firebase-admin';
+import { cookies } from 'next/headers';
 import { getUserByEmail } from './mock-data';
 
-// const SESSION_COOKIE_NAME = 'session';
+const SESSION_COOKIE_NAME = 'session';
 
 export async function getSession(): Promise<User | null> {
-    // This is a mock session. It will always return the first user found.
-    // This avoids the need for login during development.
+    const sessionCookie = cookies().get(SESSION_COOKIE_NAME)?.value;
+
+    if (!sessionCookie) {
+        return null;
+    }
+
     try {
-        const mockUser = await getUserByEmail("vendedor.jcruzeiro@gmail.com");
-        return mockUser || null;
-    } catch (e) {
-        console.error("Failed to get mock user for session", e);
+        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+        if (!decodedClaims.email) {
+            return null;
+        }
+        // Fetch the full user profile from your database
+        const user = await getUserByEmail(decodedClaims.email);
+        return user;
+    } catch (error) {
+        // Session cookie is invalid or expired.
+        // It's a good practice to clear the cookie in this case.
+        cookies().delete(SESSION_COOKIE_NAME);
+        console.error("Session verification failed:", error);
         return null;
     }
 }

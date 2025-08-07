@@ -4,38 +4,28 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-// This is a mock service account object.
-// In a real production environment, this should be loaded from a secure environment variable.
-const mockServiceAccount: ServiceAccount = {
-  projectId: 'jcr-radar',
-  clientEmail: 'mock-client-email@example.com',
-  privateKey: '-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC3\n-----END PRIVATE KEY-----\n',
-};
-
-
 const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-let serviceAccount: ServiceAccount;
+let adminApp;
 
 if (serviceAccountJson) {
   try {
-    serviceAccount = JSON.parse(serviceAccountJson);
+    const serviceAccount = JSON.parse(serviceAccountJson);
+    adminApp = !getApps().length
+      ? initializeApp({
+          credential: cert(serviceAccount),
+          storageBucket: "jcr-radar.firebasestorage.app",
+        })
+      : getApp();
   } catch (error) {
-    console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT JSON. Using mock credentials.', error);
-    serviceAccount = mockServiceAccount;
+    console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT JSON or initialize app.', error);
+    // In a real app, you might want to throw an error here to stop the server from starting
+    // without proper configuration. For this environment, we will let it proceed but auth will fail.
   }
 } else {
-  // console.warn('FIREBASE_SERVICE_ACCOUNT environment variable not set. Using mock credentials for development.');
-  serviceAccount = mockServiceAccount;
+  console.warn('FIREBASE_SERVICE_ACCOUNT environment variable not set. Server-side Firebase services will not be available.');
 }
 
-
-const adminApp = !getApps().length
-  ? initializeApp({
-      credential: cert(serviceAccount),
-      storageBucket: "jcr-radar.firebasestorage.app",
-    })
-  : getApp();
 
 const auth = getAuth(adminApp);
 const db = getFirestore(adminApp);

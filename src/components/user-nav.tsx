@@ -11,10 +11,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Settings, LogOut } from 'lucide-react';
+import { Settings, LogOut, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/mock-data';
-// import { logoutAction } from '@/app/login/actions';
+import { logoutAction } from '@/app/login/actions';
 import { useTransition } from 'react';
 
 function getInitials(name: string) {
@@ -26,11 +26,11 @@ function getInitials(name: string) {
 export function UserNav({ user }: { user: User }) {
   const [isPending, startTransition] = useTransition();
 
-  // const handleLogout = () => {
-  //   startTransition(async () => {
-  //     await logoutAction();
-  //   });
-  // };
+  const handleLogout = () => {
+    startTransition(async () => {
+      await logoutAction();
+    });
+  };
 
   return (
     <DropdownMenu>
@@ -65,6 +65,11 @@ export function UserNav({ user }: { user: User }) {
             <Settings className="mr-2 h-4 w-4" />
             <span>Configurações</span>
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout} disabled={isPending}>
+            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
+            <span>Sair</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
