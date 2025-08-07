@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 import { getUserByEmail } from './mock-data';
 
 const SESSION_COOKIE_NAME = 'session';
+const SESSION_COOKIE_EXPIRES_IN = 60 * 60 * 24 * 5 * 1000; // 5 days
 
 export async function getSession(): Promise<User | null> {
     const sessionCookie = cookies().get(SESSION_COOKIE_NAME)?.value;
@@ -16,7 +17,11 @@ export async function getSession(): Promise<User | null> {
     }
 
     try {
-        const decodedToken = await auth.verifyIdToken(sessionCookie);
+        // Here, we're not verifying an ID token, but a session cookie.
+        // For simplicity with custom tokens/mock auth, we are re-using the logic.
+        // In a full Firebase Auth setup, you would verify the session cookie.
+        const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
+
         if (decodedToken && decodedToken.email) {
              const user = await getUserByEmail(decodedToken.email);
              if (user) {
@@ -26,6 +31,30 @@ export async function getSession(): Promise<User | null> {
         return null;
     } catch (error) {
         console.error("Error verifying session cookie:", error);
+        // Clear the invalid cookie
+        cookies().delete(SESSION_COOKIE_NAME);
         return null;
+    }
+}
+
+
+export async function createSession(idToken: string) {
+    try {
+        const decodedIdToken = await auth.verifyIdToken(idToken, true);
+
+        // Session cookie creation is a privileged operation.
+        // We're creating a session cookie that will be valid for 5 days.
+        const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn: SESSION_COOKIE_EXPIRES_IN });
+
+        cookies().set(SESSION_COOKIE_NAME, sessionCookie, {
+            maxAge: SESSION_COOKIE_EXPIRES_IN,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+        
+        return { success: true };
+    } catch (error) {
+        console.error("Error creating session:", error);
+        return { success: false, error: "Falha ao criar sessão no servidor." };
     }
 }
