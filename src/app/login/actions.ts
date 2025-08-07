@@ -15,24 +15,25 @@ export async function createSession(idToken: string) {
   }
 
   try {
+    // verifyIdToken já verifica se o token está expirado, foi revogado, etc.
     const decodedIdToken = await adminAuth.verifyIdToken(idToken, true);
     
-    // Only generate session cookie if the token is valid and not expired.
-    if (new Date().getTime() / 1000 < decodedIdToken.auth_time) {
-        return { error: 'O token fornecido é de uma data futura.' };
-    }
+    // A verificação auth_time é muito sensível a pequenas diferenças de clock
+    // entre o cliente e o servidor, e a verificação principal já é suficiente.
+    // Removendo a verificação problemática.
 
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
-    cookies().set(SESSION_COOKIE_NAME, sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true });
+    (await cookies()).set(SESSION_COOKIE_NAME, sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true });
 
   } catch (error) {
     console.error("Failed to create session cookie:", error);
-    return { error: 'Não foi possível criar a sessão. Tente novamente.' };
+    // Retorna um erro genérico para não expor detalhes da implementação.
+    return { error: 'Não foi possível validar sua sessão. Tente novamente.' };
   }
 }
 
 
 export async function logoutAction() {
-    cookies().delete(SESSION_COOKIE_NAME);
+    (await cookies()).delete(SESSION_COOKIE_NAME);
     redirect('/login');
 }
