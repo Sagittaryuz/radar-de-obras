@@ -63,6 +63,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
     e.preventDefault();
     if (draggedItem && draggedItem.status !== status) {
       const originalObras = obras;
+      const updatedClientName = (draggedItem.contacts && draggedItem.contacts.length > 0 && draggedItem.contacts[0].name) ? draggedItem.contacts[0].name : draggedItem.clientName;
       // Optimistic update
       setObras(prevObras =>
         prevObras.map(obra =>
@@ -75,7 +76,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
         await updateDoc(obraRef, { status });
         toast({
           title: "Status Atualizado!",
-          description: `A obra "${draggedItem.clientName}" foi movida para ${status}.`,
+          description: `A obra de "${updatedClientName}" foi movida para ${status}.`,
         });
         // router.refresh(); // Optional: uncomment if you want to re-fetch all data
       } catch (error) {
@@ -118,6 +119,8 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
               .map(obra => {
                 const seller = obra.sellerId ? sellerMap[obra.sellerId] : null;
                 const coverPhoto = obra.photoUrls && obra.photoUrls.length > 0 ? obra.photoUrls[0] : null;
+                const cardTitle = (obra.contacts && obra.contacts.length > 0 && obra.contacts[0].name) ? obra.contacts[0].name : obra.clientName;
+
                 return (
                   <Link key={obra.id} href={`/obras/${obra.id}`} passHref>
                     <div
@@ -135,7 +138,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
                             <div className="relative aspect-video w-full">
                                 <Image 
                                     src={coverPhoto} 
-                                    alt={`Foto da obra de ${obra.clientName}`}
+                                    alt={`Foto da obra de ${cardTitle}`}
                                     fill
                                     className="object-cover"
                                     quality={50}
@@ -148,7 +151,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
                          )}
                         <CardContent className="p-4 space-y-2 flex flex-col justify-between">
                           <div>
-                            <p className="font-bold truncate">{obra.clientName}</p>
+                            <p className="font-bold truncate">{cardTitle}</p>
                             <p className="text-sm text-muted-foreground truncate">{obra.address}</p>
                           </div>
                           <div className="flex justify-between items-center pt-2">

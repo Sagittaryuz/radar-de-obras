@@ -129,6 +129,8 @@ export default function ObraDetailPage() {
   
   const lojaName = lojas.find(l => l.id === obra.lojaId)?.name || obra.lojaId;
   const isOldDataFormat = !obra.contacts || obra.contacts.length === 0;
+  const cardTitle = (obra.contacts && obra.contacts.length > 0 && obra.contacts[0].name) ? obra.contacts[0].name : obra.clientName;
+
 
   return (
     <div className="space-y-6">
@@ -148,8 +150,7 @@ export default function ObraDetailPage() {
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-3">
                         <Briefcase className="h-6 w-6 text-primary" />
-                        {/* If clientName is the same as address, it's new data, otherwise show old clientName */}
-                        {obra.clientName === obra.address ? "Obra" : `Cliente: ${obra.clientName}`}
+                        {cardTitle}
                     </CardTitle>
                     <CardDescription>{obra.address}</CardDescription>
                 </CardHeader>
