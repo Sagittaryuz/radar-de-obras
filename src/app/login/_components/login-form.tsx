@@ -56,6 +56,7 @@ export function LoginForm() {
 
       } catch (e: any) {
         let errorMessage = "Ocorreu um erro desconhecido.";
+        // Handle specific Firebase auth errors for better user feedback
         if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
             errorMessage = "Email ou senha inválidos.";
         }
