@@ -1,27 +1,28 @@
 
-import { initializeApp, getApps, getApp, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, cert, ServiceAccount } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-// IMPORTANT: Path to your service account key file
-// You can download this from your Firebase project settings.
-// DO NOT expose this file publicly.
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-  : {
-      "type": "service_account",
-      "project_id": process.env.PROJECT_ID || "jcr-radar",
-      "private_key_id": process.env.PRIVATE_KEY_ID,
-      "private_key": (process.env.PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-      "client_email": process.env.CLIENT_EMAIL,
-      "client_id": process.env.CLIENT_ID,
-      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-      "token_uri": "https://oauth2.googleapis.com/token",
-      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-      "client_x509_cert_url": process.env.CLIENT_X509_CERT_URL,
-      "universe_domain": "googleapis.com"
-    };
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+if (!serviceAccountJson) {
+  throw new Error(
+    'A variável de ambiente FIREBASE_SERVICE_ACCOUNT não está definida. Ela deve conter o JSON da chave de conta de serviço do Firebase.'
+  );
+}
+
+let serviceAccount: ServiceAccount;
+try {
+  serviceAccount = JSON.parse(serviceAccountJson);
+} catch (error) {
+  console.error('Falha ao analisar o JSON da conta de serviço:', error);
+  throw new Error('O valor de FIREBASE_SERVICE_ACCOUNT não é um JSON válido.');
+}
+
+if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
+  throw new Error("O JSON da conta de serviço é inválido. Faltam propriedades essenciais como 'project_id', 'private_key', ou 'client_email'.");
+}
 
 const adminApp = !getApps().length
   ? initializeApp({

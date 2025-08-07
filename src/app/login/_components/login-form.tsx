@@ -8,9 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { createSession } from '@/lib/auth';
+import { loginAction } from '../actions';
 import { redirect } from 'next/navigation';
 
 export function LoginForm() {
@@ -18,53 +16,29 @@ export function LoginForm() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
 
+    const formData = new FormData(event.currentTarget);
+
     startTransition(async () => {
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const idToken = await userCredential.user.getIdToken();
-            
-            const result = await createSession(idToken);
+      const result = await loginAction(formData);
 
-            if (result.success) {
-                redirect('/dashboard');
-            } else {
-                 setError(result.error || 'Falha ao criar sessão.');
-                 toast({
-                    variant: 'destructive',
-                    title: 'Erro de Login',
-                    description: result.error || 'Não foi possível iniciar a sessão no servidor.',
-                });
-            }
-
-        } catch (error: any) {
-            let errorMessage = 'Ocorreu um erro desconhecido.';
-            switch (error.code) {
-                case 'auth/user-not-found':
-                case 'auth/wrong-password':
-                case 'auth/invalid-credential':
-                    errorMessage = 'Email ou senha inválidos.';
-                    break;
-                case 'auth/too-many-requests':
-                    errorMessage = 'Muitas tentativas de login. Tente novamente mais tarde.';
-                    break;
-                 default:
-                    console.error('[LoginForm] Firebase Auth Error:', error);
-                    break;
-            }
-            setError(errorMessage);
-            toast({
-                variant: 'destructive',
-                title: 'Erro de Login',
-                description: errorMessage,
-            });
-        }
+      if (result?.error) {
+        setError(result.error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro de Login',
+          description: result.error,
+        });
+      } else {
+        toast({
+          title: 'Login bem-sucedido!',
+          description: 'Você será redirecionado em breve.',
+        });
+        redirect('/dashboard');
+      }
     });
   };
 
@@ -83,8 +57,6 @@ export function LoginForm() {
               name="email" 
               type="email" 
               placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -94,8 +66,6 @@ export function LoginForm() {
               id="password" 
               name="password" 
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>

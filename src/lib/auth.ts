@@ -17,9 +17,6 @@ export async function getSession(): Promise<User | null> {
     }
 
     try {
-        // Here, we're not verifying an ID token, but a session cookie.
-        // For simplicity with custom tokens/mock auth, we are re-using the logic.
-        // In a full Firebase Auth setup, you would verify the session cookie.
         const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
 
         if (decodedToken && decodedToken.email) {
@@ -40,10 +37,6 @@ export async function getSession(): Promise<User | null> {
 
 export async function createSession(idToken: string) {
     try {
-        const decodedIdToken = await auth.verifyIdToken(idToken, true);
-
-        // Session cookie creation is a privileged operation.
-        // We're creating a session cookie that will be valid for 5 days.
         const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn: SESSION_COOKIE_EXPIRES_IN });
 
         cookies().set(SESSION_COOKIE_NAME, sessionCookie, {

@@ -2,7 +2,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, ListTodo, Map, ShieldCheck } from 'lucide-react';
+import { Building2, LayoutDashboard, ListTodo, Map } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/mock-data';
 import { logoutAction } from '@/app/login/actions';
@@ -23,12 +23,10 @@ const menuItems = [
   { href: '/regions', label: 'Regiões', icon: Map },
 ];
 
-const adminMenuItem = { href: '/admin', label: 'Admin', icon: ShieldCheck };
-
 
 export function MainSidebar({ user }: { user: User }) {
   const pathname = usePathname();
-  const allMenuItems = user.role === 'Admin' ? [...menuItems, adminMenuItem] : menuItems;
+  const allMenuItems = menuItems;
 
   return (
     <>

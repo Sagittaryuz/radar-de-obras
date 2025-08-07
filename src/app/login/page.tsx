@@ -37,7 +37,6 @@ function LoginSkeleton() {
 
 
 export default function LoginPage() {
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,9 +45,8 @@ export default function LoginPage() {
       if (session) {
         redirect('/dashboard');
       } else {
-        setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     };
     checkSession();
   }, []);
