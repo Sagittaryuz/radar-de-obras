@@ -233,9 +233,7 @@ export async function getCoordinatesForAddress(address: string): Promise<{lat: n
       }
 }
 
-// Since auth is mocked, we need a way to update the "user" profile.
-// This will update the user record in Firestore. The mock getSession will
-// need to be updated separately if we want the change to be reflected immediately.
+// DEPRECATED - This logic is now handled on the client-side in UpdateProfileForm
 export async function updateUser(userId: string, name: string, avatarDataUrl?: string) {
     if (!dbAdmin) {
       return { error: 'Serviço de banco de dados indisponível.' };
@@ -244,15 +242,8 @@ export async function updateUser(userId: string, name: string, avatarDataUrl?: s
         const userRef = dbAdmin.collection('users').doc(userId);
         const updateData: { name: string; avatar?: string } = { name };
 
-        if (avatarDataUrl) {
-            // This part is problematic in the current environment and is being moved to client-side.
-            // For now, we will disable avatar updates from here to prevent token errors.
-            console.log("Avatar update is handled client-side. Skipping server-side upload.");
-        }
+        await userRef.update({ name });
 
-        await userRef.update({ name }); // Only update the name
-
-        // We need to revalidate paths that show user info
         revalidatePath('/settings');
         revalidatePath('/(main)', 'layout');
 

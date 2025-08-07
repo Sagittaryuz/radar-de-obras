@@ -10,15 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { User } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser } from '@/lib/actions';
 import { useTransition, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
-import { storage } from '@/lib/firebase';
+import { storage, db } from '@/lib/firebase';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 
 const profileSchema = z.object({
@@ -65,41 +63,27 @@ export default function UpdateProfileForm({ user }: { user: User }) {
   const onSubmit = (data: ProfileFormValues) => {
     startTransition(async () => {
         try {
-            // Start with the existing user data to ensure all fields are present
-            const updatePayload: User = {
-                ...user, // Use the spread operator to get all fields from the current user
+            const updatePayload: Partial<User> = {
                 name: data.name,
-                email: data.email, // email is disabled, but good practice to include it
             };
 
-            if (avatarFile) {
-                const avatarReader = new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(avatarFile);
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.onerror = (error) => reject(error);
-                });
-                const avatarDataUrl = await avatarReader;
-                
+            if (avatarFile && avatarPreview) {
                 const fileName = `avatars/${user.id}-${Date.now()}.jpg`;
                 const storageRef = ref(storage, fileName);
-                const uploadResult = await uploadString(storageRef, avatarDataUrl, 'data_url');
+                const uploadResult = await uploadString(storageRef, avatarPreview, 'data_url');
                 updatePayload.avatar = await getDownloadURL(uploadResult.ref);
             }
 
-            // Use setDoc with merge: true instead of updateDoc.
-            // This will create the document if it doesn't exist, or update it if it does.
             const userRef = doc(db, 'users', user.id);
             await setDoc(userRef, updatePayload, { merge: true });
 
             toast({
                 title: 'Sucesso!',
-                description: 'Seu perfil foi atualizado. A alteração pode levar alguns instantes para ser refletida em toda a aplicação.',
+                description: 'Seu perfil foi atualizado. A alteração pode levar alguns instantes para ser refletida.',
             });
             
             // Wait a bit before refreshing to allow data propagation
-            setTimeout(() => router.refresh(), 1000);
-
+            setTimeout(() => router.refresh(), 1500);
 
         } catch (error) {
              const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
@@ -133,6 +117,7 @@ export default function UpdateProfileForm({ user }: { user: User }) {
                         type="file" 
                         accept="image/*"
                         onChange={handleAvatarChange}
+                        disabled={isPending}
                     />
                 </FormControl>
                 </div>
@@ -146,7 +131,7 @@ export default function UpdateProfileForm({ user }: { user: User }) {
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Seu nome" {...field} />
+                    <Input placeholder="Seu nome" {...field} disabled={isPending} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
