@@ -24,8 +24,16 @@ export async function createSession(idToken: string) {
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
     console.log('[createSession] Session cookie created.');
 
-    console.log('[createSession] Setting cookie in browser...');
-    (await cookies()).set(SESSION_COOKIE_NAME, sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true });
+    const options = {
+        name: SESSION_COOKIE_NAME,
+        value: sessionCookie,
+        maxAge: expiresIn,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    };
+    
+    console.log('[createSession] Setting cookie in browser with options:', options);
+    cookies().set(options);
     console.log('[createSession] Cookie set successfully.');
     
     return { success: true };
@@ -39,6 +47,6 @@ export async function createSession(idToken: string) {
 
 
 export async function logoutAction() {
-    (await cookies()).delete(SESSION_COOKIE_NAME);
+    cookies().delete(SESSION_COOKIE_NAME);
     redirect('/login');
 }
