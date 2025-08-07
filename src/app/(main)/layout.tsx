@@ -50,12 +50,10 @@ export default function MainLayout({
   useEffect(() => {
     const loadUser = async () => {
       const session = await getSession();
-      if (!session) {
-        redirect('/login');
-      } else {
-        setUser(session);
-        setLoading(false);
-      }
+      // Since login is removed, we'll always get the mock user or null.
+      // If we want to show a default state, we can set a mock user here.
+      setUser(session);
+      setLoading(false);
     };
     loadUser();
   }, []);
