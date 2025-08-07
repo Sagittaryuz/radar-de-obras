@@ -71,7 +71,7 @@ export function NewObraDialog() {
       const fetchLojas = async () => {
         const lojasData = await getLojas();
         // Custom sort order
-        const order: Record<string, number> = { 'matriz': 1, 'catedral': 2, 'said-abdala': 3 };
+        const order: Record<string, number> = { 'matriz': 1, 'catedral': 2, 'said-abdala': 3, 'mineiros': 3 };
         lojasData.sort((a, b) => (order[a.id] || 99) - (order[b.id] || 99));
         setLojas(lojasData);
       };
@@ -204,6 +204,8 @@ export function NewObraDialog() {
     
     startTransition(async () => {
       try {
+        toast({ title: 'Salvando obra...', description: `Por favor, aguarde.` });
+        
         let uploadedPhotoUrls: string[] = [];
         
         if (photoDataUrls.length > 0) {
@@ -263,7 +265,7 @@ export function NewObraDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="w-full">
           <PlusCircle className="mr-2 h-4 w-4" />
           Nova Obra
         </Button>
@@ -355,7 +357,7 @@ export function NewObraDialog() {
               </Button>
             </div>
 
-            <div>
+             <div>
               <Label htmlFor="stage">Etapa da Obra</Label>
               <Select required name="stage" onValueChange={setEtapa} value={etapa}>
                   <SelectTrigger id="stage">
@@ -379,6 +381,7 @@ export function NewObraDialog() {
             <div>
               <Label htmlFor="photos">Fotos</Label>
               <Input id="photos" name="photos" type="file" accept="image/*" multiple onChange={handleFileChange} />
+              <p className="text-xs text-muted-foreground mt-1">Tamanho máximo por arquivo: {MAX_FILE_SIZE_MB}MB.</p>
             </div>
 
              {photoPreviews.length > 0 && (
@@ -422,5 +425,3 @@ export function NewObraDialog() {
     </Dialog>
   );
 }
-
-    
