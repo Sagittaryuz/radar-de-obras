@@ -2,26 +2,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
+import { db as dbAdmin, storage as storageAdmin } from './firebase-admin';
 import type { Obra, ObraContact } from './mock-data';
 import { z } from 'zod';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
 
-
-// Initialize Firebase Admin SDK if not already initialized
-if (getApps().length === 0) {
-  initializeApp({
-    projectId: "jcr-radar",
-    storageBucket: "jcr-radar.firebasestorage.app",
-  });
-}
-const dbAdmin = getFirestore();
-const storageAdmin = getStorage();
-
 export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: string[]) {
+  if (!dbAdmin) {
+    return { error: 'Serviço de banco de dados indisponível.' };
+  }
   try {
     const lojaRef = dbAdmin.collection('lojas').doc(lojaId);
     await lojaRef.update({ neighborhoods });
@@ -48,6 +38,9 @@ const ObraSchema = z.object({
 
 
 export async function addObra(formData: FormData) {
+    if (!dbAdmin) {
+      return { error: 'Serviço de banco de dados indisponível.' };
+    }
     const rawData = {
         street: formData.get('street'),
         number: formData.get('number'),
@@ -98,6 +91,9 @@ export async function addObra(formData: FormData) {
 
 
 export async function updateObra(obraId: string, payload: Partial<Obra>) {
+  if (!dbAdmin) {
+    return { error: 'Serviço de banco de dados indisponível.' };
+  }
   console.log(`[Action: updateObra] Received request for obraId: ${obraId}`);
   console.log('[Action: updateObra] Received payload from client:', payload);
 
@@ -164,6 +160,9 @@ export async function updateObra(obraId: string, payload: Partial<Obra>) {
 
 
 export async function deleteObra(obraId: string) {
+  if (!dbAdmin || !storageAdmin) {
+    return { error: 'Serviço de banco de dados ou armazenamento indisponível.' };
+  }
   try {
     const obraRef = dbAdmin.collection('obras').doc(obraId);
     const docSnap = await obraRef.get();
@@ -238,6 +237,9 @@ export async function getCoordinatesForAddress(address: string): Promise<{lat: n
 // This will update the user record in Firestore. The mock getSession will
 // need to be updated separately if we want the change to be reflected immediately.
 export async function updateUser(userId: string, name: string, avatarDataUrl?: string) {
+    if (!dbAdmin) {
+      return { error: 'Serviço de banco de dados indisponível.' };
+    }
     try {
         const userRef = dbAdmin.collection('users').doc(userId);
         const updateData: { name: string; avatar?: string } = { name };

@@ -15,6 +15,11 @@ export async function getSession(): Promise<User | null> {
         return null;
     }
 
+    if (!auth) {
+        console.error("Firebase Admin auth is not initialized. Cannot verify session cookie.");
+        return null;
+    }
+
     try {
         const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
         if (!decodedClaims.email) {

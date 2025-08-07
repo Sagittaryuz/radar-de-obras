@@ -9,6 +9,11 @@ const SESSION_COOKIE_NAME = 'session';
 const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
 
 export async function createSession(idToken: string) {
+  if (!adminAuth) {
+    console.error("Firebase Admin auth is not initialized. Cannot create session cookie.");
+    return { error: 'Ocorreu um erro no servidor. Tente novamente mais tarde.' };
+  }
+
   try {
     const decodedIdToken = await adminAuth.verifyIdToken(idToken, true);
     
