@@ -9,24 +9,29 @@ const SESSION_COOKIE_NAME = 'session';
 const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
 
 export async function createSession(idToken: string) {
+  console.log('[createSession] Action called.');
   if (!adminAuth) {
-    console.error("Firebase Admin auth is not initialized. Cannot create session cookie.");
+    console.error("[createSession] Firebase Admin auth is not initialized.");
     return { error: 'Ocorreu um erro no servidor. Tente novamente mais tarde.' };
   }
 
   try {
-    // verifyIdToken já verifica se o token está expirado, foi revogado, etc.
+    console.log('[createSession] Verifying ID token...');
     const decodedIdToken = await adminAuth.verifyIdToken(idToken, true);
+    console.log('[createSession] ID token verified successfully for UID:', decodedIdToken.uid);
     
-    // A verificação auth_time é muito sensível a pequenas diferenças de clock
-    // entre o cliente e o servidor, e a verificação principal já é suficiente.
-    // Removendo a verificação problemática.
-
+    console.log('[createSession] Creating session cookie...');
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+    console.log('[createSession] Session cookie created.');
+
+    console.log('[createSession] Setting cookie in browser...');
     (await cookies()).set(SESSION_COOKIE_NAME, sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true });
+    console.log('[createSession] Cookie set successfully.');
+    
+    return { success: true };
 
   } catch (error) {
-    console.error("Failed to create session cookie:", error);
+    console.error("[createSession] Failed to create session cookie:", error);
     // Retorna um erro genérico para não expor detalhes da implementação.
     return { error: 'Não foi possível validar sua sessão. Tente novamente.' };
   }
