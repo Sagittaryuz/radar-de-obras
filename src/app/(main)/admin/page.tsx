@@ -17,7 +17,13 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      try {
+       try {
+        const session = await getSession();
+        if (session?.role !== 'Admin') {
+            redirect('/dashboard');
+            return;
+        }
+
         const [usersData, lojasData] = await Promise.all([
             getUsers(),
             getLojas(),

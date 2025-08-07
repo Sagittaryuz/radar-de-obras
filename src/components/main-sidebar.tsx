@@ -2,7 +2,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, ListTodo, Map } from 'lucide-react';
+import { Building2, LayoutDashboard, ListTodo, Map, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/mock-data';
 import { logoutAction } from '@/app/login/actions';
@@ -23,8 +23,12 @@ const menuItems = [
   { href: '/regions', label: 'Regiões', icon: Map },
 ];
 
+const adminMenuItem = { href: '/admin', label: 'Admin', icon: ShieldCheck };
+
+
 export function MainSidebar({ user }: { user: User }) {
   const pathname = usePathname();
+  const allMenuItems = user.role === 'Admin' ? [...menuItems, adminMenuItem] : menuItems;
 
   return (
     <>
@@ -41,11 +45,11 @@ export function MainSidebar({ user }: { user: User }) {
       </SidebarHeader>
       <SidebarContent className="p-2 flex-1">
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {allMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href)}
                 tooltip={{ children: item.label, side: 'right' }}
               >
                 <Link href={item.href}>

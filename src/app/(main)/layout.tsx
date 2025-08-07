@@ -9,6 +9,7 @@ import type { User } from '@/lib/mock-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { redirect } from 'next/navigation';
 
 
 function MainLayoutSkeleton() {
@@ -48,10 +49,13 @@ export default function MainLayout({
 
   useEffect(() => {
     const loadUser = async () => {
-      // The new getSession() always returns a mock user, so no need for redirects.
       const session = await getSession();
-      setUser(session);
-      setLoading(false);
+      if (!session) {
+        redirect('/login');
+      } else {
+        setUser(session);
+        setLoading(false);
+      }
     };
     loadUser();
   }, []);

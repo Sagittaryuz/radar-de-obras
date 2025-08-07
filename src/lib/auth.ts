@@ -1,13 +1,31 @@
-import type { User } from '@/lib/mock-data';
 
-// Since login is removed, getSession always returns a default mock user.
-export async function getSession(): Promise<User> {
-  // This function now guarantees a user object is returned, simplifying session checks.
-  return {
-    id: 'mock-user-id',
-    name: 'Marcos Pires',
-    email: 'marcos.pires@jcruzeiro.com',
-    avatar: 'https://placehold.co/100x100.png',
-    role: 'Admin',
-  };
+'use server';
+
+import type { User } from '@/lib/mock-data';
+import { auth } from './firebase-admin';
+import { cookies } from 'next/headers';
+import { getUserByEmail } from './mock-data';
+
+const SESSION_COOKIE_NAME = 'session';
+
+export async function getSession(): Promise<User | null> {
+    const sessionCookie = cookies().get(SESSION_COOKIE_NAME)?.value;
+
+    if (!sessionCookie) {
+        return null;
+    }
+
+    try {
+        const decodedToken = await auth.verifyIdToken(sessionCookie);
+        if (decodedToken && decodedToken.email) {
+             const user = await getUserByEmail(decodedToken.email);
+             if (user) {
+                return user;
+             }
+        }
+        return null;
+    } catch (error) {
+        console.error("Error verifying session cookie:", error);
+        return null;
+    }
 }
