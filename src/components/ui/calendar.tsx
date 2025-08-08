@@ -57,8 +57,8 @@ function Calendar({
         ...classNames,
       }}
       modifiers={{
-        saturday: { dayOfWeek: 6 },
-        sunday: { dayOfWeek: 0 },
+        saturday: { dayOfWeek: [6] },
+        sunday: { dayOfWeek: [0] },
       }}
       modifiersClassNames={{
         saturday: "weekend-day",
