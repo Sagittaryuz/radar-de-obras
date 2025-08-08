@@ -86,4 +86,7 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  .weekend-day:not(.rdp-day_selected) {
+    color: hsl(var(--primary) / 0.8);
+  }
 }

@@ -1,6 +1,8 @@
+
 "use client"
 
 import * as React from "react"
+import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
 
@@ -17,6 +19,7 @@ function Calendar({
 }: CalendarProps) {
   return (
     <DayPicker
+      locale={ptBR}
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
@@ -52,6 +55,14 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
+      }}
+      modifiers={{
+        saturday: { dayOfWeek: 6 },
+        sunday: { dayOfWeek: 0 },
+      }}
+      modifiersClassNames={{
+        saturday: "weekend-day",
+        sunday: "weekend-day"
       }}
       components={{
         IconLeft: ({ className, ...props }) => (
