@@ -1,6 +1,6 @@
 
 import { db } from './firebase'; // Use the client instance for all data fetching
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, Timestamp } from 'firebase/firestore';
 
 export type User = {
   id: string;
@@ -43,6 +43,7 @@ export type Obra = {
   stage: 'Fundação' | 'Alvenaria' | 'Acabamento' | 'Pintura' | 'Telhado';
   status: 'Entrada' | 'Triagem' | 'Atribuída' | 'Em Negociação' | 'Ganha' | 'Perdida';
   sellerId: string | null;
+  createdAt: string | Timestamp;
   // Deprecated - will be replaced by contacts array
   contactPhone?: string;
 };
@@ -161,16 +162,18 @@ export async function getLojas(): Promise<Loja[]> {
     const lojasSnapshot = await getDocs(lojasCol);
     
     if (lojasSnapshot.empty) {
+        // If there's nothing in Firestore, return the hardcoded list.
+        // This is a good fallback for initial setup.
         return hardcodedLojas;
     }
 
     const lojasList = lojasSnapshot.docs.map(doc => {
         const data = doc.data();
-        // Use the name from firestore, and neighborhoods from firestore if they exist and are not empty
+        // Ensure that neighborhoods is always an array, even if it's missing in Firestore.
         return {
             id: doc.id,
-            name: data.name || doc.id,
-            neighborhoods: (data.neighborhoods && data.neighborhoods.length > 0) 
+            name: data.name || doc.id.toUpperCase(), // Default to capitalized ID if name is missing
+            neighborhoods: data.neighborhoods && Array.isArray(data.neighborhoods) 
                            ? data.neighborhoods 
                            : []
         } as Loja
@@ -178,7 +181,7 @@ export async function getLojas(): Promise<Loja[]> {
     return lojasList;
   } catch (error) {
     console.error("Error fetching lojas from client:", error);
-    // Fallback to hardcoded data on error
+    // Fallback to hardcoded data on error as well
     return hardcodedLojas;
   }
 }

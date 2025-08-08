@@ -18,7 +18,9 @@ import { Badge } from '@/components/ui/badge';
 import { X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja } from '@/lib/mock-data';
-import { updateLojaNeighborhoods } from '@/lib/actions';
+import { useRouter } from 'next/navigation';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 interface EditNeighborhoodsDialogProps {
@@ -31,6 +33,7 @@ export function EditNeighborhoodsDialog({ loja }: EditNeighborhoodsDialogProps) 
   const [open, setOpen] = useState(false);
   const [bairros, setBairros] = useState<string[]>(loja.neighborhoods);
   const [newBairro, setNewBairro] = useState('');
+  const router = useRouter();
 
   const handleAddBairro = () => {
     if (newBairro && !bairros.includes(newBairro.trim())) {
@@ -45,18 +48,22 @@ export function EditNeighborhoodsDialog({ loja }: EditNeighborhoodsDialogProps) 
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await updateLojaNeighborhoods(loja.id, bairros);
-      if (result.success) {
+      try {
+        const lojaRef = doc(db, 'lojas', loja.id);
+        await updateDoc(lojaRef, { neighborhoods: bairros });
+        
         toast({
           title: "Sucesso!",
           description: `Bairros da ${loja.name} atualizados.`,
         });
         setOpen(false);
-      } else {
-        toast({
+        router.refresh();
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido.";
+         toast({
           variant: 'destructive',
           title: "Erro",
-          description: result.error,
+          description: `Falha ao atualizar. Detalhes: ${errorMessage}`,
         });
       }
     });

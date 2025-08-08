@@ -20,7 +20,8 @@ import { Edit, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja, Obra } from '@/lib/mock-data';
 import { getLojas } from '@/lib/mock-data';
-import { updateObra } from '@/lib/actions';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { Textarea } from '../ui/textarea';
 
@@ -34,7 +35,6 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [lojas, setLojas] = useState<Loja[]>([]);
-  const router = useRouter();
   
   const [formData, setFormData] = useState<Partial<Obra>>({});
 
@@ -70,30 +70,34 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log('[EditDialog] handleSubmit triggered.');
 
     const payload: Partial<Obra> = { ...formData };
     
-    console.log('[EditDialog] Submitting payload to server action:', payload);
+    // If address fields changed, update the full address string
+    if (payload.street || payload.number || payload.neighborhood) {
+        payload.address = `${payload.street || obra.street}, ${payload.number || obra.number}, ${payload.neighborhood || obra.neighborhood}`;
+        payload.clientName = payload.address; // Also update clientName, which holds the address.
+    }
 
     startTransition(async () => {
-        console.log(`[EditObraDialog] Updating obra with ID: ${obra.id}`);
-        const result = await updateObra(obra.id, payload);
-
-        if (result.success) {
-            toast({
-                title: "Obra Atualizada",
-                description: result.message || "Os dados da obra foram atualizados.",
-            });
-            setOpen(false);
-            onSuccess(); // This will trigger the router.refresh() in the parent component.
-        } else {
-            toast({
-                variant: 'destructive',
-                title: "Erro ao Atualizar",
-                description: result.error,
-            });
-        }
+      try {
+        const obraRef = doc(db, 'obras', obra.id);
+        await updateDoc(obraRef, payload);
+        
+        toast({
+            title: "Obra Atualizada",
+            description: "Os dados da obra foram atualizados.",
+        });
+        setOpen(false);
+        onSuccess();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+        toast({
+            variant: 'destructive',
+            title: "Erro ao Atualizar",
+            description: `Não foi possível atualizar. Detalhes: ${errorMessage}`,
+        });
+      }
     });
   };
 

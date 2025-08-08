@@ -17,6 +17,7 @@ import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PdfExportButton } from '@/components/obras/pdf-export-button';
+import { Timestamp } from 'firebase/firestore';
 
 
 export default function ObrasPage() {
@@ -69,7 +70,14 @@ export default function ObrasPage() {
     if (dateRange?.from && dateRange?.to) {
         obras = obras.filter(obra => {
             if (!obra.createdAt) return false;
-            const obraDate = new Date(obra.createdAt);
+            
+            let obraDate: Date;
+            if (obra.createdAt instanceof Timestamp) {
+                obraDate = obra.createdAt.toDate();
+            } else {
+                obraDate = new Date(obra.createdAt);
+            }
+
             // Adjust to the end of the selected day
             const toDate = new Date(dateRange.to!);
             toDate.setHours(23, 59, 59, 999);
