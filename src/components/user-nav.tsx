@@ -14,8 +14,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Settings, LogOut, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/mock-data';
-import { logoutAction } from '@/app/login/actions';
 import { useTransition } from 'react';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+
 
 function getInitials(name: string) {
     const names = name.split(' ');
@@ -25,10 +28,19 @@ function getInitials(name: string) {
 
 export function UserNav({ user }: { user: User }) {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const handleLogout = () => {
     startTransition(async () => {
-      await logoutAction();
+      try {
+        await auth.signOut();
+        toast({ title: "Você saiu.", description: "Você foi desconectado com sucesso." });
+        router.push('/login');
+      } catch (error) {
+        console.error("Logout failed", error);
+        toast({ variant: 'destructive', title: "Erro ao sair", description: "Não foi possível desconectar. Tente novamente." });
+      }
     });
   };
 

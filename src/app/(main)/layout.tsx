@@ -2,14 +2,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getSession } from '@/lib/auth';
-import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { getUserByEmail } from '@/lib/mock-data';
+import { SidebarProvider, Sidebar } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/main-sidebar';
 import type { User } from '@/lib/mock-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { redirect } from 'next/navigation';
+import { redirect, usePathname } from 'next/navigation';
 
 
 function MainLayoutSkeleton() {
@@ -46,23 +48,45 @@ export default function MainLayout({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
+  const pathname = usePathname();
 
   useEffect(() => {
-    const loadUser = async () => {
-      setLoading(true);
-      const session = await getSession();
-      if (!session) {
-        redirect('/login');
-        return;
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // User is signed in, get our custom user data.
+        const appUser = await getUserByEmail(firebaseUser.email!);
+        if (appUser) {
+          setUser(appUser);
+        } else {
+          // This case should ideally not happen if Firestore is synced with Auth
+          console.error("User exists in Firebase Auth but not in Firestore.");
+          setUser(null);
+          if (pathname !== '/login') {
+            redirect('/login');
+          }
+        }
+      } else {
+        // User is signed out.
+        setUser(null);
+        if (pathname !== '/login') {
+          redirect('/login');
+        }
       }
-      setUser(session);
       setLoading(false);
-    };
-    loadUser();
-  }, []);
+    });
 
-  if (loading || !user) {
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [pathname]);
+
+  if (loading) {
     return <MainLayoutSkeleton />;
+  }
+  
+  if (!user) {
+    // If not loading and no user, we should be on the login page.
+    // The redirect in useEffect handles this, but this is a fallback.
+    return null; 
   }
 
   return (

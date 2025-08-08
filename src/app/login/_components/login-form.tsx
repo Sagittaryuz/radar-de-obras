@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { createSession } from '../actions';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Logo } from '@/components/logo';
@@ -41,19 +40,9 @@ export function LoginForm() {
     setError(null);
     startTransition(async () => {
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-        const idToken = await userCredential.user.getIdToken();
-        
-        const result = await createSession(idToken);
-
-        if (result?.error) {
-          setError(result.error);
-          toast({ variant: 'destructive', title: 'Erro de Login', description: result.error });
-        } else {
-          toast({ title: 'Sucesso!', description: 'Login realizado com sucesso.' });
-          router.push('/dashboard');
-        }
-
+        await signInWithEmailAndPassword(auth, data.email, data.password);
+        toast({ title: 'Sucesso!', description: 'Login realizado com sucesso. Redirecionando...' });
+        router.push('/dashboard');
       } catch (e: any) {
         let errorMessage = "Ocorreu um erro desconhecido. Por favor, tente novamente.";
         // Handle specific Firebase auth errors for better user feedback
