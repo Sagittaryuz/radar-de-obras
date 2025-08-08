@@ -1,8 +1,6 @@
 
 'use client';
 
-import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { getUsers, getLojas } from "@/lib/mock-data";
 import { useEffect, useState } from "react";
@@ -18,12 +16,6 @@ export default function AdminPage() {
     const fetchData = async () => {
       setLoading(true);
        try {
-        const session = await getSession();
-        if (session?.role !== 'Admin') {
-            redirect('/dashboard');
-            return;
-        }
-
         const [usersData, lojasData] = await Promise.all([
             getUsers(),
             getLojas(),

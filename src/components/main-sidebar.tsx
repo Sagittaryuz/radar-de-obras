@@ -2,31 +2,26 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, ListTodo, Map } from 'lucide-react';
+import { Building2, LayoutDashboard, ListTodo, Map, User, Settings } from 'lucide-react';
 import Link from 'next/link';
-import type { User } from '@/lib/mock-data';
-import { logoutAction } from '@/app/login/actions';
 import {
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
-  SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { UserNav } from '@/components/user-nav';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/obras', label: 'Obras', icon: ListTodo },
   { href: '/regions', label: 'Regiões', icon: Map },
+  { href: '/admin', label: 'Admin', icon: Settings },
 ];
 
 
-export function MainSidebar({ user }: { user: User }) {
+export function MainSidebar() {
   const pathname = usePathname();
-  const allMenuItems = menuItems;
 
   return (
     <>
@@ -43,7 +38,7 @@ export function MainSidebar({ user }: { user: User }) {
       </SidebarHeader>
       <SidebarContent className="p-2 flex-1">
         <SidebarMenu>
-          {allMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
@@ -59,12 +54,6 @@ export function MainSidebar({ user }: { user: User }) {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarSeparator />
-        <SidebarFooter className="p-2">
-            <div className="pb-2">
-              <UserNav user={user} />
-            </div>
-        </SidebarFooter>
     </>
   );
 }
