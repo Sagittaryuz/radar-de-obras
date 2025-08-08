@@ -8,6 +8,24 @@ import { z } from 'zod';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
 
+export async function imageToDataUrl(url: string) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+        const buffer = Buffer.from(await blob.arrayBuffer());
+        const dataUrl = `data:${blob.type};base64,${buffer.toString('base64')}`;
+        return { success: true, dataUrl };
+    } catch (error) {
+        console.error("Error converting image to data URL:", error);
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { success: false, error: message };
+    }
+}
+
+
 export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: string[]) {
   if (!dbAdmin) {
     return { error: 'Serviço de banco de dados indisponível.' };
