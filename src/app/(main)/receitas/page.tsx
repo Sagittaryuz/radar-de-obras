@@ -9,6 +9,7 @@ import { getObras, getLojas } from '@/lib/mock-data';
 import type { Obra, Loja } from '@/lib/mock-data';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { useRouter } from "next/navigation";
 
 
 function formatCurrency(value: number) {
@@ -22,6 +23,7 @@ export default function ReceitasPage() {
     const [obras, setObras] = useState<Obra[]>([]);
     const [lojas, setLojas] = useState<Loja[]>([]);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -56,9 +58,9 @@ export default function ReceitasPage() {
     
     const revenueByLoja = useMemo(() => {
         const lojaMap = lojas.reduce((acc, loja) => {
-          acc[loja.id] = { name: loja.name, total: 0 };
+          acc[loja.id] = { id: loja.id, name: loja.name, total: 0 };
           return acc;
-        }, {} as Record<string, {name: string, total: number}>);
+        }, {} as Record<string, {id: string, name: string, total: number}>);
 
         salesData.soldObras.forEach(obra => {
             if (lojaMap[obra.lojaId]) {
@@ -67,11 +69,27 @@ export default function ReceitasPage() {
         });
         
         return Object.values(lojaMap).map(loja => ({
+            id: loja.id,
             name: loja.name,
             value: loja.total,
         })).filter(loja => loja.value > 0);
 
     }, [salesData.soldObras, lojas]);
+
+    const handleBarClick = (data: any) => {
+      if (!data || !data.activePayload || data.activePayload.length === 0) return;
+      
+      const payload = data.activePayload[0].payload;
+      const lojaId = payload.id;
+      
+      if (!lojaId) return;
+
+      const query = new URLSearchParams();
+      query.append('lojaId', lojaId);
+      query.append('status', 'Ganha');
+
+      router.push(`/obras?${query.toString()}`);
+    };
 
 
     if (loading) {
@@ -161,12 +179,17 @@ export default function ReceitasPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline">Receita por Unidade</CardTitle>
-                    <CardDescription>Soma dos valores de vendas para cada loja.</CardDescription>
+                    <CardDescription>Soma dos valores de vendas para cada loja. Clique para ver as obras.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {revenueByLoja.length > 0 ? (
                         <ChartContainer config={{}} className="h-96 w-full">
-                            <BarChart data={revenueByLoja} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <BarChart 
+                                data={revenueByLoja} 
+                                margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                                onClick={handleBarClick}
+                                className="cursor-pointer"
+                            >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
                                 <YAxis 
@@ -191,4 +214,4 @@ export default function ReceitasPage() {
         </div>
     );
 
-    
+}
