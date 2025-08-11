@@ -8,7 +8,7 @@ import type { Obra, User, Loja } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar } from 'lucide-react';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import { ObraComments } from '@/components/obras/obra-comments';
 import { Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { RegisterSaleDialog } from '@/components/obras/register-sale-dialog';
 
 interface Coordinates {
     lat: number;
@@ -75,6 +76,14 @@ function formatCreationTimestamp(date: string | Timestamp | undefined): string {
         d = new Date(date);
     }
     return format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+}
+
+function formatCurrency(value: number | undefined | null) {
+  if (value === undefined || value === null) return 'N/A';
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
 }
 
 
@@ -147,6 +156,7 @@ export default function ObraDetailPage() {
   const isOldDataFormat = !obra.contacts || obra.contacts.length === 0;
   const cardTitle = (obra.contacts && obra.contacts.length > 0 && obra.contacts[0].name) ? obra.contacts[0].name : obra.clientName;
   const creationDate = formatCreationTimestamp(obra.createdAt);
+  const isSold = obra.status === 'Ganha' && obra.closedValue;
 
 
   return (
@@ -313,6 +323,41 @@ export default function ObraDetailPage() {
                     <Badge variant="default" className="text-base px-4 py-2">{obra.status}</Badge>
                 </CardContent>
             </Card>
+
+            {isSold ? (
+                <Card className="bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-800">
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2 text-green-800 dark:text-green-300">
+                            <DollarSign className="h-5 w-5"/>
+                            Venda Registrada
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                         <div>
+                            <p className="text-xs text-green-700 dark:text-green-400">Nº do Pedido</p>
+                            <p className="font-semibold">{obra.orderNumber || 'Não informado'}</p>
+                         </div>
+                         <div>
+                            <p className="text-xs text-green-700 dark:text-green-400">Valor da Venda</p>
+                            <p className="font-bold text-lg">{formatCurrency(obra.closedValue)}</p>
+                         </div>
+                         <RegisterSaleDialog obra={obra} onSuccess={handleSuccess}>
+                             <Button variant="outline" size="sm" className="w-full mt-2">
+                                <Edit className="mr-2 h-4 w-4"/>
+                                Editar Venda
+                            </Button>
+                         </RegisterSaleDialog>
+                    </CardContent>
+                </Card>
+            ) : (
+                <RegisterSaleDialog obra={obra} onSuccess={handleSuccess}>
+                    <Button className="w-full bg-green-700 hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700">
+                        <DollarSign className="mr-2 h-4 w-4"/>
+                        Registrar Venda
+                    </Button>
+                </RegisterSaleDialog>
+            )}
+
          </div>
       </div>
     </div>

@@ -47,6 +47,7 @@ export type Obra = {
   // Deprecated - will be replaced by contacts array
   contactPhone?: string;
   // New fields for revenue tracking
+  orderNumber?: string;
   closedValue?: number;
   closedAt?: string | Timestamp;
 };
