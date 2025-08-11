@@ -5,10 +5,10 @@ import { useEffect, useState } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { getObraById, getUserById, getLojas } from '@/lib/mock-data';
 import type { Obra, User, Loja } from '@/lib/mock-data';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar, DollarSign } from 'lucide-react';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar, DollarSign, Clock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -67,7 +67,7 @@ function ObraDetailSkeleton() {
     )
 }
 
-function formatCreationTimestamp(date: string | Timestamp | undefined): string {
+function formatTimestamp(date: string | Timestamp | undefined): string {
     if (!date) return '';
     let d: Date;
     if (date instanceof Timestamp) {
@@ -155,7 +155,8 @@ export default function ObraDetailPage() {
   const lojaName = lojas.find(l => l.id === obra.lojaId)?.name || obra.lojaId;
   const isOldDataFormat = !obra.contacts || obra.contacts.length === 0;
   const cardTitle = (obra.contacts && obra.contacts.length > 0 && obra.contacts[0].name) ? obra.contacts[0].name : obra.clientName;
-  const creationDate = formatCreationTimestamp(obra.createdAt);
+  const creationDate = formatTimestamp(obra.createdAt);
+  const saleDate = formatTimestamp(obra.closedAt);
   const isSold = obra.status === 'Ganha' && obra.closedValue;
 
 
@@ -325,14 +326,14 @@ export default function ObraDetailPage() {
             </Card>
 
             {isSold ? (
-                <Card className="bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-800">
+                <Card className="bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-800 flex flex-col">
                     <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2 text-green-800 dark:text-green-300">
                             <DollarSign className="h-5 w-5"/>
                             Venda Registrada
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-2 flex-grow">
                          <div>
                             <p className="text-xs text-green-700 dark:text-green-400">Nº do Pedido</p>
                             <p className="font-semibold">{obra.orderNumber || 'Não informado'}</p>
@@ -348,6 +349,14 @@ export default function ObraDetailPage() {
                             </Button>
                          </RegisterSaleDialog>
                     </CardContent>
+                    {saleDate && (
+                        <CardFooter className="pt-4 pb-2 px-6">
+                            <div className="flex items-center text-xs text-green-700 dark:text-green-400 gap-2">
+                                <Clock className="h-3 w-3" />
+                                <span>Registrada em: {saleDate}</span>
+                            </div>
+                        </CardFooter>
+                    )}
                 </Card>
             ) : (
                 <RegisterSaleDialog obra={obra} onSuccess={handleSuccess}>
@@ -363,3 +372,5 @@ export default function ObraDetailPage() {
     </div>
   );
 }
+
+    
