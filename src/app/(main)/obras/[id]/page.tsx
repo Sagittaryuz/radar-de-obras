@@ -17,6 +17,7 @@ import { DeleteObraDialog } from '@/components/obras/delete-obra-dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { InteractiveMap } from '@/components/obras/interactive-map';
 import { getCoordinatesForAddress } from '@/lib/actions';
+import { ObraComments } from '@/components/obras/obra-comments';
 
 interface Coordinates {
     lat: number;
@@ -263,14 +264,8 @@ export default function ObraDetailPage() {
                 </Card>
             )}
 
-             <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">Status Atual</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Badge variant="default" className="text-base px-4 py-2">{obra.status}</Badge>
-                </CardContent>
-            </Card>
+            <ObraComments obraId={obra.id} />
+
          </div>
          
          <div className="space-y-6">
@@ -285,6 +280,15 @@ export default function ObraDetailPage() {
                     <div className="relative aspect-video w-full">
                        <InteractiveMap coordinates={coordinates} />
                     </div>
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Status Atual</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Badge variant="default" className="text-base px-4 py-2">{obra.status}</Badge>
                 </CardContent>
             </Card>
          </div>

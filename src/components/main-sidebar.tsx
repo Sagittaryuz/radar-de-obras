@@ -2,7 +2,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, ListTodo, Map, User, Settings } from 'lucide-react';
+import { Building2, LayoutDashboard, ListTodo, Map, User, Settings, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import {
   SidebarContent,
@@ -16,6 +16,7 @@ const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/obras', label: 'Obras', icon: ListTodo },
   { href: '/regions', label: 'Regiões', icon: Map },
+  { href: '/receitas', label: 'Receitas', icon: DollarSign },
   { href: '/admin', label: 'Admin', icon: Settings },
 ];
 

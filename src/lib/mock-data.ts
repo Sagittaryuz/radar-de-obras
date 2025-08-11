@@ -46,7 +46,29 @@ export type Obra = {
   createdAt: string | Timestamp;
   // Deprecated - will be replaced by contacts array
   contactPhone?: string;
+  // New fields for revenue tracking
+  closedValue?: number;
+  closedAt?: string | Timestamp;
 };
+
+export type ObraComment = {
+    id: string;
+    obraId: string;
+    userId: string;
+    userName: string;
+    userAvatar: string;
+    text: string;
+    attachments?: { url: string; name: string; type: string }[];
+    createdAt: Timestamp;
+    // For special comments like budget info or status changes
+    metadata?: {
+        isStatusUpdate?: boolean;
+        budgetCode?: string;
+        budgetValue?: number;
+        saleStatus?: 'Ganha' | 'Perdida';
+    };
+}
+
 
 export type Loja = {
   id: string;

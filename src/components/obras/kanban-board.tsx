@@ -7,14 +7,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building2 } from 'lucide-react';
+import { Building2, Clock } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 
 type KanbanBoardProps = {
@@ -30,6 +32,16 @@ function getInitials(name: string) {
     const names = name.split(' ');
     const initials = names.map(n => n[0]).join('');
     return initials.slice(0, 2).toUpperCase();
+}
+
+function formatCreationDate(date: string | Timestamp) {
+    let d: Date;
+    if (date instanceof Timestamp) {
+        d = date.toDate();
+    } else {
+        d = new Date(date);
+    }
+    return formatDistanceToNow(d, { addSuffix: true, locale: ptBR });
 }
 
 export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoardProps) {
@@ -130,7 +142,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
                     >
                       <Card
                         className={cn(
-                          "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing h-full overflow-hidden",
+                          "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing h-full overflow-hidden flex flex-col",
                           draggedItem?.id === obra.id && "opacity-50"
                         )}
                       >
@@ -149,10 +161,16 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
                                 <Building2 className="h-10 w-10 text-muted-foreground" />
                             </div>
                          )}
-                        <CardContent className="p-4 space-y-2 flex flex-col justify-between">
-                          <div>
-                            <p className="font-bold truncate">{cardTitle}</p>
-                            <p className="text-sm text-muted-foreground truncate">{obra.address}</p>
+                        <CardContent className="p-4 space-y-2 flex flex-col flex-grow justify-between">
+                          <div className="space-y-1">
+                            <p className="font-bold truncate" title={cardTitle}>{cardTitle}</p>
+                            <p className="text-sm text-muted-foreground truncate" title={obra.address}>{obra.address}</p>
+                             {obra.createdAt && (
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{formatCreationDate(obra.createdAt)}</span>
+                                </div>
+                            )}
                           </div>
                           <div className="flex justify-between items-center pt-2">
                             <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{obra.stage}</span>
