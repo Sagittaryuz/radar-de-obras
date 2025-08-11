@@ -8,7 +8,7 @@ import type { Obra, User, Loja } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft } from 'lucide-react';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,9 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { InteractiveMap } from '@/components/obras/interactive-map';
 import { getCoordinatesForAddress } from '@/lib/actions';
 import { ObraComments } from '@/components/obras/obra-comments';
+import { Timestamp } from 'firebase/firestore';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface Coordinates {
     lat: number;
@@ -62,6 +65,18 @@ function ObraDetailSkeleton() {
         </div>
     )
 }
+
+function formatCreationTimestamp(date: string | Timestamp | undefined): string {
+    if (!date) return '';
+    let d: Date;
+    if (date instanceof Timestamp) {
+        d = date.toDate();
+    } else {
+        d = new Date(date);
+    }
+    return format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+}
+
 
 export default function ObraDetailPage() {
   const params = useParams();
@@ -131,6 +146,7 @@ export default function ObraDetailPage() {
   const lojaName = lojas.find(l => l.id === obra.lojaId)?.name || obra.lojaId;
   const isOldDataFormat = !obra.contacts || obra.contacts.length === 0;
   const cardTitle = (obra.contacts && obra.contacts.length > 0 && obra.contacts[0].name) ? obra.contacts[0].name : obra.clientName;
+  const creationDate = formatCreationTimestamp(obra.createdAt);
 
 
   return (
@@ -153,6 +169,12 @@ export default function ObraDetailPage() {
                         <Briefcase className="h-6 w-6 text-primary" />
                         {cardTitle}
                     </CardTitle>
+                    {creationDate && (
+                       <div className="flex items-center text-sm text-muted-foreground gap-2">
+                           <Calendar className="h-4 w-4" />
+                           <span>Coleta em: {creationDate}</span>
+                       </div>
+                    )}
                     <CardDescription>{obra.address}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 grid md:grid-cols-2 gap-4">
