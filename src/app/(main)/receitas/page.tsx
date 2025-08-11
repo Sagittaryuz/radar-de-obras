@@ -2,53 +2,193 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Package, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect, useMemo } from 'react';
+import { getObras, getLojas } from '@/lib/mock-data';
+import type { Obra, Loja } from '@/lib/mock-data';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+}
 
 export default function ReceitasPage() {
-    // This is a placeholder page.
-    // In the future, we will fetch sales data and display charts.
-    const loading = true;
+    const [obras, setObras] = useState<Obra[]>([]);
+    const [lojas, setLojas] = useState<Loja[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const [obrasData, lojasData] = await Promise.all([getObras(), getLojas()]);
+                setObras(obrasData);
+                setLojas(lojasData);
+            } catch (error) {
+                console.error("Failed to fetch sales data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const salesData = useMemo(() => {
+        const soldObras = obras.filter(obra => obra.status === 'Ganha' && typeof obra.closedValue === 'number' && obra.closedValue > 0);
+        
+        const totalRevenue = soldObras.reduce((sum, obra) => sum + (obra.closedValue || 0), 0);
+        const totalSales = soldObras.length;
+        const averageTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
+        
+        return {
+            soldObras,
+            totalRevenue,
+            totalSales,
+            averageTicket
+        };
+    }, [obras]);
+    
+    const revenueByLoja = useMemo(() => {
+        const lojaMap = lojas.reduce((acc, loja) => {
+          acc[loja.id] = { name: loja.name, total: 0 };
+          return acc;
+        }, {} as Record<string, {name: string, total: number}>);
+
+        salesData.soldObras.forEach(obra => {
+            if (lojaMap[obra.lojaId]) {
+                lojaMap[obra.lojaId].total += obra.closedValue || 0;
+            }
+        });
+        
+        return Object.values(lojaMap).map(loja => ({
+            name: loja.name,
+            value: loja.total,
+        })).filter(loja => loja.value > 0);
+
+    }, [salesData.soldObras, lojas]);
+
+
+    if (loading) {
+        return (
+             <div className="space-y-6">
+                <h1 className="font-headline text-3xl font-bold tracking-tight">Receitas e Vendas</h1>
+                <p className="text-muted-foreground">
+                    Analise o desempenho das vendas por período, vendedor e unidade.
+                </p>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-8 w-3/4" />
+                            <Skeleton className="h-4 w-1/2 mt-1" />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Vendas Realizadas</CardTitle>
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-8 w-3/4" />
+                            <Skeleton className="h-4 w-1/2 mt-1" />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-8 w-3/4" />
+                            <Skeleton className="h-4 w-1/2 mt-1" />
+                        </CardContent>
+                    </Card>
+                </div>
+                <Skeleton className="h-96 w-full" />
+            </div>
+        );
+    }
+
 
     return (
         <div className="space-y-6">
             <h1 className="font-headline text-3xl font-bold tracking-tight">Receitas e Vendas</h1>
             <p className="text-muted-foreground">
-                Analise o desempenho das vendas por período, vendedor e unidade. Esta seção está em desenvolvimento.
+                Analise o desempenho das vendas por período, vendedor e unidade.
             </p>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Receita Total (Este Mês)</CardTitle>
+                        <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <Skeleton className="h-8 w-3/4" />
-                        <Skeleton className="h-4 w-1/2 mt-1" />
+                        <div className="text-2xl font-bold">{formatCurrency(salesData.totalRevenue)}</div>
+                        <p className="text-xs text-muted-foreground">Soma de todas as vendas concluídas.</p>
                     </CardContent>
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Vendas Realizadas (Este Mês)</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Vendas Realizadas</CardTitle>
+                        <Package className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <Skeleton className="h-8 w-3/4" />
-                        <Skeleton className="h-4 w-1/2 mt-1" />
+                        <div className="text-2xl font-bold">{salesData.totalSales}</div>
+                        <p className="text-xs text-muted-foreground">Número de obras com status "Ganha".</p>
                     </CardContent>
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <Skeleton className="h-8 w-3/4" />
-                        <Skeleton className="h-4 w-1/2 mt-1" />
+                        <div className="text-2xl font-bold">{formatCurrency(salesData.averageTicket)}</div>
+                        <p className="text-xs text-muted-foreground">Valor médio por venda realizada.</p>
                     </CardContent>
                 </Card>
             </div>
-            <Skeleton className="h-96 w-full" />
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Receita por Unidade</CardTitle>
+                    <CardDescription>Soma dos valores de vendas para cada loja.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {revenueByLoja.length > 0 ? (
+                        <ChartContainer config={{}} className="h-96 w-full">
+                            <BarChart data={revenueByLoja} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                                <YAxis 
+                                    tickFormatter={(value) => formatCurrency(value as number)} 
+                                    allowDecimals={false} 
+                                    width={100} 
+                                />
+                                <Tooltip 
+                                    cursor={{ fill: 'hsl(var(--muted))' }} 
+                                    content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)}/>} 
+                                />
+                                <Bar dataKey="value" name="Receita" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ChartContainer>
+                    ) : (
+                        <div className="flex items-center justify-center h-96">
+                            <p className="text-muted-foreground">Nenhuma venda registrada para exibir no gráfico.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
-}
+
+    
