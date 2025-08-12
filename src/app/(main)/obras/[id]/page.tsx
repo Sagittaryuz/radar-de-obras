@@ -67,13 +67,17 @@ function ObraDetailSkeleton() {
     )
 }
 
-function formatTimestamp(date: string | Timestamp | undefined): string {
+function formatTimestamp(date: any): string {
     if (!date) return '';
     let d: Date;
-    if (date instanceof Timestamp) {
-        d = date.toDate();
-    } else {
+    // Check if it's a Firestore Timestamp
+    if (date.seconds !== undefined && date.nanoseconds !== undefined) {
+        d = new Timestamp(date.seconds, date.nanoseconds).toDate();
+    } else if (typeof date === 'string' || date instanceof Date) {
         d = new Date(date);
+    } else {
+        // Not a recognizable date format
+        return '';
     }
     return format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 }
@@ -372,5 +376,3 @@ export default function ObraDetailPage() {
     </div>
   );
 }
-
-    
