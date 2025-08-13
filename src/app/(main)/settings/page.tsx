@@ -3,28 +3,82 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/auth-context';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+
+
+function getInitials(name: string) {
+    if (!name) return '...';
+    const names = name.split(' ');
+    const initials = names.map(n => n[0]).join('');
+    return initials.slice(0, 2).toUpperCase();
+}
 
 export default function SettingsPage() {
+  const { user, loading, logout } = useAuth();
+
+  if (loading) {
+    return (
+        <div className="space-y-8 max-w-2xl mx-auto">
+             <div>
+                <h1 className="font-headline text-3xl font-bold tracking-tight">Configurações</h1>
+                <p className="text-muted-foreground">Gerencie as configurações do seu perfil.</p>
+            </div>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-4 w-64 mt-2" />
+                </CardHeader>
+                <CardContent className="flex items-center gap-4">
+                     <Skeleton className="h-16 w-16 rounded-full" />
+                     <div className="space-y-2">
+                        <Skeleton className="h-6 w-40" />
+                        <Skeleton className="h-4 w-52" />
+                     </div>
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
+  
+  if (!user) {
+    return (
+        <div className="space-y-8 max-w-2xl mx-auto">
+             <div>
+                <h1 className="font-headline text-3xl font-bold tracking-tight">Configurações</h1>
+                <p className="text-muted-foreground">Nenhum usuário logado.</p>
+            </div>
+        </div>
+    );
+  }
+
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
       <div>
         <h1 className="font-headline text-3xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-muted-foreground">Gerencie as configurações do aplicativo.</p>
+        <p className="text-muted-foreground">Gerencie as configurações do seu perfil.</p>
       </div>
 
        <Card>
             <CardHeader>
-                <CardTitle>Sistema de Login</CardTitle>
-                <CardDescription>O sistema de login está temporariamente desativado.</CardDescription>
+                <CardTitle>Seu Perfil</CardTitle>
+                <CardDescription>Estas são as suas informações de usuário.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground">
-                    O acesso ao aplicativo está atualmente aberto sem a necessidade de autenticação.
-                    A funcionalidade de login e perfis de usuário pode ser reativada no futuro.
-                </p>
+            <CardContent className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="text-lg font-semibold">{user.name}</p>
+                    <p className="text-muted-foreground">{user.email}</p>
+                    <p className="text-sm font-medium bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full inline-block mt-2">{user.role}</p>
+                </div>
             </CardContent>
        </Card>
+        <Button variant="outline" onClick={logout}>Sair da sua conta</Button>
     </div>
   );
 }
