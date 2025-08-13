@@ -31,14 +31,12 @@ export default function LoginPage() {
       });
       router.push('/dashboard');
     } catch (error) {
-      const errorMessage = (error as Error).message
-        .replace('Firebase: ', '')
-        .replace(/\(auth\/.*\)\.?/, '');
+      const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido.";
         
       toast({
         variant: 'destructive',
         title: "Erro no Login",
-        description: errorMessage || "Ocorreu um erro desconhecido.",
+        description: errorMessage,
       });
     } finally {
         setIsLoading(false);
