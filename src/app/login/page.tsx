@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
@@ -16,16 +16,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // If the user is already logged in (e.g., from a previous session),
+    // redirect them to the dashboard.
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await login(email, password);
-      router.push('/dashboard');
+      // The redirection is now handled by the useEffect hook above
+      // and the main layout's logic. No need to push here.
     } catch (error: any) {
       console.error("Login failed:", error);
       

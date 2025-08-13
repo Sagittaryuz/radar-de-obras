@@ -20,11 +20,15 @@ export default function MainLayout({
   const isMobile = useIsMobile();
   
   useEffect(() => {
+    // This is the key change: only check for the user and redirect
+    // once the initial loading is complete.
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
+  // While loading, or if the user is not yet available (even after loading),
+  // show the skeleton. This prevents the "flash" of the dashboard before redirecting.
   if (loading || !user) {
     return (
          <div className="flex min-h-screen w-full bg-background">
@@ -45,6 +49,7 @@ export default function MainLayout({
     );
   }
 
+  // Only render the main layout if loading is false AND the user exists.
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
