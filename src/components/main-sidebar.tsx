@@ -2,15 +2,18 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, ListTodo, Map, User, Settings, DollarSign } from 'lucide-react';
+import { Building2, LayoutDashboard, ListTodo, Map, User, Settings, DollarSign, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import {
   SidebarContent,
   SidebarHeader,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
+import { useAuth } from '@/context/auth-context';
+import { Separator } from '@/components/ui/separator';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -23,6 +26,7 @@ const menuItems = [
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const { logout, user } = useAuth();
 
   return (
     <>
@@ -55,6 +59,35 @@ export function MainSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
+      <Separator />
+       <SidebarFooter className="p-2">
+            <SidebarMenu>
+                <SidebarMenuItem>
+                     <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith('/settings')}
+                        tooltip={{ children: 'Configurações', side: 'right' }}
+                    >
+                        <Link href="/settings">
+                            <User />
+                            <span suppressHydrationWarning>
+                                {user?.email || "Configurações"}
+                            </span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        onClick={logout}
+                        tooltip={{ children: 'Sair', side: 'right' }}
+                        className="text-red-500 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                    >
+                        <LogOut />
+                        <span suppressHydrationWarning>Sair</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+      </SidebarFooter>
     </>
   );
 }
