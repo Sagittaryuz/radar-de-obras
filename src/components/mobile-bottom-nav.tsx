@@ -3,22 +3,32 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, ListTodo, Map, DollarSign } from 'lucide-react';
+import { Home, ListTodo, Map, DollarSign, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/auth-context';
 
-const menuItems = [
+const baseMenuItems = [
   { href: '/dashboard', label: 'Início', icon: Home },
   { href: '/obras', label: 'Obras', icon: ListTodo },
   { href: '/regions', label: 'Regiões', icon: Map },
   { href: '/receitas', label: 'Receitas', icon: DollarSign },
 ];
 
+const adminMenuItem = { href: '/admin', label: 'Admin', icon: Settings };
+
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const menuItems = user?.role === 'Admin' 
+    ? [...baseMenuItems, adminMenuItem]
+    : baseMenuItems;
+  
+  const gridColsClass = menuItems.length === 5 ? 'grid-cols-5' : 'grid-cols-4';
 
   return (
     <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-card border-t border-border md:hidden">
-      <div className="grid h-full max-w-lg grid-cols-4 mx-auto font-medium">
+      <div className={cn("grid h-full max-w-lg mx-auto font-medium", gridColsClass)}>
         {menuItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
