@@ -1,34 +1,58 @@
-type Client @table {
-  name: String!
-  contactPerson: String!
-  phoneNumber: String!
-  email: String
-  address: String
+type User @table {
+  displayName: String!
+  email: String!
+  userType: String!
   createdAt: Timestamp!
+  phoneNumber: String
+  photoUrl: String
+  address: String
+}
+
+type ServiceProviderProfile @table {
+  user: User!
+  companyName: String
+  specialties: [String]!
+  description: String!
+  availabilityStatus: String!
+  licenseNumber: String
+  yearsOfExperience: Int
+  website: String
+  portfolioLinks: [String]
+}
+
+type ServiceCategory @table {
+  name: String!
+  description: String!
 }
 
 type Project @table {
-  name: String!
-  startDate: Timestamp!
-  status: String!
-  description: String
-  endDate: Timestamp
-  budget: Float
-  createdAt: Timestamp!
-  client: Client!
-}
-
-type Service @table {
-  name: String!
+  client: User!
+  title: String!
   description: String!
-  price: Float
+  location: String!
+  status: String!
   createdAt: Timestamp!
+  budget: Float
+  startDate: Date
+  endDate: Date
+  requiredCategoryIds: [UUID]
 }
 
-type ProjectService @table(key: ["project", "service"]) {
-  quantity: Int
-  notes: String
-  createdAt: Timestamp!
+type Quote @table {
   project: Project!
-  service: Service!
+  serviceProvider: ServiceProviderProfile!
+  amount: Float!
+  quoteDetails: String!
+  status: String!
+  createdAt: Timestamp!
+  validUntil: Timestamp
+}
+
+type Review @table {
+  project: Project!
+  serviceProvider: ServiceProviderProfile!
+  client: User!
+  rating: Int!
+  comment: String!
+  createdAt: Timestamp!
 }

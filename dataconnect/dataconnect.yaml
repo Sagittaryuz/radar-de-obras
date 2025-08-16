@@ -1,10 +1,11 @@
 specVersion: "v1"
 serviceId: "radar-de-obras"
+location: "us-central1"
 schema:
   source: "./schema"
   datasource:
     postgresql:
-      database: "radar-de-obras"
+      database: "postgres"
       cloudSql:
         instanceId: "radar-de-obras"
       # schemaValidation: "COMPATIBLE"
