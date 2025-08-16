@@ -6,7 +6,15 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "source": ".",
+    "rewrites": [
+      {
+        "source": "**",
+        "app": {
+          "serviceId": "radar-de-obras",
+          "region": "southamerica-west1"
+        }
+      }
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
