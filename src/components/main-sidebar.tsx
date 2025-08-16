@@ -16,6 +16,8 @@ import {
 import { useAuth } from '@/context/auth-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+
 
 const baseMenuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -53,10 +55,14 @@ export function MainSidebar() {
   return (
     <>
       <SidebarHeader className="border-b">
-        <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-2 rounded-md">
-                <Building2 className="h-6 w-6" />
-            </div>
+        <div className="flex items-center gap-3 p-2">
+             <Image
+                src="https://i.imgur.com/RI2eag9.png"
+                alt="Radar de Obras Logo"
+                width={40}
+                height={40}
+                className="rounded-md"
+            />
             <div className="flex flex-col">
                 <h2 className="font-headline text-xl font-bold" suppressHydrationWarning>Radar de Obras</h2>
                 <p className="text-xs text-muted-foreground" suppressHydrationWarning>J. Cruzeiro</p>
