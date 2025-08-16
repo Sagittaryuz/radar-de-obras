@@ -5,23 +5,26 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, Legend
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Obra, Loja } from '@/lib/firestore-data';
-import { useMemo, useState } from 'react';
+import type { Obra, Loja, User } from '@/lib/firestore-data';
+import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/context/auth-context';
 
 interface DashboardChartsProps {
   allObras: Obra[];
   allLojas: Loja[];
+  allUsers: User[];
 }
 
 const statusColors: Record<string, string> = {
-  'Entrada': '#1f77b4',       // Muted Blue
-  'Triagem': '#ff7f0e',      // Safety Orange
-  'Atribuída': '#2ca02c',     // Cooked Asparagus Green
-  'Em Negociação': '#d62728', // Brick Red
-  'Ganha': '#9467bd',         // Muted Purple
-  'Perdida': '#8c564b',       // Chestnut Brown
+  'Entrada': '#1f77b4',
+  'Triagem': '#ff7f0e',
+  'Atribuída': '#2ca02c',
+  'Em Negociação': '#d62728',
+  'Ganha': '#9467bd',
+  'Perdida': '#8c564b',
+  'Arquivada': '#7f7f7f',
 };
 
 const stageColors: Record<string, string> = {
@@ -32,14 +35,29 @@ const stageColors: Record<string, string> = {
   'Telhado': '#9467bd',
 };
 
-const obraStatuses: Obra['status'][] = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida'];
+const obraStatuses: Obra['status'][] = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida', 'Arquivada'];
 
-export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
+export function DashboardCharts({ allObras, allLojas, allUsers }: DashboardChartsProps) {
   const [selectedLoja, setSelectedLoja] = useState('all');
+  const [selectedSeller, setSelectedSeller] = useState('all');
   const router = useRouter();
+  const { user } = useAuth();
+
+  const vendedores = useMemo(() => allUsers.filter(u => u.role === 'Vendedor'), [allUsers]);
+
+  // Set the loja filter based on user role
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'Gerente' && user.lojaId) {
+        setSelectedLoja(user.lojaId);
+      } else if (user.role === 'Vendedor') {
+        setSelectedLoja('all');
+        setSelectedSeller(user.id);
+      }
+    }
+  }, [user]);
 
   const lojaMap = useMemo(() => {
-    if (!allLojas) return {};
     return allLojas.reduce((acc, loja) => {
       acc[loja.id] = loja.name;
       return acc;
@@ -47,7 +65,6 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   }, [allLojas]);
   
   const lojaIdMap = useMemo(() => {
-    if (!allLojas) return {};
     return allLojas.reduce((acc, loja) => {
       acc[loja.name] = loja.id;
       return acc;
@@ -56,16 +73,18 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
 
   // Data for the filtered charts
   const obras = useMemo(() => {
-    if (!allObras) return [];
-    if (selectedLoja === 'all') {
-      return allObras;
+    let filtered = allObras;
+    if (selectedLoja !== 'all') {
+      filtered = filtered.filter(obra => obra.lojaId === selectedLoja);
     }
-    return allObras.filter(obra => obra.lojaId === selectedLoja);
-  }, [allObras, selectedLoja]);
+    if (selectedSeller !== 'all') {
+      filtered = filtered.filter(obra => obra.sellerId === selectedSeller);
+    }
+    return filtered;
+  }, [allObras, selectedLoja, selectedSeller]);
 
   // Data for the summary chart (always shows all lojas)
   const summaryData = useMemo(() => {
-    if (!allLojas || !allObras) return [];
     const dataByLoja = allLojas.map(loja => {
       const lojaObras = allObras.filter(o => o.lojaId === loja.id);
       const statusCounts = obraStatuses.reduce((acc, status) => {
@@ -83,7 +102,6 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
 
 
   const obrasByStatus = useMemo(() => {
-    if (!obras) return [];
     const counts = obras.reduce((acc, obra) => {
       acc[obra.status] = (acc[obra.status] || 0) + 1;
       return acc;
@@ -92,7 +110,6 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   }, [obras]);
 
   const obrasByStage = useMemo(() => {
-    if (!obras) return [];
     const counts = obras.reduce((acc, obra) => {
       acc[obra.stage] = (acc[obra.stage] || 0) + 1;
       return acc;
@@ -116,11 +133,8 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
   const handleSummaryBarClick = (data: any) => {
     if (!data || !data.activePayload || data.activePayload.length === 0) return;
     
-    // The clicked bar's dataKey is the status
     const status = data.activePayload[0].dataKey;
-    // The category on the x-axis is the loja name
     const lojaName = data.activeLabel;
-    
     const lojaId = lojaIdMap[lojaName];
 
     if (!lojaId || !status) return;
@@ -134,7 +148,7 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
 
 
   if (!allObras || !allLojas) {
-    return null; // Or a loading indicator
+    return null;
   }
   
   return (
@@ -164,20 +178,41 @@ export function DashboardCharts({ allObras, allLojas }: DashboardChartsProps) {
 
         <div className="flex justify-between items-center">
             <h1 className="font-headline text-3xl font-bold tracking-tight">
-                {selectedLoja === 'all' ? 'Dashboard Geral' : `Dashboard ${lojaMap[selectedLoja]}`}
+                Dashboard
             </h1>
-            <div className="w-full max-w-xs">
-                <Select value={selectedLoja} onValueChange={setSelectedLoja}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Filtrar por loja..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todas as Lojas</SelectItem>
-                        {allLojas.map(loja => (
-                            <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            <div className="flex items-center gap-2">
+                {/* Vendedor Filter */}
+                {user?.role !== 'Vendedor' && (
+                  <div className="w-full max-w-xs">
+                    <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Filtrar por vendedor..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos os Vendedores</SelectItem>
+                            {vendedores.map(v => (
+                                <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {/* Loja Filter */}
+                {user?.role === 'Admin' && (
+                  <div className="w-full max-w-xs">
+                    <Select value={selectedLoja} onValueChange={setSelectedLoja}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Filtrar por loja..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todas as Lojas</SelectItem>
+                            {allLojas.map(loja => (
+                                <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                  </div>
+                )}
             </div>
         </div>
 

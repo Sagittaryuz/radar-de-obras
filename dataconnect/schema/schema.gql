@@ -1,0 +1,34 @@
+type Client @table {
+  name: String!
+  contactPerson: String!
+  phoneNumber: String!
+  email: String
+  address: String
+  createdAt: Timestamp!
+}
+
+type Project @table {
+  name: String!
+  startDate: Timestamp!
+  status: String!
+  description: String
+  endDate: Timestamp
+  budget: Float
+  createdAt: Timestamp!
+  client: Client!
+}
+
+type Service @table {
+  name: String!
+  description: String!
+  price: Float
+  createdAt: Timestamp!
+}
+
+type ProjectService @table(key: ["project", "service"]) {
+  quantity: Int
+  notes: String
+  createdAt: Timestamp!
+  project: Project!
+  service: Service!
+}

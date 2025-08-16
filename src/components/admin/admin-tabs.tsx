@@ -7,11 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EditNeighborhoodsDialog } from "./edit-neighborhoods-dialog";
+import { EditUserRoleDialog } from "./edit-user-role-dialog";
 import type { User, Loja } from "@/lib/firestore-data";
 
 interface AdminTabsProps {
   users: User[];
   lojas: Loja[];
+  onUserUpdate: () => void;
 }
 
 function getInitials(name: string) {
@@ -20,7 +22,13 @@ function getInitials(name: string) {
     return initials.slice(0, 2).toUpperCase();
 }
 
-export function AdminTabs({ users, lojas }: AdminTabsProps) {
+export function AdminTabs({ users, lojas, onUserUpdate }: AdminTabsProps) {
+  
+  const lojaNameMap = lojas.reduce((acc, loja) => {
+    acc[loja.id] = loja.name;
+    return acc;
+  }, {} as Record<string, string>);
+
   return (
     <Tabs defaultValue="users">
       <TabsList className="grid w-full grid-cols-3">
@@ -32,7 +40,7 @@ export function AdminTabs({ users, lojas }: AdminTabsProps) {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">Usuários</CardTitle>
-            <CardDescription>Gerencie os usuários do sistema.</CardDescription>
+            <CardDescription>Gerencie as funções e permissões dos usuários do sistema.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -40,6 +48,8 @@ export function AdminTabs({ users, lojas }: AdminTabsProps) {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -55,6 +65,14 @@ export function AdminTabs({ users, lojas }: AdminTabsProps) {
                       </div>
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
+                        {user.role} {user.lojaId ? `(${lojaNameMap[user.lojaId] || 'N/A'})` : ''}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                       <EditUserRoleDialog user={user} lojas={lojas} onUserUpdate={onUserUpdate} />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

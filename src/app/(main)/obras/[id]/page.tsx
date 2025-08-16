@@ -3,14 +3,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { getObraById, getUserById, getLojas } from '@/lib/firestore-data';
+import { getObraById, getUserById, getLojas, getObras, getUsers } from '@/lib/firestore-data';
 import type { Obra, User, Loja } from '@/lib/firestore-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar, DollarSign, Clock } from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar, DollarSign, Clock, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EditObraDialog } from '@/components/obras/edit-obra-dialog';
 import { DeleteObraDialog } from '@/components/obras/delete-obra-dialog';
@@ -22,6 +20,9 @@ import { Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { RegisterSaleDialog } from '@/components/obras/register-sale-dialog';
+import { useAuth } from '@/context/auth-context';
+import { AssignSellerDialog } from '@/components/obras/assign-seller-dialog';
+import { ArchiveObraDialog } from '@/components/obras/archive-obra-dialog';
 
 interface Coordinates {
     lat: number;
@@ -70,13 +71,11 @@ function ObraDetailSkeleton() {
 function formatTimestamp(date: any): string {
     if (!date) return '';
     let d: Date;
-    // Check if it's a Firestore Timestamp
     if (date.seconds !== undefined && date.nanoseconds !== undefined) {
         d = new Timestamp(date.seconds, date.nanoseconds).toDate();
     } else if (typeof date === 'string' || date instanceof Date) {
         d = new Date(date);
     } else {
-        // Not a recognizable date format
         return '';
     }
     return format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
@@ -96,15 +95,16 @@ export default function ObraDetailPage() {
   const router = useRouter();
   const obraId = params.id as string;
 
+  const { user: currentUser } = useAuth();
   const [obra, setObra] = useState<Obra | null>(null);
   const [seller, setSeller] = useState<User | null>(null);
   const [lojas, setLojas] = useState<Loja[]>([]);
+  const [vendedores, setVendedores] = useState<User[]>([]);
+  const [obras, setObras] = useState<Obra[]>([]);
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // This function will be called by the dialog on successful update to refresh the page data.
   const handleSuccess = () => {
-    // Re-trigger the data fetching to get the latest data.
     fetchData();
   };
 
@@ -113,14 +113,20 @@ export default function ObraDetailPage() {
     setLoading(true);
     try {
       console.log(`[getObraById] Fetching obra with ID: ${obraId}`);
-      const [obraData, lojasData] = await Promise.all([
+      const [obraData, lojasData, todosUsuarios, todasObras] = await Promise.all([
           getObraById(obraId),
-          getLojas()
+          getLojas(),
+          getUsers(),
+          getObras()
       ]);
       
       if (obraData) {
         setObra(obraData);
         setLojas(lojasData);
+        setObras(todasObras);
+
+        const vendedoresDaLoja = todosUsuarios.filter(u => u.role === 'Vendedor' && u.lojaId === obraData.lojaId);
+        setVendedores(vendedoresDaLoja);
         
         if (obraData.address) {
             const coords = await getCoordinatesForAddress(obraData.address);
@@ -144,15 +150,13 @@ export default function ObraDetailPage() {
 
   useEffect(() => {
     fetchData();
-  }, [obraId]); // Removed router from dependency array, it's stable
+  }, [obraId]);
 
   if (loading) {
     return <ObraDetailSkeleton />;
   }
 
   if (!obra) {
-    // This will be caught by the notFound() in a real app,
-    // but client-side we can just show a message.
     return <div>Obra não encontrada.</div>;
   }
   
@@ -163,6 +167,8 @@ export default function ObraDetailPage() {
   const saleDate = formatTimestamp(obra.closedAt);
   const isSold = obra.status === 'Ganha' && obra.closedValue;
 
+  const canEdit = currentUser?.role === 'Admin' || currentUser?.role === 'Gerente';
+
 
   return (
     <div className="space-y-6">
@@ -171,8 +177,9 @@ export default function ObraDetailPage() {
             Detalhes da Obra
          </h1>
          <div className="flex items-center gap-2">
-            <EditObraDialog obra={obra} onSuccess={handleSuccess}/>
-            <DeleteObraDialog obraId={obra.id} />
+            {canEdit && <EditObraDialog obra={obra} onSuccess={handleSuccess}/>}
+            {canEdit && <DeleteObraDialog obraId={obra.id} />}
+            <ArchiveObraDialog obraId={obra.id} onSuccess={() => router.push('/obras')} />
          </div>
       </div>
       
@@ -328,6 +335,15 @@ export default function ObraDetailPage() {
                     <Badge variant="default" className="text-base px-4 py-2">{obra.status}</Badge>
                 </CardContent>
             </Card>
+            
+            {currentUser?.role === 'Gerente' && obra.status === 'Triagem' && (
+                <AssignSellerDialog 
+                    obra={obra} 
+                    vendedores={vendedores} 
+                    obras={obras}
+                    onSuccess={handleSuccess} 
+                />
+            )}
 
             {isSold ? (
                 <Card className="bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-800 flex flex-col">

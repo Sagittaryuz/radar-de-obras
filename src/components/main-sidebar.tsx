@@ -17,13 +17,16 @@ import { useAuth } from '@/context/auth-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
-const menuItems = [
+const baseMenuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/obras', label: 'Obras', icon: ListTodo },
   { href: '/regions', label: 'Regiões', icon: Map },
   { href: '/receitas', label: 'Receitas', icon: DollarSign },
-  { href: '/admin', label: 'Admin', icon: Settings },
 ];
+
+const adminMenuItem = { href: '/admin', label: 'Admin', icon: Settings };
+const adminEmails = ['marcos.pires@jcruzeiro.com', 'willian.mota@jcruzeiro.com'];
+
 
 function getInitials(name: string) {
     if (!name) return '...';
@@ -43,6 +46,9 @@ export function MainSidebar() {
     router.push('/login');
   };
   
+  const menuItems = user?.role === 'Admin' && adminEmails.includes(user.email) 
+    ? [...baseMenuItems, adminMenuItem] 
+    : baseMenuItems;
 
   return (
     <>

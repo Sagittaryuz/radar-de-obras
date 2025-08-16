@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import type { User } from '@/lib/firestore-data';
+import type { User, UserRole } from '@/lib/firestore-data';
 
 interface AuthContextType {
   user: User | null;
@@ -33,19 +33,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (userDoc.exists()) {
               setUser({ id: userDoc.id, ...userDoc.data() } as User);
             } else {
-                // If user exists in Auth but not Firestore, create them.
+                // If user exists in Auth but not Firestore, create them with a default role.
                 console.warn("User profile not found in Firestore, creating one.");
                 const newUser: User = {
                     id: fbUser.uid,
                     name: fbUser.displayName || fbUser.email || 'Novo Usuário',
                     email: fbUser.email!,
-                    avatar: fbUser.photoURL || `https://placehold.co/100x100.png?text=${(fbUser.email || 'U')[0].toUpperCase()}`
+                    avatar: fbUser.photoURL || `https://placehold.co/100x100.png?text=${(fbUser.email || 'U')[0].toUpperCase()}`,
+                    role: 'Vendedor', // Assign a default role
                 };
                 await setDoc(userDocRef, newUser);
                 setUser(newUser);
             }
         } catch (error) {
             console.error("Error fetching/creating user document from Firestore:", error);
+            // Sign out the user if there is a critical error fetching their profile
+            await signOut(auth);
             setUser(null);
         }
       } else {
@@ -65,6 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
+    // Setting user to null immediately on logout for faster UI response
+    setUser(null); 
+    setFirebaseUser(null);
   };
   
   const value = { user, firebaseUser, loading, login, logout };

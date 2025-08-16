@@ -1,12 +1,16 @@
 
 import { db } from './firebase'; // Use the client instance for all data fetching
-import { collection, getDocs, query, where, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, Timestamp, writeBatch } from 'firebase/firestore';
+
+export type UserRole = 'Admin' | 'Gerente' | 'Vendedor';
 
 export type User = {
   id: string;
   name: string;
   email: string;
   avatar: string;
+  role: UserRole;
+  lojaId?: string; // Required for Gerente and Vendedor
 };
 
 export type ContactType = 
@@ -40,7 +44,7 @@ export type Obra = {
   gmapsUrl?: string;
   lojaId: string;
   stage: 'Fundação' | 'Alvenaria' | 'Acabamento' | 'Pintura' | 'Telhado';
-  status: 'Entrada' | 'Triagem' | 'Atribuída' | 'Em Negociação' | 'Ganha' | 'Perdida';
+  status: 'Entrada' | 'Triagem' | 'Atribuída' | 'Em Negociação' | 'Ganha' | 'Perdida' | 'Arquivada';
   sellerId: string | null;
   createdAt: string | Timestamp;
   // Deprecated - will be replaced by contacts array
@@ -186,6 +190,13 @@ export async function getLojas(): Promise<Loja[]> {
     if (lojasSnapshot.empty) {
         // If there's nothing in Firestore, return the hardcoded list.
         // This is a good fallback for initial setup.
+        // Also, we can pre-populate Firestore with this data.
+        const batch = writeBatch(db);
+        hardcodedLojas.forEach((loja) => {
+            const docRef = doc(db, "lojas", loja.id);
+            batch.set(docRef, loja);
+        });
+        await batch.commit();
         return hardcodedLojas;
     }
 

@@ -2,30 +2,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getObras, getLojas } from '@/lib/firestore-data';
+import { getObras, getLojas, getUsers } from '@/lib/firestore-data';
 import { DashboardTabs } from '@/components/dashboard/dashboard-tabs';
-import type { Obra, Loja } from '@/lib/firestore-data';
+import type { Obra, Loja, User } from '@/lib/firestore-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// This is now a Client Component to fetch data client-side.
 export default function DashboardPage() {
   const [obras, setObras] = useState<Obra[] | null>(null);
   const [lojas, setLojas] = useState<Loja[] | null>(null);
+  const [users, setUsers] = useState<User[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [obrasData, lojasData] = await Promise.all([
+        const [obrasData, lojasData, usersData] = await Promise.all([
           getObras(),
-          getLojas()
+          getLojas(),
+          getUsers()
         ]);
         setObras(obrasData);
         setLojas(lojasData);
+        setUsers(usersData);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
-        // Handle error state if necessary
       } finally {
         setLoading(false);
       }
@@ -33,7 +34,7 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  if (loading || !obras || !lojas) {
+  if (loading || !obras || !lojas || !users) {
     return (
        <div className="space-y-6">
           <Skeleton className="h-8 w-full max-w-sm" />
@@ -51,7 +52,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <DashboardTabs allObras={obras} allLojas={lojas} />
+      <DashboardTabs allObras={obras} allLojas={lojas} allUsers={users} />
     </div>
   );
 }

@@ -3,21 +3,21 @@
 
 import { useState, useMemo, DragEvent, useEffect } from 'react';
 import type { Obra, User } from '@/lib/firestore-data';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building2, Clock } from 'lucide-react';
+import { Building2, Calendar } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
+import { ObraDeadlineBadge } from './obra-deadline-badge';
 
 type KanbanBoardProps = {
   obras: Obra[];
@@ -25,7 +25,7 @@ type KanbanBoardProps = {
   defaultTab?: string;
 };
 
-const columns = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida'] as const;
+const columns = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida', 'Arquivada'] as const;
 type Status = typeof columns[number];
 
 function getInitials(name: string) {
@@ -34,21 +34,22 @@ function getInitials(name: string) {
     return initials.slice(0, 2).toUpperCase();
 }
 
-function formatCreationDate(date: string | Timestamp) {
+function formatCreationDate(date: string | Timestamp | undefined): string {
+    if (!date) return 'Data desconhecida';
     let d: Date;
     if (date instanceof Timestamp) {
         d = date.toDate();
     } else {
         d = new Date(date);
     }
-    return formatDistanceToNow(d, { addSuffix: true, locale: ptBR });
+    return format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 }
 
 export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoardProps) {
   const [obras, setObras] = useState<Obra[]>(obrasProp);
   const [draggedItem, setDraggedItem] = useState<Obra | null>(null);
   const { toast } = useToast();
-  const router = useRouter();
+  const { user } = useAuth();
 
   useEffect(() => {
     setObras(obrasProp);
@@ -62,6 +63,16 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
   }, [sellers]);
 
   const handleDragStart = (e: DragEvent<HTMLDivElement>, obra: Obra) => {
+    // Prevent dragging based on user role
+    if (user?.role === 'Vendedor') {
+        toast({
+            variant: 'destructive',
+            title: 'Ação não permitida',
+            description: 'Vendedores não podem alterar o status das obras.',
+        });
+        e.preventDefault();
+        return;
+    }
     setDraggedItem(obra);
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -90,10 +101,8 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
           title: "Status Atualizado!",
           description: `A obra de "${updatedClientName}" foi movida para ${status}.`,
         });
-        // router.refresh(); // Optional: uncomment if you want to re-fetch all data
       } catch (error) {
         console.error("Failed to update status:", error);
-        // Rollback on error
         setObras(originalObras);
         toast({
           variant: 'destructive',
@@ -111,7 +120,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
   return (
     <Tabs defaultValue={defaultTab || columns[0]} className="w-full">
         <ScrollArea className="w-full whitespace-nowrap">
-            <TabsList className="grid w-full grid-cols-6 min-w-[600px]">
+            <TabsList className="grid w-full grid-cols-7 min-w-[700px]">
                 {columns.map(status => (
                 <TabsTrigger key={status} value={status}>{status}</TabsTrigger>
                 ))}
@@ -142,7 +151,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
                     >
                       <Card
                         className={cn(
-                          "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing h-full overflow-hidden flex flex-col",
+                          "shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing h-full overflow-hidden flex flex-col group",
                           draggedItem?.id === obra.id && "opacity-50"
                         )}
                       >
@@ -161,16 +170,19 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
                                 <Building2 className="h-10 w-10 text-muted-foreground" />
                             </div>
                          )}
-                        <CardContent className="p-4 space-y-2 flex flex-col flex-grow justify-between">
+                         <CardHeader className="p-4 pb-2">
+                             {user?.role === 'Gerente' && obra.status === 'Triagem' && obra.createdAt && (
+                                <ObraDeadlineBadge createdAt={obra.createdAt} />
+                             )}
+                             <p className="font-bold truncate" title={cardTitle}>{cardTitle}</p>
+                         </CardHeader>
+                        <CardContent className="p-4 pt-0 space-y-2 flex flex-col flex-grow justify-between">
                           <div className="space-y-1">
-                            <p className="font-bold truncate" title={cardTitle}>{cardTitle}</p>
                             <p className="text-sm text-muted-foreground truncate" title={obra.address}>{obra.address}</p>
-                             {obra.createdAt && (
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{formatCreationDate(obra.createdAt)}</span>
-                                </div>
-                            )}
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Calendar className="h-3 w-3" />
+                                <span>{formatCreationDate(obra.createdAt)}</span>
+                            </div>
                           </div>
                           <div className="flex justify-between items-center pt-2">
                             <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{obra.stage}</span>

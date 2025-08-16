@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "radar-de-obras"
+location: "southamerica-west1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "radar-de-obras"
+      cloudSql:
+        instanceId: "radar-de-obras"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

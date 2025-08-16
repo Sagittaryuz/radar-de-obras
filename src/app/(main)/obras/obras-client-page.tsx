@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PdfExportButton } from '@/components/obras/pdf-export-button';
 import { Timestamp } from 'firebase/firestore';
+import { useAuth } from '@/context/auth-context';
 
 
 export default function ObrasClientPage() {
@@ -31,6 +32,7 @@ export default function ObrasClientPage() {
   const initialStatus = searchParams.get('status') as Obra['status'] | null;
   const initialStage = searchParams.get('stage') as Obra['stage'] | null;
 
+  const { user } = useAuth();
   const [selectedLoja, setSelectedLoja] = useState(initialLoja);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
@@ -56,11 +58,34 @@ export default function ObrasClientPage() {
     fetchData();
   }, []);
 
+  // Set the loja filter based on user role when the component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'Gerente' && user.lojaId) {
+        setSelectedLoja(user.lojaId);
+      } else if (user.role === 'Admin') {
+        // Admin can see all, so we check if an initial filter is set from URL
+        setSelectedLoja(initialLoja);
+      }
+      // Vendedor's filter is applied in the useMemo below
+    }
+  }, [user, initialLoja]);
+
+
   const filteredObras = useMemo(() => {
     let obras = initialObras;
-    if (selectedLoja !== 'all') {
-      obras = obras.filter(obra => obra.lojaId === selectedLoja);
+
+    // Filter by user role first
+    if (user?.role === 'Gerente') {
+      obras = obras.filter(obra => obra.lojaId === user.lojaId);
+    } else if (user?.role === 'Vendedor') {
+      obras = obras.filter(obra => obra.sellerId === user.id);
+    } else if (user?.role === 'Admin') {
+       if (selectedLoja !== 'all') {
+         obras = obras.filter(obra => obra.lojaId === selectedLoja);
+       }
     }
+
     if (initialStatus) {
         obras = obras.filter(obra => obra.status === initialStatus);
     }
@@ -85,7 +110,7 @@ export default function ObrasClientPage() {
         });
     }
     return obras;
-  }, [initialObras, selectedLoja, initialStatus, initialStage, dateRange]);
+  }, [initialObras, selectedLoja, initialStatus, initialStage, dateRange, user]);
   
   // Set default tab on Kanban board if status is provided
   const defaultKanbanTab = initialStatus || undefined;
@@ -110,19 +135,22 @@ export default function ObrasClientPage() {
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
             <h1 className="font-headline text-3xl font-bold tracking-tight">Quadro de Obras</h1>
             <div className="flex flex-col sm:flex-row gap-2 w-full">
-              <div className="w-full sm:w-52">
-                 <Select value={selectedLoja} onValueChange={setSelectedLoja}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Filtrar por unidade..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todas as Unidades</SelectItem>
-                        {lojas.map(loja => (
-                            <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-              </div>
+              {/* Only Admins can filter by loja */}
+              {user?.role === 'Admin' && (
+                <div className="w-full sm:w-52">
+                  <Select value={selectedLoja} onValueChange={setSelectedLoja}>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Filtrar por unidade..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="all">Todas as Unidades</SelectItem>
+                          {lojas.map(loja => (
+                              <SelectItem key={loja.id} value={loja.id}>{loja.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="w-full sm:w-auto">
                 <Popover>
                   <PopoverTrigger asChild>

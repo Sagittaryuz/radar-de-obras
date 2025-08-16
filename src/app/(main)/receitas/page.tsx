@@ -2,15 +2,15 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Package, TrendingUp } from "lucide-react";
+import { DollarSign, Package, TrendingUp, User as UserIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useMemo } from 'react';
-import { getObras, getLojas } from '@/lib/firestore-data';
-import type { Obra, Loja } from '@/lib/firestore-data';
+import { getObras, getLojas, getUsers } from '@/lib/firestore-data';
+import type { Obra, Loja, User } from '@/lib/firestore-data';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { useRouter } from "next/navigation";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -22,16 +22,19 @@ function formatCurrency(value: number) {
 export default function ReceitasPage() {
     const [obras, setObras] = useState<Obra[]>([]);
     const [lojas, setLojas] = useState<Loja[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedSeller, setSelectedSeller] = useState('all');
     const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const [obrasData, lojasData] = await Promise.all([getObras(), getLojas()]);
+                const [obrasData, lojasData, usersData] = await Promise.all([getObras(), getLojas(), getUsers()]);
                 setObras(obrasData);
                 setLojas(lojasData);
+                setUsers(usersData.filter(u => u.role === 'Vendedor')); // Only need sellers
             } catch (error) {
                 console.error("Failed to fetch sales data", error);
             } finally {
@@ -41,8 +44,15 @@ export default function ReceitasPage() {
         fetchData();
     }, []);
 
+    const filteredObras = useMemo(() => {
+        if (selectedSeller === 'all') {
+            return obras;
+        }
+        return obras.filter(obra => obra.sellerId === selectedSeller);
+    }, [obras, selectedSeller]);
+
     const salesData = useMemo(() => {
-        const soldObras = obras.filter(obra => obra.status === 'Ganha' && typeof obra.closedValue === 'number' && obra.closedValue > 0);
+        const soldObras = filteredObras.filter(obra => obra.status === 'Ganha' && typeof obra.closedValue === 'number' && obra.closedValue > 0);
         
         const totalRevenue = soldObras.reduce((sum, obra) => sum + (obra.closedValue || 0), 0);
         const totalSales = soldObras.length;
@@ -54,7 +64,7 @@ export default function ReceitasPage() {
             totalSales,
             averageTicket
         };
-    }, [obras]);
+    }, [filteredObras]);
     
     const revenueByLoja = useMemo(() => {
         const lojaMap = lojas.reduce((acc, loja) => {
@@ -63,7 +73,7 @@ export default function ReceitasPage() {
         }, {} as Record<string, {id: string, name: string, total: number}>);
 
         salesData.soldObras.forEach(obra => {
-            if (lojaMap[obra.lojaId]) {
+            if (obra.lojaId && lojaMap[obra.lojaId]) {
                 lojaMap[obra.lojaId].total += obra.closedValue || 0;
             }
         });
@@ -99,6 +109,7 @@ export default function ReceitasPage() {
                 <p className="text-muted-foreground">
                     Analise o desempenho das vendas por período, vendedor e unidade.
                 </p>
+                <Skeleton className="h-10 w-full max-w-sm" />
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                      <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -139,10 +150,27 @@ export default function ReceitasPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="font-headline text-3xl font-bold tracking-tight">Receitas e Vendas</h1>
-            <p className="text-muted-foreground">
-                Analise o desempenho das vendas por período, vendedor e unidade.
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="font-headline text-3xl font-bold tracking-tight">Receitas e Vendas</h1>
+                    <p className="text-muted-foreground">
+                        Analise o desempenho das vendas por período, vendedor e unidade.
+                    </p>
+                </div>
+                <div className="w-full sm:w-52">
+                    <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Filtrar por vendedor..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos os Vendedores</SelectItem>
+                            {users.map(seller => (
+                                <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
