@@ -20,10 +20,9 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Get Auth instance and set persistence
+// Get Auth instance. Persistence is now handled in the AuthProvider
+// to ensure it's set before any auth state listeners are attached.
 const auth = getAuth(app);
-// This makes sure the user has to log in every time.
-setPersistence(auth, browserSessionPersistence);
 
 
 export { app, db, storage, auth };
