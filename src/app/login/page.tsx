@@ -99,7 +99,7 @@ export default function LoginPage() {
       </div>
       <div className="hidden bg-muted lg:block">
         <Image
-          src="https://i.imgur.com/L7sFzN4.jpeg"
+          src="https://i.imgur.com/VaIigvQ.jpeg"
           alt="Image of a construction site"
           width="1920"
           height="1080"
