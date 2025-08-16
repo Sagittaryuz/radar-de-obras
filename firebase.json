@@ -10,7 +10,7 @@
     "rewrites": [
       {
         "source": "**",
-        "app": {
+        "run": {
           "serviceId": "radar-de-obras",
           "region": "southamerica-west1"
         }
