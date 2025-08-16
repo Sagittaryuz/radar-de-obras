@@ -99,8 +99,7 @@ export default function LoginPage() {
       </div>
       <div className="hidden bg-muted lg:block">
         <Image
-          src="https://placehold.co/1920x1080.png"
-          data-ai-hint="construction site"
+          src="https://i.imgur.com/L7sFzN4.jpeg"
           alt="Image of a construction site"
           width="1920"
           height="1080"
