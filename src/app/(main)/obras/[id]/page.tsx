@@ -23,6 +23,7 @@ import { RegisterSaleDialog } from '@/components/obras/register-sale-dialog';
 import { useAuth } from '@/context/auth-context';
 import { AssignSellerDialog } from '@/components/obras/assign-seller-dialog';
 import { ArchiveObraDialog } from '@/components/obras/archive-obra-dialog';
+import Image from 'next/image';
 
 interface Coordinates {
     lat: number;
