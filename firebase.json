@@ -11,8 +11,7 @@
       {
         "source": "**",
         "run": {
-          "serviceId": "radar-de-obras",
-          "region": "us-central1"
+          "serviceId": "radar-de-obras"
         }
       }
     ],
