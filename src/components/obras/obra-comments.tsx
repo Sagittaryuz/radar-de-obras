@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare, Send } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ObraComment } from '@/lib/mock-data';
+import type { ObraComment } from '@/lib/firestore-data';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

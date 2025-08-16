@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getLojas } from '@/lib/mock-data';
+import { getLojas } from '@/lib/firestore-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
-import type { Loja } from '@/lib/mock-data';
+import type { Loja } from '@/lib/firestore-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function RegionsPage() {

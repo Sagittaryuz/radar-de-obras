@@ -2,9 +2,9 @@
 'use client';
 
 import { AdminTabs } from "@/components/admin/admin-tabs";
-import { getUsers, getLojas } from "@/lib/mock-data";
+import { getUsers, getLojas } from "@/lib/firestore-data";
 import { useEffect, useState } from "react";
-import { User, Loja } from "@/lib/mock-data";
+import { User, Loja } from "@/lib/firestore-data";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminPage() {

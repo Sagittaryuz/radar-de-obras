@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
-import type { Obra } from '@/lib/mock-data';
+import type { Obra } from '@/lib/firestore-data';
 import { imageToDataUrl } from '@/lib/actions';
 
 interface PdfExportButtonProps {

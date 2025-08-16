@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { DollarSign, Package, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useMemo } from 'react';
-import { getObras, getLojas } from '@/lib/mock-data';
-import type { Obra, Loja } from '@/lib/mock-data';
+import { getObras, getLojas } from '@/lib/firestore-data';
+import type { Obra, Loja } from '@/lib/firestore-data';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { useRouter } from "next/navigation";

@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Loja } from '@/lib/mock-data';
+import type { Loja } from '@/lib/firestore-data';
 import { useRouter } from 'next/navigation';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';

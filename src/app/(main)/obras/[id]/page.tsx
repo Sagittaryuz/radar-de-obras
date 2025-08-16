@@ -3,8 +3,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { getObraById, getUserById, getLojas } from '@/lib/mock-data';
-import type { Obra, User, Loja } from '@/lib/mock-data';
+import { getObraById, getUserById, getLojas } from '@/lib/firestore-data';
+import type { Obra, User, Loja } from '@/lib/firestore-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';

@@ -20,8 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, deleteObject } from 'firebase/storage';
-import { getObraById } from '@/lib/mock-data';
-import type { Obra } from '@/lib/mock-data';
+import { getObraById } from '@/lib/firestore-data';
+import type { Obra } from '@/lib/firestore-data';
 
 interface DeleteObraDialogProps {
   obraId: string;

@@ -4,8 +4,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import type { User } from '@/lib/mock-data';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import type { User } from '@/lib/firestore-data';
 
 interface AuthContextType {
   user: User | null;
@@ -29,25 +29,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const userDocRef = doc(db, 'users', fbUser.uid);
             const userDoc = await getDoc(userDocRef);
+
             if (userDoc.exists()) {
               setUser({ id: userDoc.id, ...userDoc.data() } as User);
             } else {
-                // This case handles a valid Firebase user that doesn't have a profile in Firestore.
-                // This is an invalid state, so we should sign the user out.
-                console.warn("Firebase user exists, but no user profile found in Firestore. Signing out.");
-                await signOut(auth); // This will trigger the 'else' block below.
+                // If user exists in Auth but not Firestore, create them.
+                console.warn("User profile not found in Firestore, creating one.");
+                const newUser: User = {
+                    id: fbUser.uid,
+                    name: fbUser.displayName || fbUser.email || 'Novo Usuário',
+                    email: fbUser.email!,
+                    avatar: fbUser.photoURL || `https://placehold.co/100x100.png?text=${(fbUser.email || 'U')[0].toUpperCase()}`
+                };
+                await setDoc(userDocRef, newUser);
+                setUser(newUser);
             }
         } catch (error) {
-            console.error("Error fetching user document from Firestore:", error);
-            setUser(null); // Ensure user is null on error
-            await signOut(auth);
+            console.error("Error fetching/creating user document from Firestore:", error);
+            setUser(null);
         }
       } else {
-        // This case handles when the user is logged out or sign-out was called.
         setFirebaseUser(null);
         setUser(null);
       }
-      // Only stop loading after all async operations are done.
       setLoading(false);
     });
 

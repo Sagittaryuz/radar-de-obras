@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EditNeighborhoodsDialog } from "./edit-neighborhoods-dialog";
-import type { User, Loja } from "@/lib/mock-data";
+import type { User, Loja } from "@/lib/firestore-data";
 
 interface AdminTabsProps {
   users: User[];

@@ -2,7 +2,7 @@
 'use client';
 
 import { DashboardCharts } from "./charts";
-import type { Obra, Loja } from "@/lib/mock-data";
+import type { Obra, Loja } from "@/lib/firestore-data";
 
 interface DashboardTabsProps {
   allObras: Obra[];

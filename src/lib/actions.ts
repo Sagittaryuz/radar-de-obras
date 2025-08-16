@@ -2,8 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db as dbAdmin } from './firebase-admin';
-import type { Loja } from './mock-data';
+import type { Loja } from './firestore-data';
 
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
@@ -23,28 +22,6 @@ export async function imageToDataUrl(url: string) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return { success: false, error: message };
     }
-}
-
-
-export async function updateLojaNeighborhoods(lojaId: string, neighborhoods: string[]) {
-  if (!dbAdmin) {
-    // This action now depends on firebase-admin, which we are removing for stability.
-    // If you re-introduce firebase-admin, this function can be uncommented.
-    // For now, it will return an error.
-    console.error("Firebase Admin SDK is not available.");
-    return { error: 'O serviço de administração não está disponível para atualizar bairros.' };
-  }
-  try {
-    const lojaRef = dbAdmin.collection('lojas').doc(lojaId);
-    await lojaRef.update({ neighborhoods });
-
-    revalidatePath('/admin');
-    revalidatePath('/regions');
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating neighborhoods:", error);
-    return { error: 'Falha ao atualizar os bairros. Tente novamente.' };
-  }
 }
 
 

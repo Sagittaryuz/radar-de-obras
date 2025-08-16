@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, DragEvent, useEffect } from 'react';
-import type { Obra, User } from '@/lib/mock-data';
+import type { Obra, User } from '@/lib/firestore-data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';

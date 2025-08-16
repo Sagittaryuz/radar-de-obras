@@ -2,9 +2,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getObras, getLojas } from '@/lib/mock-data';
+import { getObras, getLojas } from '@/lib/firestore-data';
 import { DashboardTabs } from '@/components/dashboard/dashboard-tabs';
-import type { Obra, Loja } from '@/lib/mock-data';
+import type { Obra, Loja } from '@/lib/firestore-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // This is now a Client Component to fetch data client-side.
