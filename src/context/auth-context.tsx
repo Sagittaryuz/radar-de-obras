@@ -36,11 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // This is an invalid state, so we should sign the user out.
                 console.warn("Firebase user exists, but no user profile found in Firestore. Signing out.");
                 await signOut(auth); // This will trigger the 'else' block below.
-                setUser(null);
             }
         } catch (error) {
             console.error("Error fetching user document from Firestore:", error);
-            setUser(null);
+            setUser(null); // Ensure user is null on error
+            await signOut(auth);
         }
       } else {
         // This case handles when the user is logged out or sign-out was called.
@@ -55,14 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, pass: string) => {
-    // The loading state is managed by the onAuthStateChanged listener,
-    // so we don't need to set it here.
+    await setPersistence(auth, browserSessionPersistence);
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
   const logout = async () => {
     await signOut(auth);
-    // The onAuthStateChanged listener will handle clearing the user state.
   };
   
   const value = { user, firebaseUser, loading, login, logout };
