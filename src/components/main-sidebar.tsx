@@ -27,7 +27,6 @@ const baseMenuItems = [
 ];
 
 const adminMenuItem = { href: '/admin', label: 'Admin', icon: Settings };
-const adminEmails = ['marcos.pires@jcruzeiro.com', 'willian.mota@jcruzeiro.com'];
 
 
 function getInitials(name: string) {
@@ -48,7 +47,7 @@ export function MainSidebar() {
     router.push('/login');
   };
   
-  const menuItems = user?.role === 'Admin' && adminEmails.includes(user.email) 
+  const menuItems = user?.role === 'Admin'
     ? [...baseMenuItems, adminMenuItem] 
     : baseMenuItems;
 

@@ -9,13 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 
-const adminEmails = ['marcos.pires@jcruzeiro.com', 'willian.mota@jcruzeiro.com'];
-
 
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataCallback, setDataCallback] = useState(0);
   
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -24,14 +23,18 @@ export default function AdminPage() {
   // Page guard
   useEffect(() => {
     if (!authLoading) {
-        if (!user || user.role !== 'Admin' || !adminEmails.includes(user.email)) {
+        if (!user || user.role !== 'Admin') {
             router.push('/dashboard');
         }
     }
   }, [user, authLoading, router]);
+  
+  const fetchData = () => {
+      setDataCallback(prev => prev + 1);
+  }
 
   useEffect(() => {
-    const fetchData = async () => {
+    const doFetch = async () => {
       setLoading(true);
        try {
         const [usersData, lojasData] = await Promise.all([
@@ -48,9 +51,9 @@ export default function AdminPage() {
     };
     
     if (!authLoading && user?.role === 'Admin') {
-        fetchData();
+        doFetch();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, dataCallback]);
   
   if (authLoading || loading || user?.role !== 'Admin' || !user) {
     return (
