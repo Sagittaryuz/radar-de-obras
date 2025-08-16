@@ -2,7 +2,7 @@
 'use client';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, browserSessionPersistence } from 'firebase/auth';
+import { getAuth, browserSessionPersistence, setPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -22,7 +22,8 @@ const storage = getStorage(app);
 
 // Get Auth instance and set persistence
 const auth = getAuth(app);
-auth.setPersistence(browserSessionPersistence);
+// This makes sure the user has to log in every time.
+setPersistence(auth, browserSessionPersistence);
 
 
 export { app, db, storage, auth };
