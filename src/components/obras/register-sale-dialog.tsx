@@ -15,11 +15,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Obra } from '@/lib/firestore-data';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Calendar } from '../ui/calendar';
+
 
 interface RegisterSaleDialogProps {
   obra: Obra;
@@ -32,6 +37,7 @@ export function RegisterSaleDialog({ obra, onSuccess, children }: PropsWithChild
   const [isPending, startTransition] = useTransition();
   const [orderNumber, setOrderNumber] = useState('');
   const [saleValue, setSaleValue] = useState('');
+  const [saleDate, setSaleDate] = useState<Date | undefined>(new Date());
 
   const isEditing = !!obra.closedValue;
 
@@ -39,11 +45,16 @@ export function RegisterSaleDialog({ obra, onSuccess, children }: PropsWithChild
     if (open && isEditing) {
       setOrderNumber(obra.orderNumber || '');
       setSaleValue(obra.closedValue?.toString() || '');
+      if (obra.closedAt) {
+          const date = obra.closedAt instanceof Timestamp ? obra.closedAt.toDate() : new Date(obra.closedAt);
+          setSaleDate(date);
+      }
     }
     if (!open) {
       // Reset form on close
       setOrderNumber('');
       setSaleValue('');
+      setSaleDate(new Date());
     }
   }, [open, isEditing, obra]);
 
@@ -58,6 +69,16 @@ export function RegisterSaleDialog({ obra, onSuccess, children }: PropsWithChild
       });
       return;
     }
+    
+    if (!saleDate) {
+        toast({
+            variant: 'destructive',
+            title: 'Data Inválida',
+            description: 'Por favor, selecione a data da venda.',
+        });
+        return;
+    }
+
 
     startTransition(async () => {
       try {
@@ -65,7 +86,7 @@ export function RegisterSaleDialog({ obra, onSuccess, children }: PropsWithChild
         await updateDoc(obraRef, {
           orderNumber: orderNumber,
           closedValue: numericSaleValue,
-          closedAt: serverTimestamp(),
+          closedAt: Timestamp.fromDate(saleDate), // Use the selected date
           status: 'Ganha' // Automatically set status to 'Ganha'
         });
         
@@ -118,6 +139,32 @@ export function RegisterSaleDialog({ obra, onSuccess, children }: PropsWithChild
                     type="text"
                     inputMode="decimal"
                 />
+            </div>
+             <div>
+                <Label htmlFor="saleDate">Data da Venda</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="saleDate"
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !saleDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {saleDate ? format(saleDate, "PPP") : <span>Selecione uma data</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={saleDate}
+                      onSelect={setSaleDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
             </div>
         </div>
         <DialogFooter>
