@@ -1,6 +1,6 @@
 specVersion: "v1"
 serviceId: "radar-de-obras"
-location: "us-central1"
+location: "southamerica-west1"
 schema:
   source: "./schema"
   datasource:

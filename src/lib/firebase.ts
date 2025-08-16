@@ -2,7 +2,7 @@
 'use client';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -19,10 +19,14 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const storage = getStorage(app);
-
-// Get Auth instance. Persistence is now handled in the AuthProvider
-// to ensure it's set before any auth state listeners are attached.
 const auth = getAuth(app);
+
+// Set persistence right after auth is initialized
+setPersistence(auth, browserSessionPersistence)
+  .catch((error) => {
+    // Handle errors here, such as when running in an environment that doesn't support it.
+    console.error("Firebase persistence error:", error);
+  });
 
 
 export { app, db, storage, auth };

@@ -1,58 +1,49 @@
 type User @table {
   displayName: String!
-  email: String!
-  userType: String!
   createdAt: Timestamp!
-  phoneNumber: String
+  email: String
   photoUrl: String
-  address: String
-}
-
-type ServiceProviderProfile @table {
-  user: User!
-  companyName: String
-  specialties: [String]!
-  description: String!
-  availabilityStatus: String!
-  licenseNumber: String
-  yearsOfExperience: Int
-  website: String
-  portfolioLinks: [String]
-}
-
-type ServiceCategory @table {
-  name: String!
-  description: String!
 }
 
 type Project @table {
-  client: User!
-  title: String!
-  description: String!
+  name: String!
   location: String!
-  status: String!
+  startDate: Date!
+  currentStatus: String!
   createdAt: Timestamp!
-  budget: Float
+  description: String
+  estimatedCompletionDate: Date
+  manager: User
+}
+
+type ProjectPhase @table {
+  name: String!
+  order: Int!
+  createdAt: Timestamp!
+  description: String
   startDate: Date
   endDate: Date
-  requiredCategoryIds: [UUID]
+  project: Project
 }
 
-type Quote @table {
-  project: Project!
-  serviceProvider: ServiceProviderProfile!
-  amount: Float!
-  quoteDetails: String!
+type StatusUpdate @table {
   status: String!
+  updateDate: Date!
   createdAt: Timestamp!
-  validUntil: Timestamp
+  notes: String
+  project: Project
 }
 
-type Review @table {
-  project: Project!
-  serviceProvider: ServiceProviderProfile!
-  client: User!
-  rating: Int!
-  comment: String!
+type ResponsibleParty @table {
+  name: String!
+  role: String!
   createdAt: Timestamp!
+  contactInfo: String
+}
+
+type ProjectResponsibleParty @table(key: ["project", "responsibleParty"]) {
+  assignedAt: Timestamp!
+  roleInProject: String
+  project: Project!
+  responsibleParty: ResponsibleParty!
 }
