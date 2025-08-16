@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,7 +40,6 @@ export function AdminTabs({ users, lojas }: AdminTabsProps) {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Papel</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -55,7 +55,6 @@ export function AdminTabs({ users, lojas }: AdminTabsProps) {
                       </div>
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell><Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge></TableCell>
                   </TableRow>
                 ))}
               </TableBody>

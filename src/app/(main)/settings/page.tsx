@@ -74,7 +74,6 @@ export default function SettingsPage() {
                 <div>
                     <p className="text-lg font-semibold">{user.name}</p>
                     <p className="text-muted-foreground">{user.email}</p>
-                    <p className="text-sm font-medium bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full inline-block mt-2">{user.role}</p>
                 </div>
             </CardContent>
        </Card>

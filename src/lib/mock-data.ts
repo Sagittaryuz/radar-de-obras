@@ -7,7 +7,6 @@ export type User = {
   name: string;
   email: string;
   avatar: string;
-  role: 'Vendedor' | 'Admin';
 };
 
 export type ContactType = 

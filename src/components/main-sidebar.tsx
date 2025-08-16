@@ -22,7 +22,7 @@ const menuItems = [
   { href: '/obras', label: 'Obras', icon: ListTodo },
   { href: '/regions', label: 'Regiões', icon: Map },
   { href: '/receitas', label: 'Receitas', icon: DollarSign },
-  { href: '/admin', label: 'Admin', icon: Settings, adminOnly: true },
+  { href: '/admin', label: 'Admin', icon: Settings },
 ];
 
 function getInitials(name: string) {
@@ -43,7 +43,6 @@ export function MainSidebar() {
     router.push('/login');
   };
   
-  const filteredMenuItems = menuItems.filter(item => !item.adminOnly || (user && user.role === 'Admin'));
 
   return (
     <>
@@ -60,7 +59,7 @@ export function MainSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2 flex-1">
         <SidebarMenu>
-          {filteredMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
