@@ -17,6 +17,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const ADMIN_EMAILS = ['marcos.pires@jcruzeiro.com', 'mrpires72@gmail.com'];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -29,18 +31,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const userDocRef = doc(db, 'users', fbUser.uid);
             const userDoc = await getDoc(userDocRef);
+            
+            // Determine the user's role. Grant 'Admin' if their email is in the admin list.
+            const userRole: UserRole = ADMIN_EMAILS.includes(fbUser.email || '') ? 'Admin' : 'Vendedor';
 
             if (userDoc.exists()) {
-              setUser({ id: userDoc.id, ...userDoc.data() } as User);
+              const existingUser = { id: userDoc.id, ...userDoc.data() } as User;
+              // If the user is an admin but their role in DB is different, update it.
+              if (userRole === 'Admin' && existingUser.role !== 'Admin') {
+                  await setDoc(userDocRef, { role: 'Admin' }, { merge: true });
+                  existingUser.role = 'Admin';
+              }
+              setUser(existingUser);
             } else {
-                // If user exists in Auth but not Firestore, create them with a default role.
+                // If user exists in Auth but not Firestore, create them.
                 console.warn("User profile not found in Firestore, creating one.");
                 const newUser: User = {
                     id: fbUser.uid,
                     name: fbUser.displayName || fbUser.email || 'Novo Usuário',
                     email: fbUser.email!,
-                    avatar: fbUser.photoURL || `https://placehold.co/100x100.png?text=${(fbUser.email || 'U')[0].toUpperCase()}`,
-                    role: 'Vendedor', // Assign a default role
+                    avatar: fbUser.photoURL || `https://i.imgur.com/RI2eag9.png`,
+                    role: userRole, // Assign the determined role
                 };
                 await setDoc(userDocRef, newUser);
                 setUser(newUser);
