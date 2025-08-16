@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { EditNeighborhoodsDialog } from "./edit-neighborhoods-dialog";
 import { EditUserRoleDialog } from "./edit-user-role-dialog";
 import type { User, Loja } from "@/lib/firestore-data";
+import { AddUserDialog } from "./add-user-dialog";
 
 interface AdminTabsProps {
   users: User[];
@@ -38,9 +39,12 @@ export function AdminTabs({ users, lojas, onUserUpdate }: AdminTabsProps) {
       </TabsList>
       <TabsContent value="users">
         <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Usuários</CardTitle>
-            <CardDescription>Gerencie as funções e permissões dos usuários do sistema.</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle className="font-headline">Usuários</CardTitle>
+                <CardDescription>Gerencie as funções e permissões dos usuários do sistema.</CardDescription>
+            </div>
+            <AddUserDialog lojas={lojas} onUserAdded={onUserUpdate} />
           </CardHeader>
           <CardContent>
             <Table>
