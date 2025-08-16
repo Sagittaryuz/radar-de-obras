@@ -3,14 +3,14 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, ListTodo, Map, User } from 'lucide-react';
+import { Home, ListTodo, Map, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
   { href: '/dashboard', label: 'Início', icon: Home },
   { href: '/obras', label: 'Obras', icon: ListTodo },
   { href: '/regions', label: 'Regiões', icon: Map },
-  { href: '/settings', label: 'Perfil', icon: User },
+  { href: '/receitas', label: 'Receitas', icon: DollarSign },
 ];
 
 export function MobileBottomNav() {
@@ -20,7 +20,7 @@ export function MobileBottomNav() {
     <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-card border-t border-border md:hidden">
       <div className="grid h-full max-w-lg grid-cols-4 mx-auto font-medium">
         {menuItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
