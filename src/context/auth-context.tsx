@@ -23,39 +23,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure persistence is set before onAuthStateChanged is triggered.
-    setPersistence(auth, browserSessionPersistence).then(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-          if (fbUser) {
-            setFirebaseUser(fbUser);
-            try {
-                const userDocRef = doc(db, 'users', fbUser.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                  setUser({ id: userDoc.id, ...userDoc.data() } as User);
-                } else {
-                    // This case handles a valid Firebase user that doesn't have a profile in Firestore.
-                    console.error("Firebase user exists, but no user profile found in Firestore.");
-                    setUser(null); 
-                }
-            } catch (error) {
-                console.error("Error fetching user document from Firestore:", error);
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        setFirebaseUser(fbUser);
+        try {
+            const userDocRef = doc(db, 'users', fbUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              setUser({ id: userDoc.id, ...userDoc.data() } as User);
+            } else {
+                // This case handles a valid Firebase user that doesn't have a profile in Firestore.
+                // This is an invalid state, so we should sign the user out.
+                console.warn("Firebase user exists, but no user profile found in Firestore. Signing out.");
+                await signOut(auth); // This will trigger the 'else' block below.
                 setUser(null);
             }
-          } else {
-            // This case handles when the user is logged out.
-            setFirebaseUser(null);
+        } catch (error) {
+            console.error("Error fetching user document from Firestore:", error);
             setUser(null);
-          }
-          // Only stop loading after all async operations are done.
-          setLoading(false);
-        });
-        return () => unsubscribe();
-    }).catch((error) => {
-        console.error("Error setting auth persistence:", error);
-        setLoading(false); // Stop loading even if persistence fails.
+        }
+      } else {
+        // This case handles when the user is logged out or sign-out was called.
+        setFirebaseUser(null);
+        setUser(null);
+      }
+      // Only stop loading after all async operations are done.
+      setLoading(false);
     });
 
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, pass: string) => {
