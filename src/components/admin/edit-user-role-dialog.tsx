@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Edit, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja, User, UserRole } from '@/lib/firestore-data';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface EditUserRoleDialogProps {
@@ -56,10 +56,17 @@ export function EditUserRoleDialog({ user, lojas, onUserUpdate }: EditUserRoleDi
     startTransition(async () => {
       try {
         const userRef = doc(db, 'users', user.id);
-        const payload: Partial<User> = {
+        
+        const payload: { role: UserRole; lojaId?: string | ReturnType<typeof deleteField> } = {
             role: selectedRole,
-            lojaId: (selectedRole === 'Gerente' || selectedRole === 'Vendedor') ? selectedLoja : undefined
         };
+
+        if (selectedRole === 'Gerente' || selectedRole === 'Vendedor') {
+            payload.lojaId = selectedLoja;
+        } else {
+            // If role is Admin, remove the lojaId field instead of setting it to undefined
+            payload.lojaId = deleteField();
+        }
 
         await updateDoc(userRef, payload);
         
