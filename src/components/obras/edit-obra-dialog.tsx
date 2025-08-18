@@ -16,13 +16,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Edit, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Edit, Loader2, Plus, Trash2, X, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Loja, Obra, ObraContact, ContactType } from '@/lib/firestore-data';
 import { getLojas } from '@/lib/firestore-data';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Textarea } from '../ui/textarea';
+import Image from 'next/image';
+
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 interface EditObraDialogProps {
   obra: Obra;
@@ -58,6 +63,12 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
   const [stage, setStage] = useState<Obra['stage'] | ''>('');
   const [contacts, setContacts] = useState<Partial<ObraContact>[]>([]);
 
+  // States for photo management
+  const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
+  const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
+  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]);
+  const [photosToDelete, setPhotosToDelete] = useState<string[]>([]);
+
 
   useEffect(() => {
     // When the dialog opens, initialize form data with the current obra data.
@@ -69,6 +80,12 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
         setLojaId(obra.lojaId || '');
         setStage(obra.stage || '');
         setContacts(obra.contacts && obra.contacts.length > 0 ? obra.contacts : [{ name: '', type: undefined, phone: '' }]);
+        setExistingPhotoUrls(obra.photoUrls || []);
+        
+        // Reset photo states
+        setNewPhotoFiles([]);
+        setNewPhotoPreviews([]);
+        setPhotosToDelete([]);
 
         const fetchLojas = async () => {
             const lojasData = await getLojas();
@@ -96,6 +113,37 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     const newContacts = contacts.filter((_, i) => i !== index);
     setContacts(newContacts);
   };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const validFiles = Array.from(files).filter(file => {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast({
+          variant: 'destructive',
+          title: 'Arquivo muito grande',
+          description: `A imagem ${file.name} excede o limite de ${MAX_FILE_SIZE_MB}MB.`,
+        });
+        return false;
+      }
+      return true;
+    });
+
+    setNewPhotoFiles(prev => [...prev, ...validFiles]);
+    const previews = validFiles.map(file => URL.createObjectURL(file));
+    setNewPhotoPreviews(prev => [...prev, ...previews]);
+  };
+
+  const handleRemoveNewPhoto = (index: number) => {
+    setNewPhotoFiles(prev => prev.filter((_, i) => i !== index));
+    setNewPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleRemoveExistingPhoto = (url: string) => {
+    setExistingPhotoUrls(prev => prev.filter(u => u !== url));
+    setPhotosToDelete(prev => [...prev, url]);
+  };
 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -116,26 +164,62 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     }
 
 
-    const payload: Partial<Obra> = {
-        street,
-        number,
-        neighborhood,
-        address,
-        clientName: validContacts[0].name || address,
-        details,
-        lojaId,
-        stage: stage as Obra['stage'],
-        contacts: validContacts,
-    };
-
     startTransition(async () => {
       try {
+        toast({ title: 'Atualizando obra...', description: 'Aguarde um momento.' });
+
+        // 1. Delete photos marked for deletion
+        for (const urlToDelete of photosToDelete) {
+          try {
+            const photoRef = ref(storage, urlToDelete);
+            await deleteObject(photoRef);
+          } catch (error: any) {
+             // Ignore "object not found" errors, as it might have been already deleted
+            if (error.code !== 'storage/object-not-found') {
+              console.warn(`Failed to delete photo: ${urlToDelete}`, error);
+            }
+          }
+        }
+
+        // 2. Upload new photos
+        const newUploadedUrls: string[] = [];
+        for (const file of newPhotoFiles) {
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          
+          const fileName = `obras/${Date.now()}-${file.name}`;
+          const storageRef = ref(storage, fileName);
+          const uploadResult = await uploadString(storageRef, dataUrl, 'data_url');
+          const downloadUrl = await getDownloadURL(uploadResult.ref);
+          newUploadedUrls.push(downloadUrl);
+        }
+
+        // 3. Construct final payload
+        const finalPhotoUrls = [...existingPhotoUrls, ...newUploadedUrls];
+        const payload: Partial<Obra> = {
+            street,
+            number,
+            neighborhood,
+            address,
+            clientName: validContacts[0].name || address,
+            details,
+            lojaId,
+            stage: stage as Obra['stage'],
+            contacts: validContacts,
+            photoUrls: finalPhotoUrls,
+        };
+
+        // 4. Update Firestore document
         const obraRef = doc(db, 'obras', obra.id);
         await updateDoc(obraRef, payload);
         
         toast({
             title: "Obra Atualizada",
-            description: "Os dados da obra foram atualizados.",
+            description: "Os dados e fotos da obra foram atualizados.",
         });
         setOpen(false);
         onSuccess();
@@ -162,7 +246,7 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
         <DialogHeader>
           <DialogTitle className="font-headline">Editar Obra</DialogTitle>
           <DialogDescription>
-            Modifique os dados da obra abaixo. As fotos não podem ser editadas aqui.
+            Modifique os dados da obra abaixo, adicione ou remova fotos.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -260,6 +344,34 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
                   </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-3">
+                <Label htmlFor="photos">Fotos</Label>
+                <div className="p-4 border-dashed border-2 rounded-md space-y-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                        {/* Existing Photos */}
+                        {existingPhotoUrls.map((url) => (
+                            <div key={url} className="relative group">
+                                <Image src={url} alt="Foto existente" width={100} height={100} className="rounded-md object-cover aspect-square" />
+                                <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveExistingPhoto(url)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                        {/* New Photo Previews */}
+                         {newPhotoPreviews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                                <Image src={preview} alt={`Nova foto ${index+1}`} width={100} height={100} className="rounded-md object-cover aspect-square" />
+                                <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveNewPhoto(index)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                     <Input id="photos" type="file" accept="image/*" multiple onChange={handleFileChange} className="w-full" />
+                </div>
+            </div>
+
           </div>
           <DialogFooter>
             <DialogClose asChild>
@@ -277,3 +389,5 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     </Dialog>
   );
 }
+
+    
