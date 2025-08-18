@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Calendar as CalendarIcon, Trash2, Edit, PlusCircle } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Trash2, Edit, PlusCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Obra, Sale } from '@/lib/firestore-data';
 import { doc, updateDoc, Timestamp, arrayUnion, arrayRemove } from 'firebase/firestore';
@@ -192,7 +192,11 @@ export function RegisterSaleDialog({ obra, onSuccess, children }: PropsWithChild
                 <div className="space-y-3 py-4">
                     {sales.length > 0 ? (
                         sales.map(sale => (
-                            <div key={sale.id} className="flex items-center justify-between p-3 rounded-md border">
+                            <div key={sale.id} className="relative flex items-center justify-between p-3 rounded-md border">
+                                <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDelete(sale)} disabled={isPending}>
+                                    <X className="h-4 w-4" />
+                                    <span className="sr-only">Excluir Venda</span>
+                                </Button>
                                 <div>
                                     <p className="font-semibold">{formatCurrency(sale.value)}</p>
                                     <p className="text-sm text-muted-foreground">{sale.orderNumber || 'Sem pedido'}</p>
@@ -201,9 +205,6 @@ export function RegisterSaleDialog({ obra, onSuccess, children }: PropsWithChild
                                 <div className="flex gap-2">
                                     <Button variant="ghost" size="icon" onClick={() => handleEdit(sale)} disabled={isPending}>
                                         <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(sale)} disabled={isPending}>
-                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
                             </div>
