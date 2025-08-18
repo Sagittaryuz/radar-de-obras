@@ -25,6 +25,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // --- Cache Busting Logic ---
+    // This forces a hard reload once per session to ensure users get the latest version
+    // of the application, preventing errors from outdated cached assets.
+    if (typeof window !== 'undefined') {
+      const hasReloaded = sessionStorage.getItem('hasReloaded');
+      if (!hasReloaded) {
+        sessionStorage.setItem('hasReloaded', 'true');
+        window.location.reload();
+        // Return early to prevent the rest of the effect from running on the old code
+        return;
+      }
+    }
+    // ---------------------------
+
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         setFirebaseUser(fbUser);
@@ -32,15 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userDocRef = doc(db, 'users', fbUser.uid);
             const userDoc = await getDoc(userDocRef);
             
-            // Determine the user's role. Grant 'Admin' if their email is in the admin list.
-            const userRole: UserRole = ADMIN_EMAILS.includes(fbUser.email || '') ? 'Admin' : 'Vendedor';
-
+            let userRole: UserRole = 'Vendedor'; // Default role
+            if (fbUser.email && ADMIN_EMAILS.includes(fbUser.email)) {
+                userRole = 'Admin';
+            } else if (userDoc.exists()) {
+                // If not an admin by email, use the role from the database
+                userRole = userDoc.data().role || 'Vendedor';
+            }
+            
             if (userDoc.exists()) {
               const existingUser = { id: userDoc.id, ...userDoc.data() } as User;
-              // If the user is an admin but their role in DB is different, update it.
+              // If the user is an admin (by email) but their role in DB is different, update it.
               if (userRole === 'Admin' && existingUser.role !== 'Admin') {
                   await setDoc(userDocRef, { role: 'Admin' }, { merge: true });
-                  existingUser.role = 'Admin';
+                  existingUser.role = 'Admin'; // Update local object as well
               }
               setUser(existingUser);
             } else {
@@ -51,14 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     name: fbUser.displayName || fbUser.email || 'Novo Usuário',
                     email: fbUser.email!,
                     avatar: fbUser.photoURL || `https://i.imgur.com/RI2eag9.png`,
-                    role: userRole, // Assign the determined role
+                    role: userRole, 
                 };
                 await setDoc(userDocRef, newUser);
                 setUser(newUser);
             }
         } catch (error) {
             console.error("Error fetching/creating user document from Firestore:", error);
-            // Sign out the user if there is a critical error fetching their profile
             await signOut(auth);
             setUser(null);
         }
@@ -73,13 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, pass: string) => {
-    // Persistence is now set globally in firebase.ts
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
   const logout = async () => {
     await signOut(auth);
-    // Setting user to null immediately on logout for faster UI response
     setUser(null); 
     setFirebaseUser(null);
   };
