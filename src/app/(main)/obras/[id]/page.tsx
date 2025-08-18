@@ -3,18 +3,18 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { getObraById, getUserById, getLojas, getObras, getUsers } from '@/lib/firestore-data';
-import type { Obra, User, Loja } from '@/lib/firestore-data';
+import type { Obra, User, Loja, Sale } from '@/lib/firestore-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar, DollarSign, Clock, Archive } from 'lucide-react';
+import { User as UserIcon, MapPin, Phone, Building, Wrench, Home, Hash, Briefcase, Edit, Trash2, Camera, PhoneCall, AlignLeft, Calendar, DollarSign, Clock, Archive, ShoppingCart, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EditObraDialog } from '@/components/obras/edit-obra-dialog';
 import { DeleteObraDialog } from '@/components/obras/delete-obra-dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { InteractiveMap } from '@/components/obras/interactive-map';
-import { getCoordinatesForAddress } from '@/lib/actions';
 import { ObraComments } from '@/components/obras/obra-comments';
 import { Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -23,7 +23,7 @@ import { RegisterSaleDialog } from '@/components/obras/register-sale-dialog';
 import { useAuth } from '@/context/auth-context';
 import { AssignSellerDialog } from '@/components/obras/assign-seller-dialog';
 import { ArchiveObraDialog } from '@/components/obras/archive-obra-dialog';
-import Image from 'next/image';
+import { Separator } from '@/components/ui/separator';
 
 interface Coordinates {
     lat: number;
@@ -72,8 +72,8 @@ function ObraDetailSkeleton() {
 function formatTimestamp(date: any): string {
     if (!date) return '';
     let d: Date;
-    if (date.seconds !== undefined && date.nanoseconds !== undefined) {
-        d = new Timestamp(date.seconds, date.nanoseconds).toDate();
+    if (date instanceof Timestamp) {
+        d = date.toDate();
     } else if (typeof date === 'string' || date instanceof Date) {
         d = new Date(date);
     } else {
@@ -81,6 +81,20 @@ function formatTimestamp(date: any): string {
     }
     return format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 }
+
+function formatSaleDate(date: any): string {
+    if (!date) return '';
+    let d: Date;
+    if (date instanceof Timestamp) {
+        d = date.toDate();
+    } else if (typeof date === 'string' || date instanceof Date) {
+        d = new Date(date);
+    } else {
+        return '';
+    }
+    return format(d, "dd/MM/yyyy", { locale: ptBR });
+}
+
 
 function formatCurrency(value: number | undefined | null) {
   if (value === undefined || value === null) return 'N/A';
@@ -165,8 +179,9 @@ export default function ObraDetailPage() {
   const isOldDataFormat = !obra.contacts || obra.contacts.length === 0;
   const cardTitle = (obra.contacts && obra.contacts.length > 0 && obra.contacts[0].name) ? obra.contacts[0].name : obra.clientName;
   const creationDate = formatTimestamp(obra.createdAt);
-  const saleDate = formatTimestamp(obra.closedAt);
-  const isSold = obra.status === 'Ganha' && obra.closedValue;
+  
+  const totalSalesValue = obra.sales ? obra.sales.reduce((sum, sale) => sum + sale.value, 0) : 0;
+  const hasSales = obra.sales && obra.sales.length > 0;
 
   const canEdit = currentUser?.role === 'Admin' || currentUser?.role === 'Gerente';
 
@@ -346,47 +361,47 @@ export default function ObraDetailPage() {
                 />
             )}
 
-            {isSold ? (
-                <Card className="bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-800 flex flex-col">
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2 text-green-800 dark:text-green-300">
-                            <DollarSign className="h-5 w-5"/>
-                            Venda Registrada
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 flex-grow">
-                         <div>
-                            <p className="text-xs text-green-700 dark:text-green-400">Nº do Pedido</p>
-                            <p className="font-semibold">{obra.orderNumber || 'Não informado'}</p>
-                         </div>
-                         <div>
-                            <p className="text-xs text-green-700 dark:text-green-400">Valor da Venda</p>
-                            <p className="font-bold text-lg">{formatCurrency(obra.closedValue)}</p>
-                         </div>
-                         <RegisterSaleDialog obra={obra} onSuccess={handleSuccess}>
-                             <Button variant="outline" size="sm" className="w-full mt-2">
-                                <Edit className="mr-2 h-4 w-4"/>
-                                Editar Venda
+            <Card className="bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-800 flex flex-col">
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle className="font-headline flex items-center gap-2 text-green-800 dark:text-green-300">
+                                <ShoppingCart className="h-5 w-5"/>
+                                Vendas da Obra
+                            </CardTitle>
+                            <CardDescription className="text-green-700 dark:text-green-400">
+                                Total de {formatCurrency(totalSalesValue)}
+                            </CardDescription>
+                        </div>
+                        <RegisterSaleDialog obra={obra} onSuccess={handleSuccess}>
+                             <Button variant="outline" size="sm">
+                                <PlusCircle className="mr-2 h-4 w-4"/>
+                                Gerenciar
                             </Button>
-                         </RegisterSaleDialog>
-                    </CardContent>
-                    {saleDate && (
-                        <CardFooter className="pt-4 pb-2 px-6">
-                            <div className="flex items-center text-xs text-green-700 dark:text-green-400 gap-2">
-                                <Clock className="h-3 w-3" />
-                                <span>Registrada em: {saleDate}</span>
+                        </RegisterSaleDialog>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-3 flex-grow">
+                    {hasSales ? (
+                        obra.sales?.map((sale, index) => (
+                            <div key={sale.id}>
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <p className="font-bold text-green-900 dark:text-green-200">{formatCurrency(sale.value)}</p>
+                                        <p className="text-xs text-green-700 dark:text-green-400">Pedido: {sale.orderNumber || 'N/A'}</p>
+                                    </div>
+                                    <p className="text-xs text-green-700 dark:text-green-400">{formatSaleDate(sale.date)}</p>
+                                </div>
+                                {index < obra.sales!.length - 1 && <Separator className="my-2 bg-green-200 dark:bg-green-800" />}
                             </div>
-                        </CardFooter>
+                        ))
+                    ) : (
+                        <div className="text-center py-4">
+                            <p className="text-sm text-green-800 dark:text-green-300">Nenhuma venda registrada.</p>
+                        </div>
                     )}
-                </Card>
-            ) : (
-                <RegisterSaleDialog obra={obra} onSuccess={handleSuccess}>
-                    <Button className="w-full bg-green-700 hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700">
-                        <DollarSign className="mr-2 h-4 w-4"/>
-                        Registrar Venda
-                    </Button>
-                </RegisterSaleDialog>
-            )}
+                </CardContent>
+            </Card>
 
          </div>
       </div>

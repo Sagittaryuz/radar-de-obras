@@ -31,8 +31,15 @@ export interface ObraContact {
   phone: string;
 }
 
+export type Sale = {
+  id: string; // Unique ID for the sale, e.g., a timestamp or random string
+  orderNumber?: string;
+  value: number;
+  date: Timestamp;
+}
+
 export type Obra = {
-  id: string;
+  id:string;
   clientName: string; // Will be the address in new obras, but might be a client name in old ones
   address: string;
   street: string;
@@ -49,10 +56,8 @@ export type Obra = {
   createdAt: string | Timestamp;
   // Deprecated - will be replaced by contacts array
   contactPhone?: string;
-  // New fields for revenue tracking
-  orderNumber?: string;
-  closedValue?: number;
-  closedAt?: string | Timestamp;
+  // New sales array
+  sales?: Sale[];
 };
 
 export type ObraComment = {

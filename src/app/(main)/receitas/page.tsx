@@ -52,9 +52,13 @@ export default function ReceitasPage() {
     }, [obras, selectedSeller]);
 
     const salesData = useMemo(() => {
-        const soldObras = filteredObras.filter(obra => obra.status === 'Ganha' && typeof obra.closedValue === 'number' && obra.closedValue > 0);
+        const soldObras = filteredObras.filter(obra => obra.status === 'Ganha' && obra.sales && obra.sales.length > 0);
         
-        const totalRevenue = soldObras.reduce((sum, obra) => sum + (obra.closedValue || 0), 0);
+        const totalRevenue = soldObras.reduce((sum, obra) => {
+            const obraTotal = obra.sales?.reduce((saleSum, sale) => saleSum + sale.value, 0) || 0;
+            return sum + obraTotal;
+        }, 0);
+
         const totalSales = soldObras.length;
         const averageTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
         
@@ -74,7 +78,8 @@ export default function ReceitasPage() {
 
         salesData.soldObras.forEach(obra => {
             if (obra.lojaId && lojaMap[obra.lojaId]) {
-                lojaMap[obra.lojaId].total += obra.closedValue || 0;
+                 const obraTotal = obra.sales?.reduce((saleSum, sale) => saleSum + sale.value, 0) || 0;
+                 lojaMap[obra.lojaId].total += obraTotal;
             }
         });
         
@@ -123,7 +128,7 @@ export default function ReceitasPage() {
                     </Card>
                      <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Vendas Realizadas</CardTitle>
+                            <CardTitle className="text-sm font-medium">Obras Concluídas</CardTitle>
                             <Package className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -133,7 +138,7 @@ export default function ReceitasPage() {
                     </Card>
                      <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+                            <CardTitle className="text-sm font-medium">Ticket Médio por Obra</CardTitle>
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -184,7 +189,7 @@ export default function ReceitasPage() {
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Vendas Realizadas</CardTitle>
+                        <CardTitle className="text-sm font-medium">Obras Concluídas</CardTitle>
                         <Package className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -194,12 +199,12 @@ export default function ReceitasPage() {
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+                        <CardTitle className="text-sm font-medium">Ticket Médio por Obra</CardTitle>
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(salesData.averageTicket)}</div>
-                        <p className="text-xs text-muted-foreground">Valor médio por venda realizada.</p>
+                        <p className="text-xs text-muted-foreground">Valor médio por obra concluída.</p>
                     </CardContent>
                 </Card>
             </div>
