@@ -201,6 +201,19 @@ export function NewObraDialog() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const validContacts = contacts
+        .filter(c => c.name && c.type && c.phone)
+        .map(c => c as ObraContact);
+    
+    if (validContacts.length === 0) {
+        toast({
+            variant: 'destructive',
+            title: 'Contato Obrigatório',
+            description: 'É necessário preencher pelo menos um contato completo (nome, função e telefone).',
+        });
+        return;
+    }
     
     startTransition(async () => {
       try {
@@ -223,16 +236,13 @@ export function NewObraDialog() {
         }
         
         const address = `${rua}, ${numero}, ${bairro}`;
-        const validContacts = contacts
-          .filter(c => c.name && c.type && c.phone)
-          .map(c => c as ObraContact);
         
         const newObraPayload: Omit<Obra, 'id'> = {
             street: rua,
             number: numero,
             neighborhood: bairro,
             address: address,
-            clientName: address, // Set clientName to be the address
+            clientName: validContacts[0].name,
             details: details,
             contacts: validContacts,
             lojaId: unidade,
@@ -247,7 +257,7 @@ export function NewObraDialog() {
 
         toast({
           title: "Obra Criada",
-          description: `A obra em "${address}" foi criada com sucesso!`,
+          description: `A obra de "${newObraPayload.clientName}" foi criada com sucesso!`,
         });
         setOpen(false);
         resetForm();
