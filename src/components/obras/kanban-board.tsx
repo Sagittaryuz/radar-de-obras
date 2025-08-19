@@ -52,7 +52,13 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
   const { user } = useAuth();
 
   useEffect(() => {
-    setObras(obrasProp);
+    // Sort obras by creation date descending
+    const sortedObras = [...obrasProp].sort((a, b) => {
+        const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
+        const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
+        return dateB - dateA;
+    });
+    setObras(sortedObras);
   }, [obrasProp]);
 
   const sellerMap = useMemo(() => {
