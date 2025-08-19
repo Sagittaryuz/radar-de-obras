@@ -22,7 +22,7 @@ const statusColors: Record<string, string> = {
   'Triagem': '#ff7f0e',
   'Atribuída': '#2ca02c',
   'Em Negociação': '#d62728',
-  'Ganha': '#9467bd',
+  'Vendido': '#9467bd',
   'Perdida': '#8c564b',
   'Arquivada': '#7f7f7f',
 };
@@ -35,7 +35,7 @@ const stageColors: Record<string, string> = {
   'Telhado': '#9467bd',
 };
 
-const obraStatuses: Obra['status'][] = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida', 'Arquivada'];
+const obraStatuses: Obra['status'][] = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Vendido', 'Perdida', 'Arquivada'];
 
 export function DashboardCharts({ allObras, allLojas, allUsers }: DashboardChartsProps) {
   const [selectedLoja, setSelectedLoja] = useState('all');

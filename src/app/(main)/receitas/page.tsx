@@ -59,7 +59,7 @@ export default function ReceitasPage() {
     }, [obras, selectedSeller]);
 
     const salesData = useMemo(() => {
-        const soldObras = filteredObras.filter(obra => obra.status === 'Ganha' && obra.sales && obra.sales.length > 0);
+        const soldObras = filteredObras.filter(obra => obra.status === 'Vendido' && obra.sales && obra.sales.length > 0);
         
         const totalRevenue = soldObras.reduce((sum, obra) => {
             const obraTotal = obra.sales?.reduce((saleSum, sale) => saleSum + sale.value, 0) || 0;
@@ -108,7 +108,7 @@ export default function ReceitasPage() {
 
       const query = new URLSearchParams();
       query.append('lojaId', lojaId);
-      query.append('status', 'Ganha');
+      query.append('status', 'Vendido');
 
       router.push(`/obras?${query.toString()}`);
     };
@@ -196,12 +196,12 @@ export default function ReceitasPage() {
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Obras Concluídas</CardTitle>
+                        <CardTitle className="text-sm font-medium">Obras Vendidas</CardTitle>
                         <Package className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{salesData.totalSales}</div>
-                        <p className="text-xs text-muted-foreground">Número de obras com status "Ganha".</p>
+                        <p className="text-xs text-muted-foreground">Número de obras com status "Vendido".</p>
                     </CardContent>
                 </Card>
                  <Card>
@@ -211,7 +211,7 @@ export default function ReceitasPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(salesData.averageTicket)}</div>
-                        <p className="text-xs text-muted-foreground">Valor médio por obra concluída.</p>
+                        <p className="text-xs text-muted-foreground">Valor médio por obra vendida.</p>
                     </CardContent>
                 </Card>
             </div>
