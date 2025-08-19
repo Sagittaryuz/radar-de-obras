@@ -10,7 +10,7 @@ import type { Obra, User, Loja } from '@/lib/firestore-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Search } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { PdfExportButton } from '@/components/obras/pdf-export-button';
 import { Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
+import { Input } from '@/components/ui/input';
 
 
 export default function ObrasClientPage() {
@@ -35,6 +36,7 @@ export default function ObrasClientPage() {
   const { user } = useAuth();
   const [selectedLoja, setSelectedLoja] = useState(initialLoja);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [searchTerm, setSearchTerm] = useState('');
   
 
   useEffect(() => {
@@ -86,6 +88,19 @@ export default function ObrasClientPage() {
        }
     }
 
+    if (searchTerm) {
+        const lowercasedFilter = searchTerm.toLowerCase();
+        obras = obras.filter(obra => {
+            const cardTitle = (obra.contacts && obra.contacts[0]?.name) ? obra.contacts[0].name : obra.clientName;
+            const contactsMatch = obra.contacts?.some(c => c.name.toLowerCase().includes(lowercasedFilter)) || false;
+
+            return cardTitle.toLowerCase().includes(lowercasedFilter) ||
+                   obra.address.toLowerCase().includes(lowercasedFilter) ||
+                   (obra.details && obra.details.toLowerCase().includes(lowercasedFilter)) ||
+                   contactsMatch;
+        });
+    }
+
     if (initialStatus) {
         obras = obras.filter(obra => obra.status === initialStatus);
     }
@@ -110,7 +125,7 @@ export default function ObrasClientPage() {
         });
     }
     return obras;
-  }, [initialObras, selectedLoja, initialStatus, initialStage, dateRange, user]);
+  }, [initialObras, selectedLoja, initialStatus, initialStage, dateRange, user, searchTerm]);
   
   // Set default tab on Kanban board if status is provided
   const defaultKanbanTab = initialStatus || undefined;
@@ -198,6 +213,15 @@ export default function ObrasClientPage() {
             </div>
         </div>
       </div>
+        <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input 
+                placeholder="Pesquisar por cliente, endereço, contato..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+        </div>
       <KanbanBoard obras={filteredObras} sellers={sellers} defaultTab={defaultKanbanTab} />
     </div>
   );
