@@ -40,7 +40,7 @@ export type Obra = {
   gmapsUrl?: string;
   lojaId: string;
   stage: 'Fundação' | 'Alvenaria' | 'Acabamento' | 'Pintura' | 'Telhado';
-  status: 'Entrada' | 'Triagem' | 'Atribuída' | 'Em Negociação' | 'Ganha' | 'Perdida';
+  status: 'Entrada' | 'Triagem' | 'Atribuída' | 'Em Negociação' | 'Vendido' | 'Perdida' | 'Arquivada';
   sellerId: string | null;
   createdAt: string | Timestamp;
   // Deprecated - will be replaced by contacts array
@@ -65,7 +65,7 @@ export type ObraComment = {
         isStatusUpdate?: boolean;
         budgetCode?: string;
         budgetValue?: number;
-        saleStatus?: 'Ganha' | 'Perdida';
+        saleStatus?: 'Vendido' | 'Perdida';
     };
 }
 
