@@ -137,7 +137,7 @@ export function RegisterSaleDialog({ obra, onSuccess, children }: PropsWithChild
             };
             await updateDoc(obraRef, {
                 sales: arrayUnion(newSale),
-                status: 'Vendido' // Set status to 'Vendido' on first sale
+                status: 'Ganha' // Set status to 'Ganha' on first sale
             });
         }
         

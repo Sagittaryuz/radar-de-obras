@@ -25,7 +25,7 @@ type KanbanBoardProps = {
   defaultTab?: string;
 };
 
-const columns = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Vendido', 'Perdida', 'Arquivada'] as const;
+const columns = ['Entrada', 'Triagem', 'Atribuída', 'Em Negociação', 'Ganha', 'Perdida', 'Arquivada'] as const;
 type Status = typeof columns[number];
 
 function getInitials(name: string) {
