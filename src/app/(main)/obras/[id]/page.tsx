@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { getObraById, getUserById, getLojas, getObras, getUsers } from '@/lib/firestore-data';
+import { getCoordinatesForAddress } from '@/lib/actions';
 import type { Obra, User, Loja, Sale } from '@/lib/firestore-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -151,6 +152,8 @@ export default function ObraDetailPage() {
         if (obraData.sellerId) {
           const sellerData = await getUserById(obraData.sellerId);
           setSeller(sellerData);
+        } else {
+          setSeller(null);
         }
       } else {
          notFound();
