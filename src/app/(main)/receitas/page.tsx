@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useMemo } from 'react';
 import { getObras, getLojas, getUsers } from '@/lib/firestore-data';
 import type { Obra, Loja, User } from '@/lib/firestore-data';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,6 +18,13 @@ function formatCurrency(value: number) {
     currency: 'BRL',
   }).format(value);
 }
+
+const lojaColors: Record<string, string> = {
+    matriz: '#3b82f6', // blue-500
+    catedral: '#ef4444', // red-500
+    'said-abdala': '#22c55e', // green-500
+};
+
 
 export default function ReceitasPage() {
     const [obras, setObras] = useState<Obra[]>([]);
@@ -234,7 +241,11 @@ export default function ReceitasPage() {
                                     cursor={{ fill: 'hsl(var(--muted))' }} 
                                     content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)}/>} 
                                 />
-                                <Bar dataKey="value" name="Receita" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="value" name="Receita" radius={[4, 4, 0, 0]}>
+                                    {revenueByLoja.map((entry) => (
+                                        <Cell key={entry.id} fill={lojaColors[entry.id] || 'var(--color-chart-1)'} />
+                                    ))}
+                                </Bar>
                             </BarChart>
                         </ChartContainer>
                     ) : (
