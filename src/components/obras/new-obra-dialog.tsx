@@ -25,7 +25,7 @@ import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
 import { db, storage } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const contactTypes: ContactType[] = [
   'Dono da obra',
@@ -57,9 +57,9 @@ export function NewObraDialog() {
   const [etapa, setEtapa] = useState('');
   const [lojas, setLojas] = useState<Loja[]>([]);
   
-  // State for photo preview and data
+  // State for photo files and their previews
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-  const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([]);
 
 
   // Fetch Lojas when the dialog is about to open or is open
@@ -84,8 +84,8 @@ export function NewObraDialog() {
     setBairro('');
     setUnidade('');
     setEtapa('');
+    setPhotoFiles([]);
     setPhotoPreviews([]);
-    setPhotoDataUrls([]);
   };
 
   const handleLocation = () => {
@@ -157,28 +157,27 @@ export function NewObraDialog() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newPreviews: string[] = [];
-      const newDataUrls: string[] = [];
       const fileList = Array.from(files);
-
-      fileList.forEach(file => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            newPreviews.push(URL.createObjectURL(file));
-            newDataUrls.push(reader.result as string);
-            if(newPreviews.length === fileList.length) {
-              setPhotoPreviews(prev => [...prev, ...newPreviews]);
-              setPhotoDataUrls(prev => [...prev, ...newDataUrls]);
-            }
-          };
-          reader.readAsDataURL(file);
-      });
+      const newFiles = [...photoFiles, ...fileList];
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      
+      setPhotoFiles(newFiles);
+      setPhotoPreviews(newPreviews);
     }
   };
 
   const handleRemoveFile = (index: number) => {
-    setPhotoPreviews(previews => previews.filter((_, i) => i !== index));
-    setPhotoDataUrls(dataUrls => dataUrls.filter((_, i) => i !== index));
+    const newFiles = photoFiles.filter((_, i) => i !== index);
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+    
+    // Clean up old object URLs
+    const oldPreview = photoPreviews[index];
+    if (oldPreview) {
+        URL.revokeObjectURL(oldPreview);
+    }
+
+    setPhotoFiles(newFiles);
+    setPhotoPreviews(newPreviews);
   };
   
 
@@ -204,14 +203,14 @@ export function NewObraDialog() {
         
         let uploadedPhotoUrls: string[] = [];
         
-        if (photoDataUrls.length > 0) {
-            toast({ title: 'Enviando fotos...', description: `0 de ${photoDataUrls.length} fotos enviadas.`});
+        if (photoFiles.length > 0) {
+            toast({ title: 'Enviando fotos...', description: `Preparando ${photoFiles.length} foto(s).`});
 
-            const uploadPromises = photoDataUrls.map(async (dataUrl, index) => {
-                const fileName = `obras/${Date.now()}-${index}.jpg`;
+            const uploadPromises = photoFiles.map(async (file, index) => {
+                const fileName = `obras/${Date.now()}-${file.name}`;
                 const storageRef = ref(storage, fileName);
-                const uploadResult = await uploadString(storageRef, dataUrl, 'data_url');
-                toast({ title: 'Enviando fotos...', description: `${index + 1} de ${photoDataUrls.length} fotos enviadas.`});
+                const uploadResult = await uploadBytes(storageRef, file);
+                toast({ title: 'Enviando fotos...', description: `${index + 1} de ${photoFiles.length} fotos enviadas.`});
                 return getDownloadURL(uploadResult.ref);
             });
 
@@ -258,7 +257,14 @@ export function NewObraDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+        if (!isOpen) {
+            // Clean up previews when dialog is closed
+            photoPreviews.forEach(URL.revokeObjectURL);
+            resetForm();
+        }
+        setOpen(isOpen);
+    }}>
       <DialogTrigger asChild>
         <Button className="w-full">
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -317,7 +323,7 @@ export function NewObraDialog() {
                    <Input 
                     placeholder="Nome do Contato"
                     className="md:col-span-2" 
-                    value={contact.name} 
+                    value={contact.name || ''} 
                     onChange={(e) => handleContactChange(index, 'name', e.target.value)}
                   />
                    <Select 
@@ -336,13 +342,13 @@ export function NewObraDialog() {
                   <div className="flex items-center gap-2">
                     <Input 
                       placeholder="(XX) XXXXX-XXXX" 
-                      value={contact.phone} 
+                      value={contact.phone || ''} 
                       onChange={(e) => handleContactChange(index, 'phone', e.target.value)}
                       type="tel"
                       inputMode='numeric'
                     />
                     <Button type="button" size="icon" variant="ghost" onClick={() => removeContact(index)} disabled={contacts.length === 1}>
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </div>
@@ -405,7 +411,7 @@ export function NewObraDialog() {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-                <Button type="button" variant="secondary" disabled={isSaving} onClick={resetForm}>
+                <Button type="button" variant="secondary" disabled={isSaving}>
                     Cancelar
                 </Button>
             </DialogClose>
@@ -419,5 +425,3 @@ export function NewObraDialog() {
     </Dialog>
   );
 }
-
-    
