@@ -22,7 +22,7 @@ import type { Loja, Obra, ObraContact, ContactType } from '@/lib/firestore-data'
 import { getLojas } from '@/lib/firestore-data';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
-import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Textarea } from '../ui/textarea';
 import Image from 'next/image';
 
@@ -118,18 +118,7 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     const files = event.target.files;
     if (!files) return;
 
-    const validFiles = Array.from(files).filter(file => {
-      if (file.size > MAX_FILE_SIZE_BYTES) {
-        toast({
-          variant: 'destructive',
-          title: 'Arquivo muito grande',
-          description: `A imagem ${file.name} excede o limite de ${MAX_FILE_SIZE_MB}MB.`,
-        });
-        return false;
-      }
-      return true;
-    });
-
+    const validFiles = Array.from(files);
     setNewPhotoFiles(prev => [...prev, ...validFiles]);
     const previews = validFiles.map(file => URL.createObjectURL(file));
     setNewPhotoPreviews(prev => [...prev, ...previews]);
@@ -137,7 +126,10 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
 
   const handleRemoveNewPhoto = (index: number) => {
     setNewPhotoFiles(prev => prev.filter((_, i) => i !== index));
-    setNewPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+    const newPreviews = newPhotoPreviews.filter((_, i) => i !== index);
+    const removedPreview = newPhotoPreviews[index];
+    URL.revokeObjectURL(removedPreview);
+    setNewPhotoPreviews(newPreviews);
   };
   
   const handleRemoveExistingPhoto = (url: string) => {
@@ -183,19 +175,17 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
 
         // 2. Upload new photos
         const newUploadedUrls: string[] = [];
-        for (const file of newPhotoFiles) {
-          const dataUrl = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          
-          const fileName = `obras/${Date.now()}-${file.name}`;
-          const storageRef = ref(storage, fileName);
-          const uploadResult = await uploadString(storageRef, dataUrl, 'data_url');
-          const downloadUrl = await getDownloadURL(uploadResult.ref);
-          newUploadedUrls.push(downloadUrl);
+        if (newPhotoFiles.length > 0) {
+            toast({ title: 'Enviando fotos...', description: `Preparando ${newPhotoFiles.length} nova(s) foto(s).`});
+            const uploadPromises = newPhotoFiles.map(async (file, index) => {
+                const fileName = `obras/${Date.now()}-${file.name}`;
+                const storageRef = ref(storage, fileName);
+                const uploadResult = await uploadBytes(storageRef, file);
+                toast({ title: 'Enviando fotos...', description: `${index + 1} de ${newPhotoFiles.length} fotos enviadas.`});
+                return getDownloadURL(uploadResult.ref);
+            });
+            const urls = await Promise.all(uploadPromises);
+            newUploadedUrls.push(...urls);
         }
 
         // 3. Construct final payload
