@@ -9,6 +9,8 @@ const GOOGLE_MAPS_API_KEY = 'AIzaSyAwY-vS9eyjPHxvcC3as_h5iMwicNRaBqg';
 
 export async function imageToDataUrl(url: string) {
     try {
+        // This server action now fetches the image on the server-side,
+        // which can help in environments where client-side fetching is restricted.
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Failed to fetch image: ${response.statusText}`);

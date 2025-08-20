@@ -180,7 +180,7 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
         if (newPhotoFiles.length > 0) {
             toast({ title: 'Enviando fotos...', description: `Preparando ${newPhotoFiles.length} nova(s) foto(s).`});
             const uploadPromises = newPhotoFiles.map(async (file, index) => {
-                const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+                const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
                 const fileName = `obras/${Date.now()}-${sanitizedFileName}`;
                 console.log(`[DEBUG] Uploading new file with sanitized name: ${fileName}`);
                 const storageRef = ref(storage, fileName);
@@ -389,5 +389,3 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     </Dialog>
   );
 }
-
-    
