@@ -27,9 +27,6 @@ import { db, storage } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 
-const MAX_FILE_SIZE_MB = 5;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-
 const contactTypes: ContactType[] = [
   'Dono da obra',
   'Mestre de Obras',
@@ -163,20 +160,6 @@ export function NewObraDialog() {
       const newPreviews: string[] = [];
       const newDataUrls: string[] = [];
       const fileList = Array.from(files);
-
-      let hasError = false;
-      fileList.forEach(file => {
-        if (file.size > MAX_FILE_SIZE_BYTES) {
-          toast({
-            variant: 'destructive',
-            title: 'Arquivo muito grande',
-            description: `O arquivo ${file.name} excede o tamanho máximo de ${MAX_FILE_SIZE_MB}MB.`,
-          });
-          hasError = true;
-        }
-      });
-      if(hasError) return;
-
 
       fileList.forEach(file => {
           const reader = new FileReader();
@@ -393,7 +376,6 @@ export function NewObraDialog() {
             <div>
               <Label htmlFor="photos">Fotos</Label>
               <Input id="photos" name="photos" type="file" accept="image/*" multiple onChange={handleFileChange} />
-              <p className="text-xs text-muted-foreground mt-1">Tamanho máximo por arquivo: {MAX_FILE_SIZE_MB}MB.</p>
             </div>
 
              {photoPreviews.length > 0 && (
@@ -437,3 +419,5 @@ export function NewObraDialog() {
     </Dialog>
   );
 }
+
+    
