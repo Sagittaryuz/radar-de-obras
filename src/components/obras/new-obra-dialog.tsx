@@ -207,7 +207,8 @@ export function NewObraDialog() {
             toast({ title: 'Enviando fotos...', description: `Preparando ${photoFiles.length} foto(s).`});
 
             const uploadPromises = photoFiles.map(async (file, index) => {
-                const fileName = `obras/${Date.now()}-${file.name}`;
+                const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+                const fileName = `obras/${Date.now()}-${sanitizedFileName}`;
                 const storageRef = ref(storage, fileName);
                 const uploadResult = await uploadBytes(storageRef, file);
                 toast({ title: 'Enviando fotos...', description: `${index + 1} de ${photoFiles.length} fotos enviadas.`});
@@ -425,3 +426,5 @@ export function NewObraDialog() {
     </Dialog>
   );
 }
+
+    

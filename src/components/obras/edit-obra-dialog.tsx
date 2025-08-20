@@ -179,7 +179,8 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
         if (newPhotoFiles.length > 0) {
             toast({ title: 'Enviando fotos...', description: `Preparando ${newPhotoFiles.length} nova(s) foto(s).`});
             const uploadPromises = newPhotoFiles.map(async (file, index) => {
-                const fileName = `obras/${Date.now()}-${file.name}`;
+                const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+                const fileName = `obras/${Date.now()}-${sanitizedFileName}`;
                 const storageRef = ref(storage, fileName);
                 const uploadResult = await uploadBytes(storageRef, file);
                 toast({ title: 'Enviando fotos...', description: `${index + 1} de ${newPhotoFiles.length} fotos enviadas.`});
@@ -380,3 +381,5 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     </Dialog>
   );
 }
+
+    
