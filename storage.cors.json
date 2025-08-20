@@ -1,13 +1,13 @@
-
 [
   {
-    "origin": ["*"],
-    "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    "responseHeader": [
-      "Content-Type",
-      "Content-Length",
-      "Access-Control-Allow-Origin"
+    "origin": [
+      "http://localhost:3000",
+      "https://jcr-radar.web.app",
+      "https://jcr-radar.firebaseapp.com",
+      "https://6000-firebase-studio-1754129334948.cluster-duylic2g3fbzerqpzxxbw6helm.cloudworkstations.dev"
     ],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Authorization"],
     "maxAgeSeconds": 3600
   }
 ]
