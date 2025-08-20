@@ -167,6 +167,7 @@ export function KanbanBoard({ obras: obrasProp, sellers, defaultTab }: KanbanBoa
                                     src={coverPhoto} 
                                     alt={`Foto da obra de ${cardTitle}`}
                                     fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                     className="object-cover"
                                     quality={50}
                                 />

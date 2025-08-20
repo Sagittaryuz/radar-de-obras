@@ -26,9 +26,6 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { Textarea } from '../ui/textarea';
 import Image from 'next/image';
 
-const MAX_FILE_SIZE_MB = 5;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-
 interface EditObraDialogProps {
   obra: Obra;
   onSuccess: () => void;
@@ -92,6 +89,9 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
             setLojas(lojasData);
         };
         fetchLojas();
+    } else {
+        // Clean up previews when dialog is closed
+        newPhotoPreviews.forEach(URL.revokeObjectURL);
     }
   }, [open, obra]);
   
@@ -120,16 +120,17 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
 
     const validFiles = Array.from(files);
     setNewPhotoFiles(prev => [...prev, ...validFiles]);
+
     const previews = validFiles.map(file => URL.createObjectURL(file));
     setNewPhotoPreviews(prev => [...prev, ...previews]);
   };
 
-  const handleRemoveNewPhoto = (index: number) => {
-    setNewPhotoFiles(prev => prev.filter((_, i) => i !== index));
-    const newPreviews = newPhotoPreviews.filter((_, i) => i !== index);
-    const removedPreview = newPhotoPreviews[index];
-    URL.revokeObjectURL(removedPreview);
-    setNewPhotoPreviews(newPreviews);
+  const handleRemoveNewPhoto = (indexToRemove: number) => {
+    // Revoke the object URL to prevent memory leaks
+    URL.revokeObjectURL(newPhotoPreviews[indexToRemove]);
+
+    setNewPhotoFiles(prev => prev.filter((_, i) => i !== indexToRemove));
+    setNewPhotoPreviews(prev => prev.filter((_, i) => i !== indexToRemove));
   };
   
   const handleRemoveExistingPhoto = (url: string) => {
@@ -379,5 +380,3 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
     </Dialog>
   );
 }
-
-    
