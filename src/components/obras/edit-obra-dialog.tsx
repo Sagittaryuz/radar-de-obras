@@ -164,12 +164,13 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
         // 1. Delete photos marked for deletion
         for (const urlToDelete of photosToDelete) {
           try {
+            console.log(`[DEBUG] Deleting existing photo from URL: ${urlToDelete}`);
             const photoRef = ref(storage, urlToDelete);
             await deleteObject(photoRef);
+            console.log(`[DEBUG] Successfully deleted photo: ${urlToDelete}`);
           } catch (error: any) {
-             // Ignore "object not found" errors, as it might have been already deleted
-            if (error.code !== 'storage/object-not-found') {
-              console.warn(`Failed to delete photo: ${urlToDelete}`, error);
+             if (error.code !== 'storage/object-not-found') {
+              console.warn(`[DEBUG] Failed to delete photo, but continuing: ${urlToDelete}`, error);
             }
           }
         }
@@ -181,13 +182,17 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
             const uploadPromises = newPhotoFiles.map(async (file, index) => {
                 const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
                 const fileName = `obras/${Date.now()}-${sanitizedFileName}`;
+                console.log(`[DEBUG] Uploading new file with sanitized name: ${fileName}`);
                 const storageRef = ref(storage, fileName);
+                console.log(`[DEBUG] Storage reference created: ${storageRef.fullPath}`);
                 const uploadResult = await uploadBytes(storageRef, file);
+                console.log(`[DEBUG] Upload successful for ${fileName}`);
                 toast({ title: 'Enviando fotos...', description: `${index + 1} de ${newPhotoFiles.length} fotos enviadas.`});
                 return getDownloadURL(uploadResult.ref);
             });
             const urls = await Promise.all(uploadPromises);
             newUploadedUrls.push(...urls);
+            console.log('[DEBUG] All new photos uploaded and URLs retrieved.');
         }
 
         // 3. Construct final payload
@@ -204,10 +209,12 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
             contacts: validContacts,
             photoUrls: finalPhotoUrls,
         };
+        console.log('[DEBUG] Final payload for Firestore update:', payload);
 
         // 4. Update Firestore document
         const obraRef = doc(db, 'obras', obra.id);
         await updateDoc(obraRef, payload);
+        console.log('[DEBUG] Firestore document updated successfully.');
         
         toast({
             title: "Obra Atualizada",
@@ -217,6 +224,7 @@ export function EditObraDialog({ obra, onSuccess }: EditObraDialogProps) {
         onSuccess();
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+        console.error("[DEBUG] Error during handleSubmit:", error);
         toast({
             variant: 'destructive',
             title: "Erro ao Atualizar",

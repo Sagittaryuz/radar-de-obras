@@ -209,13 +209,17 @@ export function NewObraDialog() {
             const uploadPromises = photoFiles.map(async (file, index) => {
                 const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
                 const fileName = `obras/${Date.now()}-${sanitizedFileName}`;
+                console.log(`[DEBUG] Uploading new file with sanitized name: ${fileName}`);
                 const storageRef = ref(storage, fileName);
+                console.log(`[DEBUG] Storage reference created: ${storageRef.fullPath}`);
                 const uploadResult = await uploadBytes(storageRef, file);
+                console.log(`[DEBUG] Upload successful for ${fileName}`);
                 toast({ title: 'Enviando fotos...', description: `${index + 1} de ${photoFiles.length} fotos enviadas.`});
                 return getDownloadURL(uploadResult.ref);
             });
 
             uploadedPhotoUrls = await Promise.all(uploadPromises);
+            console.log('[DEBUG] All new photos uploaded and URLs retrieved.');
         }
         
         const address = `${rua}, ${numero}, ${bairro}`;
@@ -235,8 +239,10 @@ export function NewObraDialog() {
             sellerId: null,
             createdAt: new Date().toISOString(),
         };
+        console.log('[DEBUG] Final payload for Firestore:', newObraPayload);
 
         const docRef = await addDoc(collection(db, 'obras'), newObraPayload);
+        console.log(`[DEBUG] Firestore document created with ID: ${docRef.id}`);
 
         toast({
           title: "Obra Criada",
@@ -248,6 +254,7 @@ export function NewObraDialog() {
 
       } catch(error) {
          const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+         console.error("[DEBUG] Error during handleSubmit:", error);
          toast({
             variant: 'destructive',
             title: "Erro ao Salvar",
